@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api';
 import ForgotPasswordModal from './ForgotPasswordModal';
 
 const AuthPage = ({ onAuthSuccess, onBack }) => {
@@ -26,7 +27,7 @@ const AuthPage = ({ onAuthSuccess, onBack }) => {
     setError('');
 
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const endpoint = isLogin ? API_ENDPOINTS.AUTH.LOGIN : API_ENDPOINTS.AUTH.REGISTER;
       const response = await axios.post(endpoint, formData);
 
       // Store token and user data

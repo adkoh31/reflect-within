@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import { retryWithBackoff } from '../utils/errorHandler';
 
 export const useMessages = (
@@ -44,7 +45,7 @@ export const useMessages = (
 
     try {
       const response = await retryWithBackoff(async () => {
-        return await axios.post('/api/reflect', { 
+        return await axios.post(API_ENDPOINTS.REFLECT, { 
           message: inputText, 
           pastEntries: last5JournalEntries 
         });
@@ -66,7 +67,7 @@ export const useMessages = (
 
       if (isPremium && user) {
         try {
-          await axios.post('/api/save-reflection', {
+          await axios.post(API_ENDPOINTS.SAVE_REFLECTION, {
             userInput: inputText,
             aiQuestion: response.data.question
           });

@@ -1,0 +1,24 @@
+// API Configuration for different environments
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? (process.env.REACT_APP_RAILWAY_URL || 'https://reflect-within-production.up.railway.app')
+  : (process.env.REACT_APP_API_URL || 'http://localhost:8080');
+
+export const API_ENDPOINTS = {
+  REFLECT: `${API_BASE_URL}/api/reflect`,
+  SAVE_REFLECTION: `${API_BASE_URL}/api/save-reflection`,
+  INSIGHTS: `${API_BASE_URL}/api/insights`,
+  AUTH: {
+    LOGIN: `${API_BASE_URL}/api/auth/login`,
+    REGISTER: `${API_BASE_URL}/api/auth/register`,
+    LOGOUT: `${API_BASE_URL}/api/auth/logout`,
+    FORGOT_PASSWORD: `${API_BASE_URL}/api/auth/forgot-password`,
+    RESET_PASSWORD: `${API_BASE_URL}/api/auth/reset-password`,
+    PROFILE: `${API_BASE_URL}/api/auth/profile`,
+    VERIFY_TOKEN: `${API_BASE_URL}/api/auth/verify-token`
+  },
+  JOURNAL: {
+    GENERATE_ENTRY: `${API_BASE_URL}/api/generate-journal-entry`
+  }
+};
+
+export default API_BASE_URL; 

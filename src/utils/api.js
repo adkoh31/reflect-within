@@ -1,19 +1,17 @@
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 
-// API call to get reflection question
-export const getReflectionQuestion = async (message, pastEntries) => {
-  const response = await axios.post('/api/reflect', { message, pastEntries });
-  return response.data.question;
-};
-
-// API call to save reflection (premium)
-export const saveReflection = async (userInput, aiQuestion) => {
-  const response = await axios.post('/api/save-reflection', { userInput, aiQuestion });
+export const reflectWithAI = async (message, pastEntries = []) => {
+  const response = await axios.post(API_ENDPOINTS.REFLECT, { message, pastEntries });
   return response.data;
 };
 
-// API call to get insights
+export const saveReflection = async (userInput, aiQuestion) => {
+  const response = await axios.post(API_ENDPOINTS.SAVE_REFLECTION, { userInput, aiQuestion });
+  return response.data;
+};
+
 export const getInsights = async (reflections) => {
-  const response = await axios.post('/api/insights', { reflections });
+  const response = await axios.post(API_ENDPOINTS.INSIGHTS, { reflections });
   return response.data;
 }; 

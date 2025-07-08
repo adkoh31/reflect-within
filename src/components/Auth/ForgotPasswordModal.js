@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../../config/api';
 
 const ForgotPasswordModal = ({ isOpen, onClose, onShowLogin }) => {
   const [email, setEmail] = useState('');
@@ -14,7 +15,7 @@ const ForgotPasswordModal = ({ isOpen, onClose, onShowLogin }) => {
     setMessage('');
 
     try {
-      const response = await axios.post('/api/auth/forgot-password', { email });
+      const response = await axios.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
       setMessage(response.data.message);
       
       // For development, show the reset URL

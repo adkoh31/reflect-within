@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 import { retryWithBackoff } from '../utils/errorHandler';
 
 export const useInsights = (
@@ -27,7 +28,7 @@ export const useInsights = (
 
       if (reflections.length > 0) {
         const response = await retryWithBackoff(async () => {
-          return await axios.post('/api/insights', { reflections });
+          return await axios.post(API_ENDPOINTS.INSIGHTS, { reflections });
         });
         setInsights(response.data);
       }

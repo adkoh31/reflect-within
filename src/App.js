@@ -16,6 +16,7 @@ import { useOnboarding } from './hooks/useOnboarding';
 // Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
+// Main App Component - Latest version with new UI
 const App = () => {
   // App state
   const appState = useAppState();

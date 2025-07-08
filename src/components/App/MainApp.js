@@ -1,7 +1,8 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { retryWithBackoff } from '../../utils/errorHandler';
+import { API_ENDPOINTS } from '../../config/api';
 
 // Enhanced UI Components
 import BottomNav from '../Navigation/BottomNav';
@@ -209,9 +210,9 @@ const MainApp = ({
 
     try {
       const response = await retryWithBackoff(async () => {
-        return await axios.post('/api/reflect', { 
-          message: prompt, 
-          pastEntries: last5JournalEntries 
+        return await axios.post(API_ENDPOINTS.REFLECT, {
+          message: inputText,
+          pastEntries: last5JournalEntries
         });
       });
       
@@ -229,8 +230,8 @@ const MainApp = ({
 
       if (isPremium && user) {
         try {
-          await axios.post('/api/save-reflection', {
-            userInput: prompt,
+          await axios.post(API_ENDPOINTS.SAVE_REFLECTION, {
+            userInput: inputText,
             aiQuestion: response.data.question
           });
         } catch (error) {
@@ -251,7 +252,7 @@ const MainApp = ({
     } finally {
       setIsLoading(false);
     }
-  }, [setMessages, formatTimestamp, setIsLoading, last5JournalEntries, isPremium, user, showMessageSent]);
+  }, [setMessages, formatTimestamp, setIsLoading, last5JournalEntries, isPremium, user, showMessageSent, inputText]);
 
   // Show onboarding if needed
   if (showOnboarding) {

@@ -13,8 +13,33 @@ console.log('JWT_SECRET:', process.env.JWT_SECRET ? '✅ Set' : '❌ Not set');
 console.log('OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? '✅ Set' : '❌ Not set');
 console.log('PORT:', process.env.PORT || 'Using default 3001');
 
+// CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://reflect-within.vercel.app',
+      'https://reflect-within-git-main-adkoh31.vercel.app',
+      'https://reflect-within-adkoh31.vercel.app'
+    ];
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(null, true); // Allow for now, log for debugging
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Import routes
@@ -51,6 +76,28 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     message: 'ReflectWithin API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Debug endpoint to test auth routes
+app.get('/api/debug', (req, res) => {
+  res.json({
+    message: 'Debug endpoint working',
+    routes: {
+      auth: '/api/auth',
+      register: '/api/auth/register',
+      login: '/api/auth/login'
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Test POST endpoint
+app.post('/api/test', (req, res) => {
+  res.json({
+    message: 'POST request working',
+    body: req.body,
     timestamp: new Date().toISOString()
   });
 });
