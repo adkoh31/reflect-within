@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 
 export const useAppState = () => {
-  // App state management
-  const [currentView, setCurrentView] = useState('landing');
+  // App state management - Start with the new minimalist dark design
+  const [currentView, setCurrentView] = useState('app');
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
