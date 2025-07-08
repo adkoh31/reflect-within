@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Mic, MicOff, Send, Bot, Edit3 } from 'lucide-react';
 import axios from 'axios';
 import { retryWithBackoff } from '../../utils/errorHandler';
+import { API_ENDPOINTS } from '../../config/api';
 
 const AIJournalAssistant = ({ 
   onSaveEntry,
@@ -62,11 +63,10 @@ const AIJournalAssistant = ({
     setIsLoading(true);
 
     try {
-      const response = await retryWithBackoff(async () => {
-        return await axios.post('/api/generate-journal-entry', { 
-          message: inputText, 
-          pastEntries: last5JournalEntries 
-        });
+      const response = await axios.post(API_ENDPOINTS.JOURNAL.GENERATE_ENTRY, {
+        prompt: inputText,
+        style: 'structured',
+        length: 'medium'
       });
 
       const aiMessage = {
