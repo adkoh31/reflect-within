@@ -9,7 +9,10 @@ const MainApp = lazy(() => import('./MainApp'));
 // Loading fallback component
 const LoadingFallback = ({ message = 'Loading...' }) => (
   <div className="min-h-screen bg-gray-50 dark:bg-dark-800 flex items-center justify-center">
-    <LoadingMessage context="general" />
+    <div className="text-center">
+      <LoadingMessage context="general" />
+      <div className="mt-4 text-xs text-gray-500">Version: Latest UI v2.0</div>
+    </div>
   </div>
 );
 
