@@ -105,7 +105,7 @@ export const useSpeechRecognitionCustom = (isListening, setIsListening, handleEr
       try {
         console.log('Starting speech recognition...');
         setMicrophoneStatus('requesting');
-        resetTranscript();
+      resetTranscript();
         
         // Request microphone permission first
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -120,7 +120,7 @@ export const useSpeechRecognitionCustom = (isListening, setIsListening, handleEr
           interimResults: true, // Show interim results
           maxAlternatives: 1
         });
-        setIsListening(true);
+      setIsListening(true);
         console.log('Speech recognition started successfully');
       } catch (error) {
         console.error('Speech recognition error:', error);

@@ -4,16 +4,12 @@ const workoutSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
-    index: true
-  },
-  date: {
-    type: Date,
-    default: Date.now
+    index: true // Add index for faster user queries
   },
   type: {
     type: String,
-    enum: ['CrossFit', 'Yoga', 'Running', 'Weightlifting', 'Cardio', 'Stretching'],
-    required: true
+    required: true,
+    default: 'CrossFit'
   },
   exercises: [{
     name: {
@@ -22,13 +18,12 @@ const workoutSchema = new mongoose.Schema({
     },
     sets: Number,
     reps: Number,
-    weight: String, // e.g., "135 lbs", "53 lbs"
-    duration: String, // e.g., "35 min", "18 min"
+    weight: String,
     notes: String
   }],
   difficulty: {
     type: String,
-    enum: ['tough', 'challenging', 'intense', 'solid', 'great', 'amazing', 'okay', 'grueling', 'exhausting'],
+    enum: ['easy', 'okay', 'tough', 'challenging', 'intense'],
     default: 'okay'
   },
   mood: {
@@ -39,7 +34,7 @@ const workoutSchema = new mongoose.Schema({
   soreness: [{
     area: {
       type: String,
-      enum: ['quads', 'shoulders', 'legs', 'core', 'calves', 'wrists', 'hamstrings', 'hips', 'lower back']
+      required: true
     },
     intensity: {
       type: String,
@@ -48,14 +43,16 @@ const workoutSchema = new mongoose.Schema({
     }
   }],
   notes: String,
-  createdAt: {
+  date: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+    index: true // Add index for date-based queries
   }
 });
 
-// Index for efficient queries
-workoutSchema.index({ userId: 1, date: -1 });
-workoutSchema.index({ userId: 1, 'exercises.name': 1 });
+// Add compound indexes for common query patterns
+workoutSchema.index({ userId: 1, date: -1 }); // For user's recent workouts
+workoutSchema.index({ userId: 1, 'soreness.area': 1 }); // For soreness history
+workoutSchema.index({ userId: 1, 'exercises.name': 1 }); // For exercise-specific queries
 
 module.exports = mongoose.model('Workout', workoutSchema); 

@@ -1,12 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const OnboardingFlow = ({ onComplete, onSkip, user }) => {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isSkipping, setIsSkipping] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState(null);
   const [formData, setFormData] = useState({
     firstReflection: '',
     preferredMode: 'chat'
   });
+
+  // Touch gesture handling
+  const touchStart = useRef(null);
+  const touchEnd = useRef(null);
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e) => {
+    touchEnd.current = null;
+    touchStart.current = e.targetTouches[0].clientX;
+    setSwipeDirection(null);
+  };
+
+  const onTouchMove = (e) => {
+    touchEnd.current = e.targetTouches[0].clientX;
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart.current || !touchEnd.current) return;
+    
+    const distance = touchStart.current - touchEnd.current;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe && currentStep < steps.length - 1) {
+      setSwipeDirection('left');
+      setTimeout(() => {
+        handleNext();
+        setSwipeDirection(null);
+      }, 150);
+    } else if (isRightSwipe && currentStep > 0) {
+      setSwipeDirection('right');
+      setTimeout(() => {
+        handleBack();
+        setSwipeDirection(null);
+      }, 150);
+    }
+  };
 
   const steps = [
     {
@@ -79,6 +118,16 @@ const OnboardingFlow = ({ onComplete, onSkip, user }) => {
   const handleInputChange = (key, value) => {
     setFormData(prev => ({ ...prev, [key]: value }));
   };
+
+  const handleSkip = useCallback(() => {
+    if (isSkipping) return; // Prevent double-clicks
+    
+    setIsSkipping(true);
+    onSkip();
+    
+    // Reset after a short delay in case the skip doesn't work
+    setTimeout(() => setIsSkipping(false), 1000);
+  }, [isSkipping, onSkip]);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -191,7 +240,7 @@ const OnboardingFlow = ({ onComplete, onSkip, user }) => {
   return (
     <div className="fixed inset-0 z-50 bg-white flex flex-col">
       {/* Progress Bar */}
-      <div className="w-full bg-gray-100 h-1">
+      <div className="w-full bg-gray-100 h-1 flex-shrink-0">
         <motion.div
           className="h-full bg-gradient-to-r from-primary-400 to-secondary-400"
           initial={{ width: 0 }}
@@ -201,73 +250,111 @@ const OnboardingFlow = ({ onComplete, onSkip, user }) => {
       </div>
 
       {/* Skip Button */}
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 z-10">
         <button
-          onClick={onSkip}
-          className="text-gray-500 hover:text-gray-700 text-sm font-medium"
+          onClick={handleSkip}
+          disabled={isSkipping}
+          className={`text-gray-500 hover:text-gray-700 text-sm font-medium transition-colors duration-200 ${
+            isSkipping ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
         >
-          Skip
+          {isSkipping ? 'Skipping...' : 'Skip'}
         </button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 flex flex-col justify-center px-6 py-8">
-        <AnimatePresence mode="wait">
+      {/* Content - Scrollable Area with Swipe Support */}
+      <div 
+        className="flex-1 overflow-y-auto px-6 py-8 relative"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        {/* Swipe Background Indicator */}
+        {swipeDirection && (
           <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-            className="text-center"
-          >
-            {/* Icon */}
+            className={`absolute inset-0 pointer-events-none ${
+              swipeDirection === 'left' ? 'bg-gradient-to-r from-transparent to-blue-50' : 
+              swipeDirection === 'right' ? 'bg-gradient-to-l from-transparent to-blue-50' : ''
+            }`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.3 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          />
+        )}
+        
+        <div className="min-h-full flex flex-col justify-center relative z-10">
+          {/* Swipe Hint */}
+          {currentStep < steps.length - 1 && (
+            <div className="text-center mb-4">
+              <p className="text-xs text-gray-400 animate-pulse">
+                💡 Swipe left to continue
+              </p>
+            </div>
+          )}
+          
+          <AnimatePresence mode="wait">
             <motion.div
-              className="text-6xl mb-6"
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ delay: 0.1, type: "spring" }}
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ 
+                opacity: 1, 
+                x: 0,
+                transform: swipeDirection === 'left' ? 'translateX(-10px)' : 
+                          swipeDirection === 'right' ? 'translateX(10px)' : 'translateX(0px)'
+              }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="text-center"
             >
-              {currentStepData.icon}
+              {/* Icon */}
+              <motion.div
+                className="text-6xl mb-6"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.1, type: "spring" }}
+              >
+                {currentStepData.icon}
+              </motion.div>
+
+              {/* Title */}
+              <h1 className="text-2xl font-display font-bold text-gray-900 mb-2">
+                {currentStepData.title}
+              </h1>
+
+              {/* Subtitle */}
+              <p className="text-lg text-gray-600 mb-4">
+                {currentStepData.subtitle}
+              </p>
+
+              {/* Description */}
+              <p className="text-gray-500 mb-8 max-w-md mx-auto">
+                {currentStepData.description}
+              </p>
+
+              {/* Example */}
+              {renderExample()}
+
+              {/* Form Fields */}
+              {currentStepData.fields.length > 0 && (
+                <div className="space-y-4 max-w-sm mx-auto">
+                  {currentStepData.fields.map((field, index) => (
+                    <div key={index} className="text-left">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {field.label}
+                      </label>
+                      {renderField(field)}
+                    </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
-
-            {/* Title */}
-            <h1 className="text-2xl font-display font-bold text-gray-900 mb-2">
-              {currentStepData.title}
-            </h1>
-
-            {/* Subtitle */}
-            <p className="text-lg text-gray-600 mb-4">
-              {currentStepData.subtitle}
-            </p>
-
-            {/* Description */}
-            <p className="text-gray-500 mb-8 max-w-md mx-auto">
-              {currentStepData.description}
-            </p>
-
-            {/* Example */}
-            {renderExample()}
-
-            {/* Form Fields */}
-            {currentStepData.fields.length > 0 && (
-              <div className="space-y-4 max-w-sm mx-auto">
-                {currentStepData.fields.map((field, index) => (
-                  <div key={index} className="text-left">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {field.label}
-                    </label>
-                    {renderField(field)}
-                  </div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        </AnimatePresence>
+          </AnimatePresence>
+        </div>
       </div>
 
-      {/* Navigation */}
-      <div className="px-6 py-6 border-t border-gray-100">
+      {/* Navigation - Fixed at Bottom */}
+      <div className="px-6 py-6 border-t border-gray-100 flex-shrink-0">
         <div className="flex items-center justify-between">
           <button
             onClick={handleBack}
@@ -305,6 +392,22 @@ const OnboardingFlow = ({ onComplete, onSkip, user }) => {
           >
             {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
           </motion.button>
+        </div>
+        
+        {/* Swipe Navigation Hints */}
+        <div className="flex justify-between items-center mt-4 text-xs text-gray-400">
+          {currentStep > 0 && (
+            <div className="flex items-center space-x-1">
+              <span>←</span>
+              <span>Swipe right to go back</span>
+            </div>
+          )}
+          {currentStep < steps.length - 1 && (
+            <div className="flex items-center space-x-1 ml-auto">
+              <span>Swipe left to continue</span>
+              <span>→</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

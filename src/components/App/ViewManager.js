@@ -1,23 +1,14 @@
-import React, { Suspense, lazy } from 'react';
-import { LoadingMessage } from '../LoadingStates';
+import React, { useState, useEffect } from 'react';
+import { LampTransition } from '../ui/page-transition';
 
-// Lazy load heavy components
-const LandingPage = lazy(() => import('../Landing/LandingPage'));
-const AuthPage = lazy(() => import('../Auth/AuthPage'));
-const MainApp = lazy(() => import('./MainApp'));
-
-// Loading fallback component
-const LoadingFallback = ({ message = 'Loading...' }) => (
-  <div className="min-h-screen bg-gray-50 dark:bg-dark-800 flex items-center justify-center">
-    <div className="text-center">
-      <LoadingMessage context="general" />
-      <div className="mt-4 text-xs text-gray-500">Version: Latest UI v2.0</div>
-    </div>
-  </div>
-);
+// Import components directly instead of lazy loading
+import LandingPage from '../Landing/LandingPage';
+import AuthPage from '../Auth/AuthPage';
+import MainApp from './MainApp';
 
 const ViewManager = ({ 
   currentView, 
+  setCurrentView,
   onGetStarted, 
   onBackToLanding, 
   onAuthSuccess,
@@ -25,45 +16,76 @@ const ViewManager = ({
   onboardingData,
   onOnboardingComplete,
   onSkipOnboarding,
-  user
+  user,
+  handleLogout,
+  handleProfileUpdate,
+  showProfile,
+  setShowProfile
 }) => {
+  const [transitioning, setTransitioning] = useState(false);
+  const [previousView, setPreviousView] = useState(currentView);
+
+  // Handle view transitions
+  useEffect(() => {
+    if (previousView !== currentView) {
+      setTransitioning(true);
+      const timer = setTimeout(() => {
+        setTransitioning(false);
+        setPreviousView(currentView);
+      }, 500); // Match the transition duration
+      return () => clearTimeout(timer);
+    }
+  }, [currentView, previousView]);
+
   // Render different views based on current state
   if (currentView === 'landing') {
     return (
-      <Suspense fallback={<LoadingFallback message="Loading ReflectWithin..." />}>
+      <LampTransition isVisible={!transitioning}>
         <LandingPage onGetStarted={onGetStarted} />
-      </Suspense>
+      </LampTransition>
     );
   }
 
   if (currentView === 'auth') {
     return (
-      <Suspense fallback={<LoadingFallback message="Loading authentication..." />}>
+      <LampTransition isVisible={!transitioning}>
         <AuthPage onAuthSuccess={onAuthSuccess} onBack={onBackToLanding} />
-      </Suspense>
+      </LampTransition>
     );
   }
 
   // Show onboarding if needed
   if (showOnboarding) {
     return (
-      <Suspense fallback={<LoadingFallback message="Setting up your experience..." />}>
+      <LampTransition isVisible={!transitioning}>
         <MainApp 
           showOnboarding={showOnboarding}
           onboardingData={onboardingData}
           onOnboardingComplete={onOnboardingComplete}
           onSkipOnboarding={onSkipOnboarding}
           user={user}
+          handleLogout={handleLogout}
+          handleProfileUpdate={handleProfileUpdate}
+          showProfile={showProfile}
+          setShowProfile={setShowProfile}
+          setCurrentView={setCurrentView}
         />
-      </Suspense>
+      </LampTransition>
     );
   }
 
   // Main app view
   return (
-    <Suspense fallback={<LoadingFallback message="Loading your reflection space..." />}>
-      <MainApp user={user} />
-    </Suspense>
+    <LampTransition isVisible={!transitioning}>
+      <MainApp 
+        user={user}
+        handleLogout={handleLogout}
+        handleProfileUpdate={handleProfileUpdate}
+        showProfile={showProfile}
+        setShowProfile={setShowProfile}
+        setCurrentView={setCurrentView}
+      />
+    </LampTransition>
   );
 };
 

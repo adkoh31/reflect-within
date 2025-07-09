@@ -18,7 +18,8 @@ const ChatWindow = memo(({
   handleKeyPress,
   user,
   streak = 0,
-  microphoneStatus
+  microphoneStatus,
+  isPremium = false
 }) => {
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(false);
   const [showVoiceGuide, setShowVoiceGuide] = useState(false);
@@ -147,6 +148,16 @@ const ChatWindow = memo(({
             {/* AI Welcome Message */}
             <div className="max-w-md w-full">
               <div className="max-w-full px-4 py-3 rounded-2xl shadow-sm bg-muted text-foreground">
+                {/* Premium Indicator */}
+                {isPremium && (
+                  <div className="flex items-center justify-center mb-3">
+                    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-500 to-purple-600 text-white">
+                      <span className="mr-1">🌟</span>
+                      Premium Coach Mode
+                    </div>
+                  </div>
+                )}
+                
                 <p className="text-sm leading-relaxed font-light mb-4 text-center">
                   {getWelcomeMessage()}
                 </p>

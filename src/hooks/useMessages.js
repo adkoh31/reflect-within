@@ -47,7 +47,8 @@ export const useMessages = (
       const response = await retryWithBackoff(async () => {
         return await axios.post(API_ENDPOINTS.REFLECT, { 
           message: inputText, 
-          pastEntries: last5JournalEntries 
+          pastEntries: last5JournalEntries,
+          isPremium: isPremium
         });
       });
       

@@ -6,7 +6,11 @@ const {
   extractStructuredData, 
   getStretchRecommendation, 
   buildContext, 
-  buildEnhancedPrompt 
+  buildEnhancedPrompt,
+  buildEnhancedUserContext,
+  buildBasicContext,
+  buildPremiumEnhancedPrompt,
+  getCachedContext
 } = require('../utils/patternAnalysis');
 const {
   extractFitnessGoals,
@@ -16,7 +20,7 @@ const {
 // Basic reflection (works without auth)
 const reflect = async (req, res) => {
   try {
-    const { message, pastEntries = [] } = req.body;
+    const { message, pastEntries = [], isPremium = false } = req.body;
     
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
@@ -141,19 +145,34 @@ const reflect = async (req, res) => {
           stretchRecommendation = getStretchRecommendation(extractedData.soreness, extractedData.timeContext);
         }
         
-        // Build context
-        context = buildContext(extractedData, user, lastWorkout, sorenessHistory);
+        // Build context based on premium status
+        if (isPremium && user) {
+          console.log('🌟 Using premium-enhanced session continuity');
+          try {
+            context = await getCachedContext(req.user._id, extractedData, true);
+          } catch (error) {
+            console.error('Error with premium context, falling back to basic:', error);
+            context = await getCachedContext(req.user._id, extractedData, false, user, lastWorkout, sorenessHistory);
+          }
+        } else {
+          console.log('📝 Using basic context for free user');
+          context = await getCachedContext(req.user._id, extractedData, false, user, lastWorkout, sorenessHistory);
+        }
       } catch (error) {
         console.error('Error fetching user context:', error);
         // Continue without user context if there's an error
       }
     }
 
-    // Build enhanced prompt
+    // Build enhanced prompt based on premium status
     let prompt;
     
-    if (extractedData.hasStructuredFormat && context) {
-      // Use enhanced personalization for structured messages
+    if (isPremium && extractedData.hasStructuredFormat && context) {
+      // Use premium enhanced personalization for structured messages
+      console.log('🌟 Building premium-enhanced prompt');
+      prompt = buildPremiumEnhancedPrompt(message, extractedData, context, stretchRecommendation);
+    } else if (extractedData.hasStructuredFormat && context) {
+      // Use enhanced personalization for structured messages (free users)
       prompt = buildEnhancedPrompt(message, extractedData, context, stretchRecommendation);
     } else {
       // Simplified prompt for unstructured messages
@@ -186,28 +205,16 @@ Your personality:
 - Encourage self-compassion and growth mindset
 - Be conversational and natural, not clinical or robotic
 - Show genuine interest in their journey and progress
-- Provide thoughtful insights and ask follow-up questions when helpful
+- Provide thoughtful, open-ended questions that encourage deeper reflection
+- Be encouraging but realistic about challenges
+- Help users connect their experiences to broader patterns and growth opportunities
 
-IMPORTANT RESPONSE GUIDELINES:
-- When users ask for specific advice, help, or suggestions, provide direct, actionable answers
-- When users share experiences or feelings, respond with supportive conversation and thoughtful questions
-- If they ask "suggest me something" or "help me with", give concrete, practical advice
-- If they're sharing and reflecting, ask questions to help them explore deeper
-- Always prioritize being helpful over being conversational when they need specific guidance
-
-Your responses can include:
-- Brief reflections that show you understand their situation
-- Supportive statements that validate their feelings
-- Direct, actionable advice when requested
-- Thoughtful questions that help them explore deeper insights
-- Gentle guidance when appropriate
-
-Keep responses conversational and focused on helping them gain self-awareness, but be direct when they ask for specific help.`
+When users ask for specific advice or help, provide direct, actionable guidance. When they're sharing experiences, respond with supportive conversation and thoughtful questions.`
         },
         { role: 'user', content: prompt }
       ],
-      max_tokens: 300,
-      temperature: 0.8,
+      max_tokens: 800,
+      temperature: 0.7,
       presence_penalty: 0.1,
       frequency_penalty: 0.1
     }, {

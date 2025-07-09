@@ -46,8 +46,8 @@ const BottomNav = ({ activeTab, onTabChange }) => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-sm border-t border-border shadow-lg safe-area-inset-bottom">
-      <div className="flex items-center justify-around px-2 py-3">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-lg safe-area-inset-bottom">
+      <div className="flex items-center justify-around px-1 py-2">
         {tabs.map((tab) => (
           <motion.button
             key={tab.id}
@@ -55,22 +55,39 @@ const BottomNav = ({ activeTab, onTabChange }) => {
               console.log(`${tab.label} tab clicked!`);
               onTabChange(tab.id);
             }}
-            className={`flex flex-col items-center justify-center w-full py-2 px-3 rounded-xl transition-colors duration-200 ${
+            className={`relative flex flex-col items-center justify-center w-full py-3 px-2 rounded-xl transition-all duration-300 ${
               activeTab === tab.id
-                ? 'text-foreground bg-accent'
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                ? 'text-white bg-blue-600 shadow-md'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
             }`}
             whileTap={{ scale: 0.95 }}
             aria-label={`Switch to ${tab.label} tab`}
           >
-            <div className="mb-1">{tab.icon}</div>
-            <div className="flex flex-col items-center">
-              <span className="text-xs font-light">{tab.label}</span>
-              <span className="text-xs text-muted-foreground">{tab.description}</span>
+            {/* Icon */}
+            <div className={`mb-1 transition-transform duration-200 ${
+              activeTab === tab.id ? 'scale-110' : 'scale-100'
+            }`}>
+              {tab.icon}
             </div>
+            
+            {/* Text Content */}
+            <div className="flex flex-col items-center">
+              <span className={`text-xs font-medium transition-colors duration-200 ${
+                activeTab === tab.id ? 'text-white' : 'text-gray-600'
+              }`}>
+                {tab.label}
+              </span>
+              <span className={`text-xs transition-colors duration-200 ${
+                activeTab === tab.id ? 'text-blue-100' : 'text-gray-400'
+              }`}>
+                {tab.description}
+              </span>
+            </div>
+            
+            {/* Active Indicator */}
             {activeTab === tab.id && (
               <motion.div
-                className="absolute bottom-0 w-1 h-1 bg-foreground rounded-full"
+                className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-white rounded-full"
                 layoutId="activeTab"
                 initial={false}
                 transition={{ type: "spring", stiffness: 500, damping: 30 }}

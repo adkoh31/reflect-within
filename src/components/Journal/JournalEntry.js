@@ -151,7 +151,7 @@ const JournalEntry = ({
           {isListening && (
             <div className="p-4 bg-accent rounded-lg border border-border">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-accent-foreground font-light">
+              <p className="text-sm text-accent-foreground font-light">
                   <span className="font-medium">Listening...</span>
                 </p>
                 <div className="flex space-x-1">

@@ -285,18 +285,18 @@ const Journal = ({
             transcript={transcript}
           />
         ) : (
-          <JournalEntry
-            selectedDate={selectedDate}
+        <JournalEntry
+          selectedDate={selectedDate}
             entry={editingEntry || selectedDateEntries[0] || null}
-            onSave={handleSaveEntry}
-            onDelete={handleDeleteEntry}
-            isLoading={isLoading}
-            onSpeechToggle={onSpeechToggle}
-            isListening={isListening}
-            browserSupportsSpeechRecognition={browserSupportsSpeechRecognition}
-            transcript={transcript}
+          onSave={handleSaveEntry}
+          onDelete={handleDeleteEntry}
+          isLoading={isLoading}
+          onSpeechToggle={onSpeechToggle}
+          isListening={isListening}
+          browserSupportsSpeechRecognition={browserSupportsSpeechRecognition}
+          transcript={transcript}
             microphoneStatus={microphoneStatus}
-          />
+        />
         )}
       </motion.div>
 

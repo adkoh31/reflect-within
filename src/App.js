@@ -1,20 +1,13 @@
 import React, { useEffect } from 'react';
 import axios from 'axios';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-
-// Contexts
-import { ToastProvider } from './contexts/ToastContext';
-
-// Components
+import { AppProvider } from './contexts/AppContext';
 import ViewManager from './components/App/ViewManager';
-
-// Custom hooks
 import { useAppState } from './hooks/useAppState';
 import { useAuth } from './hooks/useAuth';
 import { useOnboarding } from './hooks/useOnboarding';
 
 // Register Chart.js components
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+// ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend); // This line was removed as per the new_code
 
 // Main App Component - Latest version with new UI - Vercel Test v2
 const App = () => {
@@ -24,7 +17,7 @@ const App = () => {
 
   // Auth
   const auth = useAuth(setCurrentView);
-  const { user, handleAuthSuccess } = auth;
+  const { user, handleAuthSuccess, handleLogout, handleProfileUpdate, showProfile, setShowProfile } = auth;
 
   // Onboarding
   const { showOnboarding, onboardingData, completeOnboarding, skipOnboarding } = useOnboarding();
@@ -38,18 +31,28 @@ const App = () => {
       try {
         auth.setUser(JSON.parse(savedUser));
         axios.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
+        // Returning users go directly to app
         setCurrentView('app');
       } catch (error) {
         console.error('Error loading saved auth:', error);
         localStorage.removeItem('reflectWithin_token');
         localStorage.removeItem('reflectWithin_user');
+        // If token is invalid, stay on landing page
+        setCurrentView('landing');
       }
+    } else {
+      // New users start at landing page
+      setCurrentView('landing');
     }
-  }, []);
+  }, [setCurrentView]); // Only depend on setCurrentView, not auth object
 
   // Navigation handlers
-  const handleGetStarted = () => setCurrentView('auth');
-  const handleBackToLanding = () => setCurrentView('landing');
+  const handleGetStarted = () => {
+    setCurrentView('auth');
+  };
+  const handleBackToLanding = () => {
+    setCurrentView('landing');
+  };
 
   // Onboarding handlers
   const handleOnboardingComplete = (data) => {
@@ -57,17 +60,24 @@ const App = () => {
   };
 
   return (
-    <ViewManager 
-      currentView={currentView}
-      onGetStarted={handleGetStarted}
-      onBackToLanding={handleBackToLanding}
-      onAuthSuccess={handleAuthSuccess}
-      showOnboarding={showOnboarding}
-      onboardingData={onboardingData}
-      onOnboardingComplete={handleOnboardingComplete}
-      onSkipOnboarding={skipOnboarding}
-      user={user}
-    />
+    <AppProvider>
+      <ViewManager 
+        currentView={currentView}
+        setCurrentView={setCurrentView}
+        onGetStarted={handleGetStarted}
+        onBackToLanding={handleBackToLanding}
+        onAuthSuccess={handleAuthSuccess}
+        showOnboarding={showOnboarding}
+        onboardingData={onboardingData}
+        onOnboardingComplete={handleOnboardingComplete}
+        onSkipOnboarding={skipOnboarding}
+        user={user}
+        handleLogout={handleLogout}
+        handleProfileUpdate={handleProfileUpdate}
+        showProfile={showProfile}
+        setShowProfile={setShowProfile}
+      />
+    </AppProvider>
   );
 };
 

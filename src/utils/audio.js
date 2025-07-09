@@ -1,5 +1,3 @@
-import { Howl } from 'howler';
-
 // Simple chime sound for feedback
 // In a real app, you'd have actual audio files
 const createChimeSound = () => {

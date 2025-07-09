@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Typography } from '../Typography/Typography';
 
 const HomeTab = ({ 
   user, 
@@ -66,18 +67,23 @@ const HomeTab = ({
         transition={{ duration: 0.5 }}
       >
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-primary-400 to-secondary-400 rounded-2xl flex items-center justify-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
             </svg>
           </div>
           <div>
-            <h1 className="text-2xl font-light text-foreground mb-2">
+            <Typography 
+              variant="title" 
+              color="primary" 
+              weight="semibold" 
+              className="mb-2"
+            >
               {getGreeting()}, {user?.name?.split(' ')[0] || 'there'}!
-            </h1>
-            <p className="text-muted-foreground font-light text-lg">
+            </Typography>
+            <Typography variant="body" color="muted" weight="normal" className="text-lg">
               Ready to reflect on your journey?
-            </p>
+            </Typography>
           </div>
         </div>
       </motion.div>
@@ -85,7 +91,7 @@ const HomeTab = ({
       {/* Streak Counter */}
       {streak > 0 && (
         <motion.div 
-          className="bg-gradient-to-r from-primary-50 to-secondary-50 border border-primary-200 rounded-2xl p-6 text-center"
+          className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-2xl p-6 text-center"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -93,10 +99,16 @@ const HomeTab = ({
           <div className="flex flex-col items-center space-y-3">
             <span className="text-4xl">🔥</span>
             <div>
-              <p className="text-foreground font-light text-lg">Your reflection streak</p>
-              <p className="text-3xl font-light text-primary-600">{streak} day{streak !== 1 ? 's' : ''}</p>
+              <Typography variant="subtitle" color="primary" weight="medium">
+                Your reflection streak
+              </Typography>
+              <Typography variant="heading" color="primary" weight="bold" className="text-orange-600">
+                {streak} day{streak !== 1 ? 's' : ''}
+              </Typography>
             </div>
-            <p className="text-sm text-muted-foreground font-light">Keep going!</p>
+            <Typography variant="caption" color="muted" weight="normal">
+              Keep going!
+            </Typography>
           </div>
         </motion.div>
       )}
@@ -108,14 +120,16 @@ const HomeTab = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <h2 className="text-xl font-light text-foreground mb-4">Today's Reflection</h2>
-        <p className="text-muted-foreground font-light text-lg mb-6 leading-relaxed">
+        <Typography variant="title" color="primary" weight="semibold" as="h2" className="mb-4 text-center">
+          Today's Reflection
+        </Typography>
+        <Typography variant="body" color="muted" weight="normal" className="text-lg mb-6 leading-relaxed">
           {getReflectionPrompt()}
-        </p>
+        </Typography>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <button
             onClick={() => onAction('voice')}
-            className="w-full sm:w-auto bg-foreground text-background py-4 px-8 rounded-xl font-light hover:bg-muted-foreground transition-colors shadow-md text-lg"
+            className="w-full sm:w-auto bg-foreground text-background py-4 px-8 rounded-xl font-medium hover:bg-muted-foreground transition-colors shadow-md text-lg"
           >
             Start Reflecting
           </button>
@@ -131,10 +145,12 @@ const HomeTab = ({
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-light text-foreground">Recent Reflections</h2>
+            <Typography variant="subtitle" color="primary" weight="semibold" as="h3">
+              Recent Reflections
+            </Typography>
             <button
               onClick={() => onAction('journal')}
-              className="text-sm text-muted-foreground hover:text-foreground font-light transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground font-medium transition-colors"
             >
               View all
             </button>
@@ -142,12 +158,12 @@ const HomeTab = ({
           <div className="space-y-4">
             {last5JournalEntries.slice(0, 3).map((entry, index) => (
               <div key={index} className="p-4 bg-muted/50 rounded-xl">
-                <p className="text-sm text-foreground font-light line-clamp-2 leading-relaxed">
+                <Typography variant="body" color="muted" weight="normal" className="line-clamp-2 leading-relaxed">
                   {entry.text}
-                </p>
-                <p className="text-xs text-muted-foreground mt-3 font-light">
+                </Typography>
+                <Typography variant="caption" color="muted" weight="normal" className="mt-3">
                   {new Date(entry.timestamp).toLocaleDateString()}
-                </p>
+                </Typography>
               </div>
             ))}
           </div>
@@ -161,10 +177,10 @@ const HomeTab = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.4 }}
       >
-        <blockquote className="text-foreground font-light italic text-lg mb-4 leading-relaxed">
+        <blockquote className="text-foreground font-medium italic text-lg mb-4 leading-relaxed">
           "{quote.text}"
         </blockquote>
-        <cite className="text-sm text-muted-foreground font-light">
+        <cite className="text-sm text-muted-foreground font-medium">
           — {quote.author}
         </cite>
       </motion.div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { retryWithBackoff } from '../../utils/errorHandler';
@@ -16,14 +16,12 @@ import ChatWindow from '../Chat/ChatWindow';
 import Journal from '../Journal/Journal';
 import InsightsDashboard from '../Insights/InsightsDashboard';
 import DisclaimerModal from '../DisclaimerModal';
-import AuthModal from '../Auth/AuthModal';
 import UserProfile from '../Auth/UserProfile';
 import ErrorModal from '../ErrorModal';
 import NetworkStatus from '../NetworkStatus';
-import { AIThinkingIndicator } from '../LoadingStates';
+import { AIThinkingIndicator } from '../ui/loading-states';
 
 // Custom hooks
-import { useAuth } from '../../hooks/useAuth';
 import { useErrorHandling } from '../../hooks/useErrorHandling';
 import { useMessages } from '../../hooks/useMessages';
 import { useInsights } from '../../hooks/useInsights';
@@ -41,6 +39,11 @@ const MainApp = ({
   onOnboardingComplete, 
   onSkipOnboarding,
   user: propUser,
+  handleLogout,
+  handleProfileUpdate,
+  showProfile,
+  setShowProfile,
+  setCurrentView,
   currentView = 'app'
 }) => {
   // Local state management (without currentView)
@@ -53,19 +56,15 @@ const MainApp = ({
   const [isPremium, setIsPremium] = React.useState(false);
   const [insights, setInsights] = React.useState({ themes: [], moods: [] });
   const [isGeneratingInsights, setIsGeneratingInsights] = React.useState(false);
-  const [isJournaling, setIsJournaling] = React.useState(false);
   const chatEndRef = React.useRef(null);
   const inputRef = React.useRef(null);
 
   // Utils
   const { formatTimestamp, last5JournalEntries } = useUtils(messages);
 
-  // Auth
-  const auth = useAuth();
-  const { user: hookUser, showAuthModal, setShowAuthModal, showProfile, setShowProfile, handleAuthSuccess, handleLogout, handleProfileUpdate } = auth;
-  
-  // Use prop user if provided, otherwise use hook user
-  const user = propUser || hookUser;
+  // Auth - All auth functions passed as props from parent
+  // Use prop user (passed from App.js)
+  const user = propUser;
 
   // Error handling
   const errorHandling = useErrorHandling(activeTab, handleLogout);
@@ -91,10 +90,10 @@ const MainApp = ({
   const { generateInsights } = useInsights(messages, isGeneratingInsights, setIsGeneratingInsights, setInsights, handleError);
 
   // Journal
-  const { } = useJournal(messages, showJournalDownloaded);
+  useJournal(messages, showJournalDownloaded);
 
   // Theme
-  const { } = useTheme();
+  useTheme();
 
   // Onboarding
   const { showOnboarding: hookShowOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
@@ -194,25 +193,15 @@ const MainApp = ({
 
   // Handle sending prompts directly
   const handleSendPrompt = useCallback(async (prompt) => {
-    // Create a user message with the prompt
-    const userMessage = {
-      id: Date.now(),
-      text: prompt,
-      sender: 'user',
-      timestamp: formatTimestamp()
-    };
-
-    // Add user message to chat
-    setMessages(prev => [...prev, userMessage]);
-    
     // Set loading for AI response
     setIsLoading(true);
 
     try {
       const response = await retryWithBackoff(async () => {
         return await axios.post(API_ENDPOINTS.REFLECT, {
-          message: inputText,
-          pastEntries: last5JournalEntries
+          message: prompt,
+          pastEntries: last5JournalEntries,
+          isPremium: isPremium
         });
       });
       
@@ -231,7 +220,7 @@ const MainApp = ({
       if (isPremium && user) {
         try {
           await axios.post(API_ENDPOINTS.SAVE_REFLECTION, {
-            userInput: inputText,
+            userInput: prompt,
             aiQuestion: response.data.question
           });
         } catch (error) {
@@ -252,7 +241,7 @@ const MainApp = ({
     } finally {
       setIsLoading(false);
     }
-  }, [setMessages, formatTimestamp, setIsLoading, last5JournalEntries, isPremium, user, showMessageSent, inputText]);
+  }, [setMessages, formatTimestamp, setIsLoading, last5JournalEntries, isPremium, user, showMessageSent]);
 
   // Show onboarding if needed
   if (showOnboarding) {
@@ -281,20 +270,41 @@ const MainApp = ({
       />
 
       {/* User Profile Panel */}
-      {showProfile && user && (
+      {showProfile && (
         <motion.div 
           className="px-4 py-3 border-b border-border"
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
         >
-          <UserProfile 
-            user={user}
-            onLogout={handleLogout}
-            onUpdateProfile={handleProfileUpdate}
-            isPremium={isPremium}
-            onPremiumToggle={() => setIsPremium(!isPremium)}
-          />
+          {user ? (
+            <UserProfile 
+              user={user}
+              onLogout={handleLogout}
+              onUpdateProfile={handleProfileUpdate}
+              isPremium={isPremium}
+              onPremiumToggle={() => setIsPremium(!isPremium)}
+            />
+          ) : (
+            <div className="bg-card rounded-2xl border border-border p-6">
+              <div className="text-center">
+                <h3 className="text-lg font-light text-foreground mb-4">Welcome to ReflectWithin</h3>
+                <p className="text-muted-foreground text-sm font-light mb-6">
+                  Sign in to save your reflections and access premium features.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowProfile(false);
+                    // Navigate to landing page for proper auth flow
+                    setCurrentView('landing');
+                  }}
+                  className="w-full bg-foreground text-background py-3 px-4 rounded-xl font-light hover:bg-muted-foreground transition-colors"
+                >
+                  Sign In
+                </button>
+              </div>
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -346,6 +356,7 @@ const MainApp = ({
                 user={user}
                 streak={streak}
                 microphoneStatus={microphoneStatus}
+                isPremium={isPremium}
               />
             </motion.div>
           )}
@@ -396,12 +407,6 @@ const MainApp = ({
       {isLoading && <AIThinkingIndicator />}
 
       {/* Modals */}
-      <AuthModal 
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onAuthSuccess={handleAuthSuccess}
-      />
-
       <ErrorModal 
         error={error}
         isOpen={showErrorModal}

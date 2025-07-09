@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Mic, MicOff, Send, Bot, Edit3 } from 'lucide-react';
+import { Mic, MicOff, Bot, Edit3 } from 'lucide-react';
 import axios from 'axios';
-import { retryWithBackoff } from '../../utils/errorHandler';
 import { API_ENDPOINTS } from '../../config/api';
 
 const AIJournalAssistant = ({ 

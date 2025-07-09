@@ -1,7 +1,6 @@
-const CACHE_NAME = 'reflect-within-v1';
+const CACHE_NAME = 'reflect-within-v2';
 const urlsToCache = [
   '/',
-  '/static/js/bundle.js',
   '/static/css/main.css',
   '/manifest.json',
   '/logo192.png',
@@ -16,6 +15,12 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Don't cache JavaScript files to avoid serving old chunks
+  if (event.request.url.includes('.js')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
