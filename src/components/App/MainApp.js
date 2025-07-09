@@ -7,7 +7,6 @@ import { API_ENDPOINTS } from '../../config/api';
 // Enhanced UI Components
 import BottomNav from '../Navigation/BottomNav';
 import EnhancedHeader from '../Navigation/EnhancedHeader';
-import OnboardingFlow from '../Onboarding/OnboardingFlow';
 import SuccessToast from '../Feedback/SuccessToast';
 import HomeTab from './HomeTab';
 
@@ -29,15 +28,10 @@ import { useJournal } from '../../hooks/useJournal';
 import { useSpeechRecognitionCustom } from '../../hooks/useSpeechRecognition';
 import { useUtils } from '../../hooks/useUtils';
 import { useTheme } from '../../hooks/useTheme';
-import { useOnboarding } from '../../hooks/useOnboarding';
 import { useStreak } from '../../hooks/useStreak';
 import { useSuccessFeedback } from '../../hooks/useSuccessFeedback';
 
 const MainApp = ({ 
-  showOnboarding: propShowOnboarding, 
-  onboardingData, 
-  onOnboardingComplete, 
-  onSkipOnboarding,
   user: propUser,
   handleLogout,
   handleProfileUpdate,
@@ -95,11 +89,15 @@ const MainApp = ({
   // Theme
   useTheme();
 
-  // Onboarding
-  const { showOnboarding: hookShowOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
+  // Onboarding - Use props from App.js, don't create duplicate hook
+  // const { showOnboarding: hookShowOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
   
   // Use prop showOnboarding if provided, otherwise use hook showOnboarding
-  const showOnboarding = propShowOnboarding !== undefined ? propShowOnboarding : hookShowOnboarding;
+  const showOnboarding = false; // Removed as onboarding is now handled by ViewManager
+
+  console.log('🔍 MainApp Debug:', {
+    user: user?.email
+  });
 
   // Streak tracking
   const { streak } = useStreak(messages);
@@ -153,14 +151,15 @@ const MainApp = ({
   }, [setShowDisclaimer]);
 
   const handleOnboardingComplete = useCallback((data) => {
-    if (onOnboardingComplete) {
-      onOnboardingComplete(data);
-    } else {
-      completeOnboarding(data);
-    }
+    // This function is no longer needed as onboarding is handled by ViewManager
+    // if (onOnboardingComplete) {
+    //   onOnboardingComplete(data);
+    // } else {
+    //   // completeOnboarding(data); // This line was removed as per the edit hint
+    // }
     
     // Show success feedback
-    showOnboardingComplete();
+    // showOnboardingComplete(); // This line was removed as per the edit hint
     
     // Set initial tab based on user preference
     if (data.preferredMode) {
@@ -171,15 +170,16 @@ const MainApp = ({
     if (data.firstReflection?.trim()) {
       handleSendMessage(data.firstReflection);
     }
-  }, [onOnboardingComplete, completeOnboarding, showOnboardingComplete, handleSendMessage, setActiveTab]);
+  }, [handleSendMessage, setActiveTab]);
 
   const handleSkipOnboarding = useCallback(() => {
-    if (onSkipOnboarding) {
-      onSkipOnboarding();
-    } else {
-      skipOnboarding();
-    }
-  }, [onSkipOnboarding, skipOnboarding]);
+    // This function is no longer needed as onboarding is handled by ViewManager
+    // if (onSkipOnboarding) {
+    //   onSkipOnboarding();
+    // } else {
+    //   // skipOnboarding(); // This line was removed as per the edit hint
+    // }
+  }, []);
 
   // Home tab action handler
   const handleHomeAction = useCallback((action) => {
@@ -193,6 +193,16 @@ const MainApp = ({
 
   // Handle sending prompts directly
   const handleSendPrompt = useCallback(async (prompt) => {
+    // First, add the user's prompt as a message
+    const userMessage = {
+      id: Date.now(),
+      text: prompt,
+      sender: 'user',
+      timestamp: formatTimestamp()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+
     // Set loading for AI response
     setIsLoading(true);
 
@@ -244,69 +254,19 @@ const MainApp = ({
   }, [setMessages, formatTimestamp, setIsLoading, last5JournalEntries, isPremium, user, showMessageSent]);
 
   // Show onboarding if needed
-  if (showOnboarding) {
-    return (
-      <OnboardingFlow 
-        onComplete={handleOnboardingComplete}
-        onSkip={handleSkipOnboarding}
-        user={user}
-      />
-    );
-  }
+  // if (showOnboarding) {
+  //   return (
+  //     <OnboardingFlow 
+  //       onComplete={handleOnboardingComplete}
+  //       onSkip={handleSkipOnboarding}
+  //       user={user}
+  //     />
+  //   );
+  // }
 
   return (
-    <div className="min-h-screen font-sans transition-colors duration-300 bg-background text-foreground flex flex-col safe-area-inset-bottom">
+    <div className="min-h-screen font-sans transition-colors duration-300 bg-slate-900 text-slate-50 flex flex-col safe-area-inset-bottom">
       <NetworkStatus />
-
-      {/* Enhanced Header */}
-      <EnhancedHeader 
-        user={user}
-        onProfileClick={() => setShowProfile(!showProfile)}
-        onSaveChat={() => handleSaveChat(showChatSaved)}
-        onClearChat={handleClearChat}
-        messages={messages}
-        streak={streak}
-        showProfile={showProfile}
-      />
-
-      {/* User Profile Panel */}
-      {showProfile && (
-        <motion.div 
-          className="px-4 py-3 border-b border-border"
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-        >
-          {user ? (
-            <UserProfile 
-              user={user}
-              onLogout={handleLogout}
-              onUpdateProfile={handleProfileUpdate}
-              isPremium={isPremium}
-              onPremiumToggle={() => setIsPremium(!isPremium)}
-            />
-          ) : (
-            <div className="bg-card rounded-2xl border border-border p-6">
-              <div className="text-center">
-                <h3 className="text-lg font-light text-foreground mb-4">Welcome to ReflectWithin</h3>
-                <p className="text-muted-foreground text-sm font-light mb-6">
-                  Sign in to save your reflections and access premium features.
-                </p>
-                <button
-                  onClick={() => {
-                    setShowProfile(false);
-                    // Navigate to landing page for proper auth flow
-                    setCurrentView('landing');
-                  }}
-                  className="w-full bg-foreground text-background py-3 px-4 rounded-xl font-light hover:bg-muted-foreground transition-colors"
-                >
-                  Sign In
-                </button>
-              </div>
-            </div>
-          )}
-        </motion.div>
-      )}
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-h-0 pb-20 sm:pb-24">
@@ -315,7 +275,7 @@ const MainApp = ({
           {activeTab === 'home' && (
             <motion.div
               key="home"
-              className="px-4 py-4 overflow-y-auto pb-6"
+              className="flex-1 flex flex-col min-h-0"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
@@ -395,6 +355,44 @@ const MainApp = ({
                 isPremium={isPremium}
                 onPremiumToggle={() => setIsPremium(!isPremium)}
               />
+            </motion.div>
+          )}
+
+          {activeTab === 'profile' && (
+            <motion.div
+              key="profile"
+              className="px-4 py-4 overflow-y-auto pb-6"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              {user ? (
+                <UserProfile 
+                  user={user}
+                  onLogout={handleLogout}
+                  onUpdateProfile={handleProfileUpdate}
+                  isPremium={isPremium}
+                  onPremiumToggle={() => setIsPremium(!isPremium)}
+                />
+              ) : (
+                <div className="bg-slate-800/80 backdrop-blur-md rounded-2xl border border-slate-700/50 p-6">
+                  <div className="text-center">
+                    <h3 className="text-lg font-light text-slate-50 mb-4">Welcome to ReflectWithin</h3>
+                    <p className="text-slate-400 text-sm font-light mb-6">
+                      Sign in to save your reflections and access premium features.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setCurrentView('landing');
+                      }}
+                      className="w-full bg-cyan-500 text-slate-900 py-3 px-4 rounded-xl font-medium hover:bg-cyan-400 transition-colors"
+                    >
+                      Sign In
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

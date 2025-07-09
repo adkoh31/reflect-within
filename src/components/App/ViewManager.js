@@ -5,6 +5,7 @@ import { LampTransition } from '../ui/page-transition';
 import LandingPage from '../Landing/LandingPage';
 import AuthPage from '../Auth/AuthPage';
 import MainApp from './MainApp';
+import OnboardingFlow from '../Onboarding/OnboardingFlow';
 
 const ViewManager = ({ 
   currentView, 
@@ -38,6 +39,27 @@ const ViewManager = ({
   }, [currentView, previousView]);
 
   // Render different views based on current state
+  // Show onboarding if needed (check this FIRST)
+  console.log('🔍 ViewManager Debug:', {
+    currentView,
+    showOnboarding,
+    user: user?.email,
+    transitioning
+  });
+  
+  if (showOnboarding) {
+    console.log('✅ Rendering onboarding flow directly');
+    return (
+      <LampTransition isVisible={!transitioning}>
+        <OnboardingFlow 
+          onComplete={onOnboardingComplete}
+          onSkip={onSkipOnboarding}
+          user={user}
+        />
+      </LampTransition>
+    );
+  }
+
   if (currentView === 'landing') {
     return (
       <LampTransition isVisible={!transitioning}>
@@ -50,26 +72,6 @@ const ViewManager = ({
     return (
       <LampTransition isVisible={!transitioning}>
         <AuthPage onAuthSuccess={onAuthSuccess} onBack={onBackToLanding} />
-      </LampTransition>
-    );
-  }
-
-  // Show onboarding if needed
-  if (showOnboarding) {
-    return (
-      <LampTransition isVisible={!transitioning}>
-        <MainApp 
-          showOnboarding={showOnboarding}
-          onboardingData={onboardingData}
-          onOnboardingComplete={onOnboardingComplete}
-          onSkipOnboarding={onSkipOnboarding}
-          user={user}
-          handleLogout={handleLogout}
-          handleProfileUpdate={handleProfileUpdate}
-          showProfile={showProfile}
-          setShowProfile={setShowProfile}
-          setCurrentView={setCurrentView}
-        />
       </LampTransition>
     );
   }

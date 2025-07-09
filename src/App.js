@@ -20,7 +20,7 @@ const App = () => {
   const { user, handleAuthSuccess, handleLogout, handleProfileUpdate, showProfile, setShowProfile } = auth;
 
   // Onboarding
-  const { showOnboarding, onboardingData, completeOnboarding, skipOnboarding } = useOnboarding();
+  const { showOnboarding, onboardingData, completeOnboarding, skipOnboarding } = useOnboarding(user);
 
   // Effects
   useEffect(() => {
@@ -45,6 +45,26 @@ const App = () => {
       setCurrentView('landing');
     }
   }, [setCurrentView]); // Only depend on setCurrentView, not auth object
+
+  // Handle view transitions based on user and onboarding state
+  useEffect(() => {
+    console.log('🔄 App State Debug:', {
+      user: user?.email,
+      showOnboarding,
+      currentView
+    });
+
+    if (user && showOnboarding) {
+      console.log('✅ User authenticated and needs onboarding - staying on current view');
+      // Don't change view - let ViewManager handle onboarding
+    } else if (user && !showOnboarding && currentView !== 'app') {
+      console.log('✅ User authenticated and completed onboarding - going to app');
+      setCurrentView('app');
+    } else if (!user && currentView !== 'landing' && currentView !== 'auth') {
+      console.log('❌ No user - going to landing');
+      setCurrentView('landing');
+    }
+  }, [user, showOnboarding, currentView, setCurrentView]);
 
   // Navigation handlers
   const handleGetStarted = () => {

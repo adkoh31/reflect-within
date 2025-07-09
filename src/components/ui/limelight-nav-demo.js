@@ -1,5 +1,5 @@
 import React from 'react';
-import { LimelightNav } from '../ui/limelight-nav';
+import { LimelightNav } from './limelight-nav';
 
 // Custom icons for our app
 const HomeIcon = (props) => (
@@ -33,74 +33,58 @@ const ProfileIcon = (props) => (
   </svg>
 );
 
-const BottomNav = ({ activeTab, onTabChange }) => {
+const LimelightNavDemo = () => {
   const navItems = [
     {
       id: 'home',
       icon: <HomeIcon />,
       label: 'Home',
-      onClick: () => {
-        console.log('Home tab clicked!');
-        onTabChange('home');
-      }
+      onClick: () => console.log('Home clicked!')
     },
     {
       id: 'chat',
       icon: <ChatIcon />,
       label: 'AI Chat',
-      onClick: () => {
-        console.log('Chat tab clicked!');
-        onTabChange('chat');
-      }
+      onClick: () => console.log('Chat clicked!')
     },
     {
       id: 'journal',
       icon: <JournalIcon />,
       label: 'Journal',
-      onClick: () => {
-        console.log('Journal tab clicked!');
-        onTabChange('journal');
-      }
+      onClick: () => console.log('Journal clicked!')
     },
     {
       id: 'insights',
       icon: <InsightsIcon />,
       label: 'Insights',
-      onClick: () => {
-        console.log('Insights tab clicked!');
-        onTabChange('insights');
-      }
+      onClick: () => console.log('Insights clicked!')
     },
     {
       id: 'profile',
       icon: <ProfileIcon />,
       label: 'Profile',
-      onClick: () => {
-        console.log('Profile tab clicked!');
-        onTabChange('profile');
-      }
+      onClick: () => console.log('Profile clicked!')
     }
   ];
 
-  // Find the active index
-  const activeIndex = navItems.findIndex(item => item.id === activeTab);
-
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 safe-area-inset-bottom">
-      <LimelightNav
-        items={navItems}
-        defaultActiveIndex={activeIndex >= 0 ? activeIndex : 0}
-        onTabChange={(index) => {
-          const tabId = navItems[index].id;
-          onTabChange(tabId);
-        }}
-        className="w-full bg-slate-800/95 backdrop-blur-md border-slate-700/50 rounded-xl shadow-2xl"
-        limelightClassName="bg-cyan-400 shadow-[0_50px_15px_rgba(34,211,238,0.3)]"
-        iconContainerClassName="text-slate-300 hover:text-white transition-colors"
-        iconClassName="text-slate-300"
-      />
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <h2 className="text-slate-50 text-xl font-semibold mb-8 text-center">
+          ReflectWithin Navigation
+        </h2>
+        <LimelightNav
+          items={navItems}
+          defaultActiveIndex={0}
+          onTabChange={(index) => console.log('Tab changed to:', index)}
+          className="w-full bg-slate-800/95 backdrop-blur-md border-slate-700/50 rounded-xl shadow-2xl"
+          limelightClassName="bg-cyan-400 shadow-[0_50px_15px_rgba(34,211,238,0.3)]"
+          iconContainerClassName="text-slate-300 hover:text-white transition-colors"
+          iconClassName="text-slate-300"
+        />
+      </div>
     </div>
   );
 };
 
-export default BottomNav; 
+export default LimelightNavDemo; 

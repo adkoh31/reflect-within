@@ -9,8 +9,9 @@ export const useAuth = (setCurrentView, handleError) => {
   const handleAuthSuccess = useCallback((userData, userToken) => {
     setUser(userData);
     axios.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
-    setCurrentView('app');
-  }, [setCurrentView]);
+    // Don't set currentView here - let onboarding logic handle it
+    // setCurrentView('app'); // Removed to prevent race condition
+  }, []); // Remove setCurrentView dependency
 
   const handleLogout = useCallback(() => {
     setUser(null);
