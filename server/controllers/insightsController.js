@@ -14,7 +14,7 @@ exports.insightsHandler = async (req, res) => {
     let apiResponse;
     if (process.env.OPENAI_API_KEY) {
       apiResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'ft:gpt-4o-mini-2024-07-18:personal:unifieddataset:BrLSoSLz',
+        model: 'ft:gpt-4o-mini-2024-07-18:personal:nuancedyoga-dataset:BrhGBnf1',
         messages: [
           { role: 'system', content: 'You are an expert at analyzing emotional and psychological themes in personal reflections. Return only valid JSON.' },
           { role: 'user', content: analysisPrompt }

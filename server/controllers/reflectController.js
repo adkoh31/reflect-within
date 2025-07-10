@@ -41,7 +41,7 @@ const reflect = async (req, res) => {
     }
 
     // Log which model is being used
-    const modelToUse = process.env.FINE_TUNED_MODEL_ID || 'gpt-4o-mini';
+    const modelToUse = process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:nuancedyoga-dataset:BrhGBnf1';
     console.log(`🤖 Using model: ${modelToUse}`);
     if (process.env.FINE_TUNED_MODEL_ID) {
       console.log('✅ Fine-tuned model detected!');
@@ -193,7 +193,7 @@ Respond appropriately based on whether they're asking for specific help or shari
     }
 
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: 'ft:gpt-4o-mini-2024-07-18:personal:unifieddataset:BrLSoSLz',
+      model: 'ft:gpt-4o-mini-2024-07-18:personal:nuancedyoga-dataset:BrhGBnf1',
       messages: [
         {
           role: 'system',
@@ -239,7 +239,7 @@ CONVERSATION STYLE:
         },
         { role: 'user', content: prompt }
       ],
-      max_tokens: 800,
+      max_tokens: 1000,
       temperature: 0.7,
       presence_penalty: 0.1,
       frequency_penalty: 0.1
@@ -443,7 +443,7 @@ Include specific, actionable goals for improvement.`;
     }
 
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: 'ft:gpt-4o-mini-2024-07-18:personal:unifieddataset:BrLSoSLz',
+      model: 'ft:gpt-4o-mini-2024-07-18:personal:nuancedyoga-dataset:BrhGBnf1',
       messages: [
         {
           role: 'system',
@@ -451,7 +451,7 @@ Include specific, actionable goals for improvement.`;
         },
         { role: 'user', content: prompt }
       ],
-      max_tokens: 800,
+      max_tokens: 1000,
       temperature: 0.4,
       presence_penalty: 0.1,
       frequency_penalty: 0.1
