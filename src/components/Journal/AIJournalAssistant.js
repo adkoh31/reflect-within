@@ -104,7 +104,7 @@ const AIJournalAssistant = ({
     const entryToSave = isEditing ? editableEntry : structuredEntry;
     if (entryToSave) {
       const content = formatStructuredEntry(entryToSave);
-      onSaveEntry(new Date(), content, 'AI Generated');
+      onSaveEntry(new Date(), content, ['AI Generated']);
     }
   };
 
@@ -399,38 +399,38 @@ const AIJournalAssistant = ({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <div className="flex items-center space-x-2">
-          <Bot className="w-5 h-5 text-primary-600" />
-          <h2 className="text-lg font-light text-foreground">AI Journal Assistant</h2>
+      <div className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-700/50 bg-slate-900/80">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
+          <h2 className="text-base sm:text-lg font-semibold text-slate-50">AI Journal Assistant</h2>
         </div>
         <button
           onClick={onCancel}
-          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="text-xs sm:text-sm text-slate-400 hover:text-slate-200 transition-colors py-2 px-3 rounded-lg hover:bg-slate-800/50"
         >
           Cancel
         </button>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-4">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 pb-4">
         {messages.map((message) => (
           <div
             key={message.id}
             className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div
-              className={`max-w-[85%] px-4 py-3 rounded-2xl shadow-sm ${
+              className={`max-w-[85%] px-3 sm:px-4 py-2 sm:py-3 rounded-2xl shadow-sm ${
                 message.sender === 'user'
-                  ? 'bg-foreground text-background'
-                  : 'bg-muted text-foreground'
+                  ? 'bg-cyan-500 text-slate-900'
+                  : 'bg-slate-800/80 text-slate-50 border border-slate-700/50'
               }`}
             >
-              <p className="text-sm leading-relaxed font-light">{message.text}</p>
-              <p className={`text-xs mt-2 font-light ${
+              <p className="text-sm sm:text-base leading-relaxed font-normal">{message.text}</p>
+              <p className={`text-xs mt-2 font-normal ${
                 message.sender === 'user' 
-                  ? 'text-background/70' 
-                  : 'text-muted-foreground'
+                  ? 'text-slate-900/70' 
+                  : 'text-slate-400'
               }`}>
                 {message.timestamp}
               </p>
@@ -440,14 +440,14 @@ const AIJournalAssistant = ({
         
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-accent px-4 py-3 rounded-xl max-w-[85%]">
+            <div className="bg-slate-800/80 border border-slate-700/50 px-3 sm:px-4 py-2 sm:py-3 rounded-xl max-w-[85%]">
               <div className="flex items-center space-x-2">
                 <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-accent-foreground rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-accent-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-accent-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                 </div>
-                <span className="text-xs text-accent-foreground font-light">Creating entry...</span>
+                <span className="text-xs sm:text-sm text-slate-300 font-normal">Creating entry...</span>
               </div>
             </div>
           </div>
@@ -462,8 +462,8 @@ const AIJournalAssistant = ({
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-border bg-card/95 backdrop-blur-sm p-4 pb-6">
-        <div className="flex items-center gap-3">
+      <div className="border-t border-slate-700/50 bg-slate-900/95 backdrop-blur-sm p-3 sm:p-4 pb-6">
+        <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex-1">
             <input
               ref={inputRef}
@@ -472,14 +472,14 @@ const AIJournalAssistant = ({
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Tell me about your day..."
-              className="w-full px-4 py-3 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent bg-background text-foreground placeholder-muted-foreground font-light text-sm"
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-slate-700/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 bg-slate-800/50 text-slate-50 placeholder-slate-400 font-normal text-sm sm:text-base min-h-[44px]"
             />
           </div>
           
           <button
             onClick={onSpeechToggle}
             disabled={!browserSupportsSpeechRecognition || microphoneStatus === 'requesting'}
-            className="p-3 bg-muted hover:bg-accent rounded-xl transition-colors duration-200 border border-border disabled:opacity-50 disabled:cursor-not-allowed"
+            className="p-2 sm:p-3 bg-slate-800/80 hover:bg-slate-700/80 rounded-xl transition-all duration-200 border border-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] min-w-[44px] flex items-center justify-center"
             title={
               !browserSupportsSpeechRecognition ? 'Speech recognition not supported' : 
               microphoneStatus === 'requesting' ? 'Requesting microphone access...' :
@@ -488,18 +488,18 @@ const AIJournalAssistant = ({
             }
           >
             {microphoneStatus === 'requesting' ? (
-              <div className="w-5 h-5 border-2 border-foreground border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
             ) : isListening ? (
-              <MicOff className="w-5 h-5 text-accent-foreground" />
+              <MicOff className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300" />
             ) : (
-              <Mic className="w-5 h-5 text-foreground" />
+              <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300" />
             )}
           </button>
           
           <button
             onClick={handleSendMessage}
             disabled={!inputText.trim() || isLoading}
-            className="px-6 py-3 bg-foreground text-background rounded-xl hover:bg-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed font-light shadow-sm transition-all duration-200 min-w-[80px] text-sm"
+            className="px-4 sm:px-6 py-2 sm:py-3 bg-cyan-500 text-slate-900 rounded-xl hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm transition-all duration-200 min-w-[80px] text-sm sm:text-base min-h-[44px]"
           >
             {isLoading ? '...' : 'Send'}
           </button>
@@ -507,21 +507,21 @@ const AIJournalAssistant = ({
         
         {/* Listening Indicator */}
         {isListening && (
-          <div className="mt-3 p-4 bg-accent rounded-lg border border-border">
+          <div className="mt-3 p-3 sm:p-4 bg-slate-800/80 rounded-lg border border-slate-700/50">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-accent-foreground font-light">
+              <p className="text-sm text-slate-300 font-normal">
                 <span className="font-medium">Listening...</span>
               </p>
               <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-accent-foreground rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-accent-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-accent-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
             </div>
-            <p className="text-sm text-accent-foreground font-light mb-2">
+            <p className="text-sm text-slate-300 font-normal mb-2">
               {transcript || 'Start speaking...'}
             </p>
-            <div className="text-xs text-accent-foreground/70 font-light">
+            <div className="text-xs text-slate-400 font-normal">
               💡 Tell me about your day, workouts, or feelings. I'll stop listening after 3 seconds of silence.
             </div>
           </div>
@@ -529,8 +529,8 @@ const AIJournalAssistant = ({
 
         {/* Microphone Access Error */}
         {microphoneStatus === 'denied' && (
-          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-700 font-light">
+          <div className="mt-3 p-3 bg-red-900/20 border border-red-700/30 rounded-lg">
+            <p className="text-sm text-red-300 font-normal">
               <span className="font-medium">Microphone access denied.</span> Please allow microphone access in your browser settings to use voice input.
             </p>
           </div>
@@ -538,10 +538,10 @@ const AIJournalAssistant = ({
 
         {/* Save Button */}
         {structuredEntry && (
-          <div className="mt-4 flex gap-3">
+          <div className="mt-4 flex flex-col sm:flex-row gap-3">
             <button
               onClick={handleSaveEntry}
-              className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-xl hover:bg-primary-700 font-light transition-colors"
+              className="flex-1 px-4 py-3 bg-cyan-500 text-slate-900 rounded-xl hover:bg-cyan-400 font-medium transition-all duration-200 min-h-[44px]"
             >
               {isEditing ? 'Save Edited Entry' : 'Save Journal Entry'}
             </button>
@@ -556,7 +556,7 @@ const AIJournalAssistant = ({
                     timestamp: new Date().toLocaleTimeString()
                   }]);
                 }}
-                className="px-4 py-3 bg-muted text-foreground rounded-xl hover:bg-accent font-light transition-colors"
+                className="px-4 py-3 bg-slate-800/80 text-slate-300 rounded-xl hover:bg-slate-700/80 font-medium transition-all duration-200 min-h-[44px]"
               >
                 Add More
               </button>

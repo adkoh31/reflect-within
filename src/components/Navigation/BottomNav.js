@@ -95,7 +95,7 @@ const BottomNav = ({ activeTab, onTabChange }) => {
           onTabChange(tabId);
         }}
         className="w-full bg-slate-800/95 backdrop-blur-md border-slate-700/50 rounded-xl shadow-2xl"
-        limelightClassName="bg-cyan-400 shadow-[0_50px_15px_rgba(34,211,238,0.3)]"
+        limelightClassName="bg-transparent shadow-none"
         iconContainerClassName="text-slate-300 hover:text-white transition-colors"
         iconClassName="text-slate-300"
       />

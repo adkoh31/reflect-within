@@ -44,7 +44,7 @@ const App = () => {
       // New users start at landing page
       setCurrentView('landing');
     }
-  }, [setCurrentView]); // Only depend on setCurrentView, not auth object
+  }, [setCurrentView, auth]); // Include auth dependency
 
   // Handle view transitions based on user and onboarding state
   useEffect(() => {

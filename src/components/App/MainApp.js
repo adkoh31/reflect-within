@@ -6,7 +6,6 @@ import { API_ENDPOINTS } from '../../config/api';
 
 // Enhanced UI Components
 import BottomNav from '../Navigation/BottomNav';
-import EnhancedHeader from '../Navigation/EnhancedHeader';
 import SuccessToast from '../Feedback/SuccessToast';
 import HomeTab from './HomeTab';
 
@@ -70,7 +69,7 @@ const MainApp = ({
 
   // Success feedback - MUST come before useMessages
   const successFeedback = useSuccessFeedback();
-  const { toast, hideToast, showMessageSent, showChatSaved, showJournalDownloaded, showOnboardingComplete } = successFeedback;
+  const { toast, hideToast, showMessageSent } = successFeedback;
 
   // Messages
   const messageHandlers = useMessages(
@@ -78,22 +77,16 @@ const MainApp = ({
     isListening, setIsListening, resetTranscript, formatTimestamp,
     last5JournalEntries, isPremium, user, handleError, showMessageSent
   );
-  const { handleSendMessage, handleClearChat, handleSaveChat, handleKeyPress } = messageHandlers;
+  const { handleSendMessage, handleKeyPress } = messageHandlers;
 
   // Insights
   const { generateInsights } = useInsights(messages, isGeneratingInsights, setIsGeneratingInsights, setInsights, handleError);
 
   // Journal
-  useJournal(messages, showJournalDownloaded);
+  useJournal(messages);
 
   // Theme
   useTheme();
-
-  // Onboarding - Use props from App.js, don't create duplicate hook
-  // const { showOnboarding: hookShowOnboarding, completeOnboarding, skipOnboarding } = useOnboarding();
-  
-  // Use prop showOnboarding if provided, otherwise use hook showOnboarding
-  const showOnboarding = false; // Removed as onboarding is now handled by ViewManager
 
   console.log('🔍 MainApp Debug:', {
     user: user?.email
@@ -149,37 +142,6 @@ const MainApp = ({
     setShowDisclaimer(false);
     localStorage.setItem('reflectWithin_disclaimer', 'true');
   }, [setShowDisclaimer]);
-
-  const handleOnboardingComplete = useCallback((data) => {
-    // This function is no longer needed as onboarding is handled by ViewManager
-    // if (onOnboardingComplete) {
-    //   onOnboardingComplete(data);
-    // } else {
-    //   // completeOnboarding(data); // This line was removed as per the edit hint
-    // }
-    
-    // Show success feedback
-    // showOnboardingComplete(); // This line was removed as per the edit hint
-    
-    // Set initial tab based on user preference
-    if (data.preferredMode) {
-      setActiveTab(data.preferredMode);
-    }
-    
-    // Add first reflection if provided
-    if (data.firstReflection?.trim()) {
-      handleSendMessage(data.firstReflection);
-    }
-  }, [handleSendMessage, setActiveTab]);
-
-  const handleSkipOnboarding = useCallback(() => {
-    // This function is no longer needed as onboarding is handled by ViewManager
-    // if (onSkipOnboarding) {
-    //   onSkipOnboarding();
-    // } else {
-    //   // skipOnboarding(); // This line was removed as per the edit hint
-    // }
-  }, []);
 
   // Home tab action handler
   const handleHomeAction = useCallback((action) => {
@@ -252,17 +214,6 @@ const MainApp = ({
       setIsLoading(false);
     }
   }, [setMessages, formatTimestamp, setIsLoading, last5JournalEntries, isPremium, user, showMessageSent]);
-
-  // Show onboarding if needed
-  // if (showOnboarding) {
-  //   return (
-  //     <OnboardingFlow 
-  //       onComplete={handleOnboardingComplete}
-  //       onSkip={handleSkipOnboarding}
-  //       user={user}
-  //     />
-  //   );
-  // }
 
   return (
     <div className="min-h-screen font-sans transition-colors duration-300 bg-slate-900 text-slate-50 flex flex-col safe-area-inset-bottom">

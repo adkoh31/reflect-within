@@ -88,10 +88,17 @@ const JournalEntriesList = ({
               {/* Entry Header */}
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-3">
-                  {entry.topic && (
-                    <span className="px-2 py-1 bg-accent/20 text-accent-foreground text-xs rounded-lg font-medium">
-                      {entry.topic}
-                    </span>
+                  {entry.topics && entry.topics.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {entry.topics.map((topic, index) => (
+                        <span 
+                          key={index}
+                          className="px-2 py-1 bg-accent/20 text-accent-foreground text-xs rounded-lg font-medium"
+                        >
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
                   )}
                   <span className="text-xs text-muted-foreground font-light">
                     {formatTime(entry.createdAt)}

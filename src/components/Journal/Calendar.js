@@ -5,7 +5,8 @@ const Calendar = ({
   currentDate, 
   onDateSelect, 
   entriesByDate = {},
-  onMonthChange 
+  onMonthChange,
+  selectedDate
 }) => {
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
@@ -55,23 +56,23 @@ const Calendar = ({
   const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="bg-card rounded-2xl border border-border p-6">
+    <div className="w-full">
       {/* Calendar Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <button
           onClick={getPreviousMonth}
-          className="p-2 hover:bg-muted rounded-lg transition-colors"
+          className="p-2 hover:bg-slate-800/80 rounded-lg transition-colors text-slate-300 hover:text-slate-100"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-        <h3 className="text-lg font-light text-foreground">
+        <h3 className="text-lg font-semibold text-slate-50">
           {getMonthName(currentDate)}
         </h3>
         <button
           onClick={getNextMonth}
-          className="p-2 hover:bg-muted rounded-lg transition-colors"
+          className="p-2 hover:bg-slate-800/80 rounded-lg transition-colors text-slate-300 hover:text-slate-100"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -82,7 +83,7 @@ const Calendar = ({
       {/* Days of Week Header */}
       <div className="grid grid-cols-7 gap-1 mb-2">
         {daysOfWeek.map((day) => (
-          <div key={day} className="text-center text-xs text-muted-foreground font-light py-2">
+          <div key={day} className="text-center text-xs text-slate-400 font-medium py-2">
             {day}
           </div>
         ))}
@@ -101,27 +102,32 @@ const Calendar = ({
           const hasEntryOnDay = hasEntry(day);
           const entryCount = getEntryCount(day);
           const isTodayDate = isToday(day);
-          
+          const isSelected = selectedDate &&
+            selectedDate.getFullYear() === currentDate.getFullYear() &&
+            selectedDate.getMonth() === currentDate.getMonth() &&
+            selectedDate.getDate() === day;
           return (
             <motion.button
               key={day}
               onClick={() => onDateSelect(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
-              className={`h-10 rounded-lg text-sm font-light transition-all duration-200 relative ${
-                isTodayDate
-                  ? 'bg-foreground text-background'
+              className={`h-10 rounded-lg text-sm font-medium transition-all duration-200 relative ${
+                isSelected
+                  ? 'bg-cyan-500 text-slate-900 shadow-lg shadow-cyan-500/25 ring-2 ring-cyan-300'
+                  : isTodayDate
+                  ? 'bg-slate-600/80 text-slate-200 border border-slate-500/50'
                   : hasEntryOnDay
-                  ? 'bg-accent text-accent-foreground hover:bg-accent/80'
-                  : 'hover:bg-muted text-foreground'
+                  ? 'bg-slate-700/80 text-slate-200 hover:bg-slate-600/80 border border-slate-600/50'
+                  : 'text-slate-300 hover:bg-slate-800/80 hover:text-slate-100'
               }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               {day}
-              {hasEntryOnDay && !isTodayDate && (
-                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-accent-foreground rounded-full"></div>
+              {hasEntryOnDay && !isTodayDate && !isSelected && (
+                <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-cyan-400 rounded-full"></div>
               )}
-              {entryCount > 1 && (
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
+              {entryCount > 1 && !isSelected && (
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 text-slate-900 text-xs rounded-full flex items-center justify-center font-bold">
                   {entryCount}
                 </div>
               )}

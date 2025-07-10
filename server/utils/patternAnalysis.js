@@ -68,21 +68,35 @@ const EXERCISE_PATTERNS = {
   ],
   yoga: [
     'vinyasa', 'hatha', 'yin', 'crow pose', 'savasana', 'warrior II', 'downward dog'
+  ],
+  strength: [
+    'bench press', 'squat', 'deadlift', 'overhead press', 'row', 'lunge', 'plank'
+  ],
+  cardio: [
+    'run', 'bike', 'swim', 'row', 'elliptical', 'stairmaster', 'jump rope'
   ]
 };
 
-// Difficulty patterns
-const DIFFICULTY_PATTERNS = [
-  'tough', 'challenging', 'intense', 'solid', 'great', 'amazing', 'okay', 'grueling', 'exhausting'
-];
+// Difficulty patterns with emotional context
+const DIFFICULTY_PATTERNS = {
+  positive: ['amazing', 'incredible', 'fantastic', 'awesome', 'great', 'solid', 'strong'],
+  challenging: ['tough', 'challenging', 'intense', 'grueling', 'exhausting', 'brutal'],
+  neutral: ['okay', 'decent', 'fine', 'manageable', 'moderate'],
+  negative: ['terrible', 'awful', 'horrible', 'bad', 'weak', 'poor']
+};
 
-// Soreness areas
+// Soreness areas with recovery context
 const SORENESS_AREAS = [
   'quads?', 'shoulders?', 'legs?', 'core', 'calves?', 'wrists?', 'hamstrings?', 'hips?', 'lower back'
 ];
 
-// Mood patterns
-const MOOD_PATTERNS = ['Tired', 'Energized', 'Grateful', 'Neutral', 'Stressed'];
+// Enhanced mood patterns with emotional intelligence
+const MOOD_PATTERNS = {
+  positive: ['excited', 'energized', 'grateful', 'happy', 'proud', 'motivated', 'confident', 'peaceful'],
+  neutral: ['neutral', 'calm', 'focused', 'determined', 'balanced'],
+  negative: ['tired', 'stressed', 'anxious', 'frustrated', 'overwhelmed', 'sad', 'angry', 'worried'],
+  recovery: ['sore', 'exhausted', 'drained', 'fatigued', 'restless']
+};
 
 // Time patterns for recovery context
 const TIME_PATTERNS = {
@@ -92,39 +106,63 @@ const TIME_PATTERNS = {
   ongoing: ['still', 'continuing', 'persistent', 'recurring', 'chronic']
 };
 
-// Stretch recommendations based on training data
+// Enhanced stretch recommendations with emotional support
 const STRETCH_RECOMMENDATIONS = {
   'quads': [
-    'Quad Stretch: hold your foot behind for 30 seconds per side',
-    'Couch Stretch: shin against a wall for 1-2 min per side'
+    'Quad Stretch: hold your foot behind for 30 seconds per side - this should help release that tension',
+    'Couch Stretch: shin against a wall for 1-2 min per side - great for opening up those tight quads'
   ],
   'shoulders': [
-    'Thread-the-Needle: thread one arm under for 30 seconds per side',
-    'Eagle Arm stretch: cross your arms for 30 seconds'
+    'Thread-the-Needle: thread one arm under for 30 seconds per side - perfect for shoulder mobility',
+    'Eagle Arm stretch: cross your arms for 30 seconds - helps with that upper body tightness'
   ],
   'hamstrings': [
-    'Downward Dog: hold for 1 min',
-    'Forward Fold: hang loose for 1 min'
+    'Downward Dog: hold for 1 min - let gravity help stretch those hamstrings',
+    'Forward Fold: hang loose for 1 min - breathe into the stretch'
   ],
   'core': [
-    'Cat-Cow stretch: flow for 1 min'
+    'Cat-Cow stretch: flow for 1 min - gentle movement for core recovery'
   ],
   'hips': [
-    'Figure-Four stretch: hold for 1 min per side',
-    'Pigeon Pose: hold for 1 min per side'
+    'Figure-Four stretch: hold for 1 min per side - great for hip opening',
+    'Pigeon Pose: hold for 1 min per side - deep hip stretch'
   ],
   'lower back': [
-    'Child\'s Pose: sink back for 1 min',
-    'Supine Twist: hold for 1 min per side'
+    'Child\'s Pose: sink back for 1 min - gentle decompression for your spine',
+    'Supine Twist: hold for 1 min per side - helps release lower back tension'
   ],
   'wrists': [
-    'Wrist Stretch: pull your fingers back gently for 30 seconds per side'
+    'Wrist Stretch: pull your fingers back gently for 30 seconds per side - important for wrist health'
   ],
   'calves': [
-    'Forward Fold: hang loose for 1 min'
+    'Forward Fold: hang loose for 1 min - let those calves release'
   ],
   'legs': [
-    'Forward Fold: hang loose for 1 min'
+    'Forward Fold: hang loose for 1 min - overall leg stretch'
+  ]
+};
+
+// Emotional support patterns based on context
+const EMOTIONAL_SUPPORT_PATTERNS = {
+  achievement: [
+    "That's incredible progress! What do you think made this workout feel so powerful?",
+    "You should be proud of that effort! What was different about today that helped you push through?",
+    "Amazing work! I can feel your energy through your words. What's driving this momentum?"
+  ],
+  challenge: [
+    "It sounds like you're really pushing your limits. How are you feeling about that challenge?",
+    "That sounds tough, but you're showing real resilience. What's helping you stay motivated?",
+    "I hear the struggle in your voice. What do you think you're learning about yourself through this?"
+  ],
+  recovery: [
+    "Your body is asking for rest, and that's completely normal. How are you feeling about taking it easy?",
+    "Recovery is just as important as the workout. What does your body need right now?",
+    "It's okay to listen to your body. What would feel most supportive for you today?"
+  ],
+  stress: [
+    "I can hear the stress in your voice. How is your workout helping or not helping with that?",
+    "Stress can really impact our energy. What's on your mind that might be affecting your workout?",
+    "You're carrying a lot right now. How can movement help you process what you're going through?"
   ]
 };
 
@@ -166,6 +204,33 @@ const extractTimeContext = (message) => {
 };
 
 /**
+ * Extract emotional context from message
+ */
+const extractEmotionalContext = (message) => {
+  const lowerMessage = message.toLowerCase();
+  
+  // Check for emotional keywords
+  for (const [category, emotions] of Object.entries(MOOD_PATTERNS)) {
+    for (const emotion of emotions) {
+      if (lowerMessage.includes(emotion)) {
+        return { category, emotion, intensity: 'moderate' };
+      }
+    }
+  }
+  
+  // Check for difficulty patterns
+  for (const [category, difficulties] of Object.entries(DIFFICULTY_PATTERNS)) {
+    for (const difficulty of difficulties) {
+      if (lowerMessage.includes(difficulty)) {
+        return { category: 'difficulty', emotion: difficulty, intensity: category };
+      }
+    }
+  }
+  
+  return { category: 'neutral', emotion: null, intensity: 'low' };
+};
+
+/**
  * Extract structured data from user message using patterns
  */
 const extractStructuredData = (message) => {
@@ -190,7 +255,7 @@ const extractStructuredData = (message) => {
   // Extract mood
   let mood = null;
   const moodMatch = message.match(/Mood:\s*([A-Za-z]+)/);
-  if (moodMatch && MOOD_PATTERNS.includes(moodMatch[1])) {
+  if (moodMatch && Object.values(MOOD_PATTERNS).flat().includes(moodMatch[1])) {
     mood = moodMatch[1];
   }
   
@@ -198,50 +263,25 @@ const extractStructuredData = (message) => {
   let journalDetails = null;
   const journalMatch = message.match(/Journal:\s*Workouts,\s*(CrossFit|Yoga),\s*(.+?)(?=\s*$|\.)/);
   if (journalMatch) {
-    journalDetails = {
-      type: journalMatch[1],
-      details: journalMatch[2]
-    };
-  }
-  
-  // If no exercise found in main message, check journal details
-  if (!exercise && journalDetails) {
-    for (const [type, exercises] of Object.entries(EXERCISE_PATTERNS)) {
-      for (const exercisePattern of exercises) {
-        const regex = new RegExp(`\\b${exercisePattern}\\b`, 'i');
-        if (regex.test(journalDetails.details)) {
-          exercise = journalDetails.details.match(regex)[0];
-          exerciseType = type;
-          break;
-        }
-      }
-      if (exercise) break;
-    }
+    journalDetails = journalMatch[2];
   }
   
   // Extract difficulty
   let difficulty = null;
-  for (const diff of DIFFICULTY_PATTERNS) {
-    const regex = new RegExp(`(were|was|felt)\\s+${diff}`, 'i');
-    if (regex.test(message)) {
-      difficulty = diff;
-      break;
+  for (const [category, difficulties] of Object.entries(DIFFICULTY_PATTERNS)) {
+    for (const diff of difficulties) {
+      if (lowerMessage.includes(diff)) {
+        difficulty = diff;
+        break;
+      }
     }
+    if (difficulty) break;
   }
   
   // Extract soreness
   let soreness = null;
   for (const area of SORENESS_AREAS) {
-    // Check for "X sore" pattern
-    const sorePattern = new RegExp(`\\b${area}\\s+sore`, 'i');
-    if (sorePattern.test(message)) {
-      soreness = message.match(sorePattern)[0].replace(' sore', '');
-      break;
-    }
-    
-    // Also check for "sore X" pattern
-    const sorePattern2 = new RegExp(`sore\\s+${area}`, 'i');
-    if (sorePattern2.test(message)) {
+    if (lowerMessage.includes(area)) {
       soreness = area;
       break;
     }
@@ -250,15 +290,22 @@ const extractStructuredData = (message) => {
   // Extract time context
   const timeContext = extractTimeContext(message);
   
+  // Extract emotional context
+  const emotionalContext = extractEmotionalContext(message);
+  
+  // Determine if message has structured format
+  const hasStructuredFormat = !!(exercise || mood || journalDetails || difficulty || soreness);
+  
   return {
     exercise,
     exerciseType,
-    difficulty,
-    soreness,
     mood,
     journalDetails,
+    difficulty,
+    soreness,
     timeContext,
-    hasStructuredFormat: !!(mood && journalDetails)
+    emotionalContext,
+    hasStructuredFormat
   };
 };
 
@@ -339,7 +386,44 @@ const buildContext = (extractedData, user, lastWorkout, sorenessHistory) => {
  * Build enhanced prompt for AI with time awareness
  */
 const buildEnhancedPrompt = (message, extractedData, context, stretchRecommendation) => {
-  let prompt = `You are ReflectWithin, an empathetic AI companion designed to help people explore their thoughts, feelings, and experiences through thoughtful conversation. Your personality is warm, supportive, and genuinely curious, with deep expertise in psychology, personal development, fitness, and emotional intelligence. Always start by acknowledging the user's current input or emotional state with warmth and empathy, validating their experience before proceeding. Use active listening, reflecting back what you hear, and prioritize being helpful and supportive. For specific requests for advice or help, provide direct, actionable answers. For sharing or reflection, balance 1-2 thoughtful questions with supportive statements to encourage self-compassion and growth mindset. Reference previous conversations naturally only when relevant. Keep responses concise and conversational, matching the user's pacing, and avoid clinical or robotic tones.
+  // Determine emotional context and response style
+  const emotionalContext = extractedData.emotionalContext;
+  const isAchievement = emotionalContext.category === 'difficulty' && emotionalContext.intensity === 'positive';
+  const isChallenge = emotionalContext.category === 'difficulty' && emotionalContext.intensity === 'challenging';
+  const isRecovery = emotionalContext.category === 'recovery' || extractedData.soreness;
+  const isStress = emotionalContext.category === 'negative' && ['stressed', 'anxious', 'overwhelmed'].includes(emotionalContext.emotion);
+  
+  // Select appropriate emotional support pattern
+  let emotionalSupport = '';
+  if (isAchievement) {
+    emotionalSupport = EMOTIONAL_SUPPORT_PATTERNS.achievement[Math.floor(Math.random() * EMOTIONAL_SUPPORT_PATTERNS.achievement.length)];
+  } else if (isChallenge) {
+    emotionalSupport = EMOTIONAL_SUPPORT_PATTERNS.challenge[Math.floor(Math.random() * EMOTIONAL_SUPPORT_PATTERNS.challenge.length)];
+  } else if (isRecovery) {
+    emotionalSupport = EMOTIONAL_SUPPORT_PATTERNS.recovery[Math.floor(Math.random() * EMOTIONAL_SUPPORT_PATTERNS.recovery.length)];
+  } else if (isStress) {
+    emotionalSupport = EMOTIONAL_SUPPORT_PATTERNS.stress[Math.floor(Math.random() * EMOTIONAL_SUPPORT_PATTERNS.stress.length)];
+  }
+
+  let prompt = `You are ReflectWithin, an empathetic AI companion designed to help people explore their thoughts, feelings, and experiences through thoughtful conversation. Your personality is warm, supportive, and genuinely curious, with deep expertise in psychology, personal development, fitness, and emotional intelligence.
+
+CORE PERSONALITY TRAITS:
+- Warm and genuinely caring, like a trusted friend who knows you well
+- Deeply empathetic and validating of all emotions and experiences
+- Curious and interested in understanding the person behind the words
+- Supportive without being pushy or overly positive
+- Wise and insightful, drawing from psychology and personal development
+- Encouraging of self-compassion and growth mindset
+- Conversational and natural, avoiding clinical or robotic language
+
+RESPONSE APPROACH:
+- Always start with emotional validation and acknowledgment
+- Use active listening techniques - reflect back what you hear
+- Ask 1-2 thoughtful, open-ended questions that encourage deeper reflection
+- Balance support with gentle curiosity
+- Reference their history and patterns when relevant
+- Match your energy to their emotional state
+- Keep responses concise but meaningful (2-3 sentences max)
 
 Current user input: "${message}"
 
@@ -349,15 +433,30 @@ Extracted data:
 - Soreness: ${extractedData.soreness || 'None mentioned'}
 - Mood: ${extractedData.mood || 'None mentioned'}
 - Time Context: ${extractedData.timeContext?.reference || 'None mentioned'}
+- Emotional Context: ${emotionalContext.category} - ${emotionalContext.emotion || 'neutral'}
 
 User context: ${context}
 
+EMOTIONAL INTELLIGENCE GUIDANCE:
+${emotionalSupport ? `- Emotional support pattern: "${emotionalSupport}"` : ''}
+- If they're celebrating achievement: Acknowledge their effort and explore what made it special
+- If they're struggling: Validate the difficulty and explore their resilience
+- If they're in recovery: Support their body's needs and explore their relationship with rest
+- If they're stressed: Acknowledge the stress and explore how movement helps or doesn't help
+- If they're neutral: Gently explore what's on their mind or what they're working through
+
+CONVERSATION FLOW:
+1. Acknowledge their current state with warmth and empathy
+2. Ask one thoughtful question that encourages deeper reflection
+3. Keep the tone conversational and supportive
+
 IMPORTANT: 
-- Respond with ONLY a single, thoughtful question
+- Respond with ONLY a single, thoughtful question or supportive statement followed by a question
 - Keep it conversational and supportive
 - Reference past workouts if relevant
-- Match the tone to their mood
-- Consider recovery time: immediate soreness vs. persistent soreness`;
+- Match the tone to their emotional state
+- Consider recovery time: immediate soreness vs. persistent soreness
+- Avoid generic responses - make it personal to their situation`;
 
   if (stretchRecommendation) {
     prompt += `\n- If soreness is mentioned, suggest: "${stretchRecommendation}"`;
@@ -378,7 +477,16 @@ IMPORTANT:
     }
   }
 
-  prompt += `\n\nExample response pattern: "[Exercise] at [weight]? That's [difficulty]! Sore [body part]? Try [specific stretch]. What made it so [difficulty]?"`;
+  // Add emotional state specific guidance
+  if (emotionalContext.category === 'positive') {
+    prompt += `\n- They're feeling positive - build on this momentum and explore what's working`;
+  } else if (emotionalContext.category === 'negative') {
+    prompt += `\n- They're experiencing negative emotions - provide extra validation and gentle support`;
+  } else if (emotionalContext.category === 'recovery') {
+    prompt += `\n- They're in recovery mode - emphasize the importance of rest and self-care`;
+  }
+
+  prompt += `\n\nRESPONSE FORMAT: Start with a warm acknowledgment, then ask one thoughtful question that encourages deeper reflection. Keep it personal and conversational.`;
 
   return prompt;
 };
@@ -593,7 +701,45 @@ const analyzeReflectionThemes = (reflections) => {
  * Build enhanced prompt for premium users with comprehensive context
  */
 const buildPremiumEnhancedPrompt = (message, extractedData, context, stretchRecommendation) => {
-  let prompt = `You are ReflectWithin, an empathetic AI companion designed to help people explore their thoughts, feelings, and experiences through thoughtful conversation. Your personality is warm, supportive, and genuinely curious, with deep expertise in psychology, personal development, fitness, and emotional intelligence. Always start by acknowledging the user's current input or emotional state with warmth and empathy, validating their experience before proceeding. Use active listening, reflecting back what you hear, and prioritize being helpful and supportive. For specific requests for advice or help, provide direct, actionable answers. For sharing or reflection, balance 1-2 thoughtful questions with supportive statements to encourage self-compassion and growth mindset. Reference previous conversations naturally only when relevant. Keep responses concise and conversational, matching the user's pacing, and avoid clinical or robotic tones.
+  // Determine emotional context and response style
+  const emotionalContext = extractedData.emotionalContext;
+  const isAchievement = emotionalContext.category === 'difficulty' && emotionalContext.intensity === 'positive';
+  const isChallenge = emotionalContext.category === 'difficulty' && emotionalContext.intensity === 'challenging';
+  const isRecovery = emotionalContext.category === 'recovery' || extractedData.soreness;
+  const isStress = emotionalContext.category === 'negative' && ['stressed', 'anxious', 'overwhelmed'].includes(emotionalContext.emotion);
+  
+  // Select appropriate emotional support pattern
+  let emotionalSupport = '';
+  if (isAchievement) {
+    emotionalSupport = EMOTIONAL_SUPPORT_PATTERNS.achievement[Math.floor(Math.random() * EMOTIONAL_SUPPORT_PATTERNS.achievement.length)];
+  } else if (isChallenge) {
+    emotionalSupport = EMOTIONAL_SUPPORT_PATTERNS.challenge[Math.floor(Math.random() * EMOTIONAL_SUPPORT_PATTERNS.challenge.length)];
+  } else if (isRecovery) {
+    emotionalSupport = EMOTIONAL_SUPPORT_PATTERNS.recovery[Math.floor(Math.random() * EMOTIONAL_SUPPORT_PATTERNS.recovery.length)];
+  } else if (isStress) {
+    emotionalSupport = EMOTIONAL_SUPPORT_PATTERNS.stress[Math.floor(Math.random() * EMOTIONAL_SUPPORT_PATTERNS.stress.length)];
+  }
+
+  let prompt = `You are ReflectWithin, an empathetic AI companion designed to help people explore their thoughts, feelings, and experiences through thoughtful conversation. Your personality is warm, supportive, and genuinely curious, with deep expertise in psychology, personal development, fitness, and emotional intelligence.
+
+CORE PERSONALITY TRAITS:
+- Warm and genuinely caring, like a trusted friend who knows you well
+- Deeply empathetic and validating of all emotions and experiences
+- Curious and interested in understanding the person behind the words
+- Supportive without being pushy or overly positive
+- Wise and insightful, drawing from psychology and personal development
+- Encouraging of self-compassion and growth mindset
+- Conversational and natural, avoiding clinical or robotic language
+
+PREMIUM COACH MODE - ENHANCED CAPABILITIES:
+- You have access to their complete workout history, mood patterns, and reflection themes
+- You can reference specific patterns from their history naturally
+- You can acknowledge their progress and consistency over time
+- You can provide personalized advice based on their recurring patterns
+- You can show you remember their goals and track their progress
+- You can be encouraging but realistic about their patterns
+- You can suggest improvements based on their historical data
+- You can identify trends and help them understand their patterns
 
 Current user input: "${message}"
 
@@ -605,15 +751,30 @@ Extracted data:
 - Soreness: ${extractedData.soreness || 'None mentioned'}
 - Mood: ${extractedData.mood || 'None mentioned'}
 - Time Context: ${extractedData.timeContext?.reference || 'None mentioned'}
+- Emotional Context: ${emotionalContext.category} - ${emotionalContext.emotion || 'neutral'}
 
-PREMIUM COACH MODE:
-- You have access to their complete workout history, mood patterns, and reflection themes
-- Reference specific patterns from their history naturally
-- Acknowledge their progress and consistency
-- Provide personalized advice based on their recurring patterns
-- Show you remember their goals and track their progress
-- Be encouraging but realistic about their patterns
-- Suggest improvements based on their historical data`;
+EMOTIONAL INTELLIGENCE GUIDANCE:
+${emotionalSupport ? `- Emotional support pattern: "${emotionalSupport}"` : ''}
+- If they're celebrating achievement: Acknowledge their effort and explore what made it special
+- If they're struggling: Validate the difficulty and explore their resilience
+- If they're in recovery: Support their body's needs and explore their relationship with rest
+- If they're stressed: Acknowledge the stress and explore how movement helps or doesn't help
+- If they're neutral: Gently explore what's on their mind or what they're working through
+
+PREMIUM COACHING APPROACH:
+- Reference their specific patterns and progress naturally
+- Acknowledge their consistency and growth over time
+- Provide insights based on their historical data
+- Help them understand their patterns and trends
+- Offer personalized suggestions based on their journey
+- Balance celebration of wins with realistic assessment
+- Encourage self-reflection on their progress and goals
+
+CONVERSATION FLOW:
+1. Acknowledge their current state with warmth and empathy
+2. Reference their patterns or progress when relevant
+3. Ask one thoughtful question that encourages deeper reflection
+4. Keep the tone conversational and supportive`;
 
   if (stretchRecommendation) {
     prompt += `\n- If soreness is mentioned, suggest: "${stretchRecommendation}"`;
@@ -634,13 +795,25 @@ PREMIUM COACH MODE:
     }
   }
 
+  // Add emotional state specific guidance
+  if (emotionalContext.category === 'positive') {
+    prompt += `\n- They're feeling positive - build on this momentum and explore what's working`;
+  } else if (emotionalContext.category === 'negative') {
+    prompt += `\n- They're experiencing negative emotions - provide extra validation and gentle support`;
+  } else if (emotionalContext.category === 'recovery') {
+    prompt += `\n- They're in recovery mode - emphasize the importance of rest and self-care`;
+  }
+
   prompt += `\n\nRESPONSE TYPE: ${message.toLowerCase().includes('suggest') || message.toLowerCase().includes('help') || message.toLowerCase().includes('advice') || message.toLowerCase().includes('what should') || message.toLowerCase().includes('how to') ? 'Provide direct, actionable advice as their coach.' : 'Respond as their supportive coach with personalized insights and questions.'}`;
+
+  prompt += `\n\nRESPONSE FORMAT: Start with a warm acknowledgment, reference their patterns if relevant, then ask one thoughtful question that encourages deeper reflection. Keep it personal and conversational.`;
 
   return prompt;
 };
 
 module.exports = {
   extractStructuredData,
+  extractEmotionalContext,
   getStretchRecommendation,
   buildContext,
   buildEnhancedPrompt,
@@ -655,5 +828,6 @@ module.exports = {
   MOOD_PATTERNS,
   TIME_PATTERNS,
   STRETCH_RECOMMENDATIONS,
+  EMOTIONAL_SUPPORT_PATTERNS,
   getCachedContext
 }; 

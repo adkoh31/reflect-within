@@ -206,86 +206,86 @@ const OnboardingFlow = ({ onComplete, onSkip, user }) => {
       <div className="relative min-h-screen">
         <LampBackground />
         
-        {/* Progress Bar */}
+      {/* Progress Bar */}
         <div className="absolute top-0 left-0 right-0 z-10">
           <div className="w-full bg-white/10 h-1">
-            <motion.div
+        <motion.div
               className="h-full bg-gradient-to-r from-cyan-400 to-blue-600"
-              initial={{ width: 0 }}
-              animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
-              transition={{ duration: 0.3 }}
-            />
+          initial={{ width: 0 }}
+          animate={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+          transition={{ duration: 0.3 }}
+        />
           </div>
-        </div>
+      </div>
 
-        {/* Skip Button */}
-        <div className="absolute top-4 right-4 z-10">
-          <button
-            onClick={handleSkip}
-            disabled={isSkipping}
+      {/* Skip Button */}
+      <div className="absolute top-4 right-4 z-10">
+        <button
+          onClick={handleSkip}
+          disabled={isSkipping}
             className={`text-white/70 hover:text-white text-sm font-medium transition-colors duration-200 ${
-              isSkipping ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {isSkipping ? 'Skipping...' : 'Skip'}
-          </button>
-        </div>
+            isSkipping ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          {isSkipping ? 'Skipping...' : 'Skip'}
+        </button>
+      </div>
 
         {/* Main Content - Centered */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-full max-w-2xl mx-auto px-6">
-            {/* Swipe Background Indicator */}
-            {swipeDirection && (
-              <motion.div
-                className={`absolute inset-0 pointer-events-none ${
+        {/* Swipe Background Indicator */}
+        {swipeDirection && (
+          <motion.div
+            className={`absolute inset-0 pointer-events-none ${
                   swipeDirection === 'left' ? 'bg-gradient-to-r from-transparent to-white/5' : 
                   swipeDirection === 'right' ? 'bg-gradient-to-l from-transparent to-white/5' : ''
-                }`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 0.3 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-              />
-            )}
-            
+            }`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.3 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          />
+        )}
+        
             <div className="relative z-10"
                  onTouchStart={onTouchStart}
                  onTouchMove={onTouchMove}
                  onTouchEnd={onTouchEnd}>
-              {/* Swipe Hint */}
-              {currentStep < steps.length - 1 && (
-                <div className="text-center mb-4">
+          {/* Swipe Hint */}
+          {currentStep < steps.length - 1 && (
+            <div className="text-center mb-4">
                   <p className="text-xs text-white/60 animate-pulse">
-                    💡 Swipe left to continue
-                  </p>
-                </div>
-              )}
-              
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentStep}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ 
-                    opacity: 1, 
-                    x: 0,
-                    transform: swipeDirection === 'left' ? 'translateX(-10px)' : 
-                              swipeDirection === 'right' ? 'translateX(10px)' : 'translateX(0px)'
-                  }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="text-center"
-                >
-                  {/* Icon */}
-                  <motion.div
-                    className="text-6xl mb-6"
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ delay: 0.1, type: "spring" }}
-                  >
-                    {currentStepData.icon}
-                  </motion.div>
+                💡 Swipe left to continue
+              </p>
+            </div>
+          )}
+          
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ 
+                opacity: 1, 
+                x: 0,
+                transform: swipeDirection === 'left' ? 'translateX(-10px)' : 
+                          swipeDirection === 'right' ? 'translateX(10px)' : 'translateX(0px)'
+              }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="text-center"
+            >
+              {/* Icon */}
+              <motion.div
+                className="text-6xl mb-6"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.1, type: "spring" }}
+              >
+                {currentStepData.icon}
+              </motion.div>
 
-                  {/* Title */}
+              {/* Title */}
                   {currentStep === 0 ? (
                     <div className="mb-6">
                       <TextPressure
@@ -303,97 +303,97 @@ const OnboardingFlow = ({ onComplete, onSkip, user }) => {
                     </div>
                   ) : (
                     <h1 className="text-white text-2xl font-bold mb-2 drop-shadow-lg">
-                      {currentStepData.title}
-                    </h1>
+                {currentStepData.title}
+              </h1>
                   )}
 
-                  {/* Subtitle */}
+              {/* Subtitle */}
                   <p className="text-white/80 text-lg mb-4">
-                    {currentStepData.subtitle}
-                  </p>
+                {currentStepData.subtitle}
+              </p>
 
-                  {/* Description */}
+              {/* Description */}
                   <p className="text-white/70 mb-6 max-w-md mx-auto">
-                    {currentStepData.description}
-                  </p>
+                {currentStepData.description}
+              </p>
 
-                  {/* Example */}
-                  {renderExample()}
+              {/* Example */}
+              {renderExample()}
 
-                  {/* Form Fields */}
-                  {currentStepData.fields.length > 0 && (
-                    <div className="space-y-4 max-w-sm mx-auto">
-                      {currentStepData.fields.map((field, index) => (
-                        <div key={index} className="text-left">
+              {/* Form Fields */}
+              {currentStepData.fields.length > 0 && (
+                <div className="space-y-4 max-w-sm mx-auto">
+                  {currentStepData.fields.map((field, index) => (
+                    <div key={index} className="text-left">
                           <label className="block text-sm font-medium text-white mb-2">
-                            {field.label}
-                          </label>
-                          {renderField(field)}
-                        </div>
-                      ))}
+                        {field.label}
+                      </label>
+                      {renderField(field)}
                     </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          </AnimatePresence>
             </div>
-          </div>
         </div>
+      </div>
 
-        {/* Navigation - Fixed at Bottom */}
+      {/* Navigation - Fixed at Bottom */}
         <div className="absolute bottom-0 left-0 right-0 z-10 px-6 py-6 border-t border-white/20">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={handleBack}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors duration-200 ${
-                currentStep === 0
+        <div className="flex items-center justify-between">
+          <button
+            onClick={handleBack}
+            className={`px-6 py-3 rounded-lg font-medium transition-colors duration-200 ${
+              currentStep === 0
                   ? 'text-white/40 cursor-not-allowed'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
-              }`}
-              disabled={currentStep === 0}
-            >
-              Back
-            </button>
+            }`}
+            disabled={currentStep === 0}
+          >
+            Back
+          </button>
 
-            <div className="flex space-x-2">
-              {steps.map((_, index) => (
-                <div
-                  key={index}
-                  className={`w-2 h-2 rounded-full transition-colors duration-200 ${
+          <div className="flex space-x-2">
+            {steps.map((_, index) => (
+              <div
+                key={index}
+                className={`w-2 h-2 rounded-full transition-colors duration-200 ${
                     index === currentStep ? 'bg-cyan-400' : 'bg-white/30'
-                  }`}
-                />
-              ))}
-            </div>
+                }`}
+              />
+            ))}
+          </div>
 
-            <motion.button
-              onClick={handleNext}
-              className={`px-6 py-3 rounded-lg font-medium transition-colors duration-200 ${
-                isStepValid()
+          <motion.button
+            onClick={handleNext}
+            className={`px-6 py-3 rounded-lg font-medium transition-colors duration-200 ${
+              isStepValid()
                   ? 'bg-white text-black hover:bg-slate-200'
                   : 'bg-white/20 text-white/40 cursor-not-allowed'
-              }`}
-              disabled={!isStepValid()}
-              whileHover={isStepValid() ? { scale: 1.02 } : {}}
-              whileTap={isStepValid() ? { scale: 0.98 } : {}}
-            >
-              {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
-            </motion.button>
-          </div>
-          
-          {/* Swipe Navigation Hints */}
+            }`}
+            disabled={!isStepValid()}
+            whileHover={isStepValid() ? { scale: 1.02 } : {}}
+            whileTap={isStepValid() ? { scale: 0.98 } : {}}
+          >
+            {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
+          </motion.button>
+        </div>
+        
+        {/* Swipe Navigation Hints */}
           <div className="flex justify-between items-center mt-4 text-xs text-white/50">
-            {currentStep > 0 && (
-              <div className="flex items-center space-x-1">
-                <span>←</span>
-                <span>Swipe right to go back</span>
-              </div>
-            )}
-            {currentStep < steps.length - 1 && (
-              <div className="flex items-center space-x-1 ml-auto">
-                <span>Swipe left to continue</span>
-                <span>→</span>
-              </div>
-            )}
+          {currentStep > 0 && (
+            <div className="flex items-center space-x-1">
+              <span>←</span>
+              <span>Swipe right to go back</span>
+            </div>
+          )}
+          {currentStep < steps.length - 1 && (
+            <div className="flex items-center space-x-1 ml-auto">
+              <span>Swipe left to continue</span>
+              <span>→</span>
+            </div>
+          )}
           </div>
         </div>
       </div>

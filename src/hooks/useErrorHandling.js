@@ -6,6 +6,16 @@ export const useErrorHandling = (currentView, activeTab, handleLogout) => {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [pendingOperations, setPendingOperations] = useState([]);
 
+  const retryPendingOperations = useCallback(() => {
+    if (pendingOperations.length > 0) {
+      console.log('Retrying pending operations:', pendingOperations.length);
+      pendingOperations.forEach(operation => {
+        operation();
+      });
+      setPendingOperations([]);
+    }
+  }, [pendingOperations]);
+
   const handleError = useCallback((error, context = '') => {
     const errorInfo = getErrorInfo(error);
     logError(error, { context, currentView, activeTab });
@@ -29,20 +39,7 @@ export const useErrorHandling = (currentView, activeTab, handleLogout) => {
       default:
         break;
     }
-  }, []);
-
-  const retryPendingOperations = useCallback(async () => {
-    if (pendingOperations.length === 0) return;
-
-    for (const operation of pendingOperations) {
-      try {
-        await operation();
-      } catch (error) {
-        console.error('Failed to retry operation:', error);
-      }
-    }
-    setPendingOperations([]);
-  }, [pendingOperations]);
+  }, [retryPendingOperations]);
 
   return {
     error,

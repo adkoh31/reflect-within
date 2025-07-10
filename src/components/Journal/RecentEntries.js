@@ -60,10 +60,17 @@ const RecentEntries = ({ entries = [], onEntryClick }) => {
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                {entry.topic && (
-                  <p className="text-xs text-accent-foreground font-medium mb-1">
-                    {entry.topic}
-                  </p>
+                {entry.topics && entry.topics.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-1">
+                    {entry.topics.map((topic, index) => (
+                      <span 
+                        key={index}
+                        className="text-xs text-accent-foreground font-medium"
+                      >
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
                 )}
                 <p className="text-sm text-foreground font-light leading-relaxed">
                   {truncateText(entry.content)}
