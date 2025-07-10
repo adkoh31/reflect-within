@@ -39,7 +39,6 @@ const ViewManager = ({
   }, [currentView, previousView]);
 
   // Render different views based on current state
-  // Show onboarding if needed (check this FIRST)
   console.log('🔍 ViewManager Debug:', {
     currentView,
     showOnboarding,
@@ -47,19 +46,7 @@ const ViewManager = ({
     transitioning
   });
   
-  if (showOnboarding) {
-    console.log('✅ Rendering onboarding flow directly');
-    return (
-      <LampTransition isVisible={!transitioning}>
-        <OnboardingFlow 
-          onComplete={onOnboardingComplete}
-          onSkip={onSkipOnboarding}
-          user={user}
-        />
-      </LampTransition>
-    );
-  }
-
+  // Handle navigation state only - let individual components handle their own logic
   if (currentView === 'landing') {
     return (
       <LampTransition isVisible={!transitioning}>
@@ -76,7 +63,7 @@ const ViewManager = ({
     );
   }
 
-  // Main app view
+  // Main app view - let MainApp handle onboarding logic
   return (
     <LampTransition isVisible={!transitioning}>
       <MainApp 
@@ -86,6 +73,10 @@ const ViewManager = ({
         showProfile={showProfile}
         setShowProfile={setShowProfile}
         setCurrentView={setCurrentView}
+        showOnboarding={showOnboarding}
+        onboardingData={onboardingData}
+        onOnboardingComplete={onOnboardingComplete}
+        onSkipOnboarding={onSkipOnboarding}
       />
     </LampTransition>
   );

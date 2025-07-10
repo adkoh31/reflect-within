@@ -29,6 +29,7 @@ import { useUtils } from '../../hooks/useUtils';
 import { useTheme } from '../../hooks/useTheme';
 import { useStreak } from '../../hooks/useStreak';
 import { useSuccessFeedback } from '../../hooks/useSuccessFeedback';
+import OnboardingFlow from '../Onboarding/OnboardingFlow';
 
 const MainApp = ({ 
   user: propUser,
@@ -37,7 +38,11 @@ const MainApp = ({
   showProfile,
   setShowProfile,
   setCurrentView,
-  currentView = 'app'
+  currentView = 'app',
+  showOnboarding,
+  onboardingData,
+  onOnboardingComplete,
+  onSkipOnboarding
 }) => {
   // Local state management (without currentView)
   const [messages, setMessages] = React.useState([]);
@@ -89,8 +94,21 @@ const MainApp = ({
   useTheme();
 
   console.log('🔍 MainApp Debug:', {
-    user: user?.email
+    user: user?.email,
+    showOnboarding
   });
+
+  // Show onboarding if needed
+  if (showOnboarding) {
+    console.log('✅ Rendering onboarding flow in MainApp');
+    return (
+      <OnboardingFlow 
+        onComplete={onOnboardingComplete}
+        onSkip={onSkipOnboarding}
+        user={user}
+      />
+    );
+  }
 
   // Streak tracking
   const { streak } = useStreak(messages);

@@ -213,7 +213,9 @@ const AuthPage = ({ onAuthSuccess, onBack }) => {
 
       {showForgotPassword && (
         <ForgotPasswordModal 
+          isOpen={showForgotPassword}
           onClose={() => setShowForgotPassword(false)} 
+          onShowLogin={() => setShowForgotPassword(false)}
         />
       )}
     </div>
