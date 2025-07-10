@@ -63,7 +63,20 @@ const ViewManager = ({
     );
   }
 
-  // Main app view - let MainApp handle onboarding logic
+  // Show onboarding if user needs it
+  if (user && showOnboarding) {
+    return (
+      <LampTransition isVisible={!transitioning}>
+        <OnboardingFlow 
+          onComplete={onOnboardingComplete}
+          onSkip={onSkipOnboarding}
+          user={user}
+        />
+      </LampTransition>
+    );
+  }
+
+  // Main app view
   return (
     <LampTransition isVisible={!transitioning}>
       <MainApp 
@@ -73,10 +86,7 @@ const ViewManager = ({
         showProfile={showProfile}
         setShowProfile={setShowProfile}
         setCurrentView={setCurrentView}
-        showOnboarding={showOnboarding}
-        onboardingData={onboardingData}
-        onOnboardingComplete={onOnboardingComplete}
-        onSkipOnboarding={onSkipOnboarding}
+        currentView={currentView}
       />
     </LampTransition>
   );

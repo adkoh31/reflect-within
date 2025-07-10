@@ -108,15 +108,15 @@ const InsightsDashboard = ({ insights, isGeneratingInsights, isPremium, onPremiu
               <div className="flex flex-col items-center space-y-4 sm:space-y-6">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-slate-600 to-slate-700 rounded-2xl flex items-center justify-center">
                   <BarChart3 className="w-8 h-8 sm:w-10 sm:h-10 text-cyan-400" />
-                </div>
+            </div>
                 <div>
                   <h3 className="text-lg sm:text-xl font-semibold text-slate-50 mb-2 sm:mb-3">
                     No Insights Yet
                   </h3>
                   <p className="text-sm sm:text-base text-slate-300 max-w-md mx-auto leading-relaxed">
                     Start journaling to unlock personalized insights about your fitness journey, mood patterns, and personal growth.
-                  </p>
-                </div>
+            </p>
+          </div>
                 <button
                   onClick={() => onAction('journal')}
                   className="bg-cyan-500 text-slate-900 py-3 sm:py-4 px-6 sm:px-8 rounded-xl font-medium hover:bg-cyan-400 transition-all duration-200 hover:scale-105 active:scale-95 focus:ring-2 focus:ring-cyan-500/50 shadow-lg shadow-cyan-500/25 text-sm sm:text-base min-h-[44px]"
