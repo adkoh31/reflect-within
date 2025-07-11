@@ -1,12 +1,47 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import axios from 'axios';
+import { API_ENDPOINTS } from '../config/api';
 
-export const useJournalEntries = () => {
+export const useJournalEntries = (isPremium = false, user = null) => {
   const [entries, setEntries] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load entries from localStorage with migration
+  // Load entries from localStorage or database
   useEffect(() => {
-    try {
+    const loadEntries = async () => {
+      setIsLoading(true);
+      try {
+        if (isPremium && user) {
+          // Load from database for premium users
+          console.log('🔄 Loading journal entries from database...');
+          const response = await axios.get(API_ENDPOINTS.JOURNAL_ENTRIES.GET_ALL, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('reflectWithin_token')}` }
+          });
+          
+          // Convert array to object format for consistency
+          const entriesObject = {};
+          response.data.entries.forEach(entry => {
+            entriesObject[entry.id] = {
+              date: entry.date,
+              content: entry.content,
+              topics: entry.topics || [],
+              attachments: entry.attachments || [],
+              template: entry.template,
+              tags: entry.tags || [],
+              mood: entry.mood,
+              energy: entry.energy,
+              wordCount: entry.wordCount || 0,
+              createdAt: entry.createdAt,
+              updatedAt: entry.updatedAt
+            };
+          });
+          
+          setEntries(entriesObject);
+          console.log(`✅ Loaded ${Object.keys(entriesObject).length} entries from database`);
+        } else {
+          // Load from localStorage for free users
+          console.log('🔄 Loading journal entries from localStorage...');
       const savedEntries = localStorage.getItem('reflectWithin_journal_entries');
       if (savedEntries) {
         const parsedEntries = JSON.parse(savedEntries);
@@ -54,20 +89,42 @@ export const useJournalEntries = () => {
         });
         
         setEntries(migratedEntries);
+            console.log(`✅ Loaded ${Object.keys(migratedEntries).length} entries from localStorage`);
+          }
       }
     } catch (error) {
       console.error('Error loading journal entries:', error);
-    }
-  }, []);
+        // Fallback to localStorage if database fails
+        if (isPremium && user) {
+          console.log('⚠️ Database load failed, falling back to localStorage');
+          const savedEntries = localStorage.getItem('reflectWithin_journal_entries');
+          if (savedEntries) {
+            setEntries(JSON.parse(savedEntries));
+          }
+        }
+      } finally {
+        setIsLoading(false);
+        setIsInitialized(true);
+      }
+    };
 
-  // Save entries to localStorage
+    loadEntries();
+  }, [isPremium, user]);
+
+  // Save entries to localStorage (for free users) or database (for premium users)
   useEffect(() => {
+    if (!isInitialized) return;
+
     try {
+      if (!isPremium || !user) {
+        // Save to localStorage for free users
       localStorage.setItem('reflectWithin_journal_entries', JSON.stringify(entries));
+      }
+      // For premium users, entries are saved to database immediately when created/updated
     } catch (error) {
       console.error('Error saving journal entries:', error);
     }
-  }, [entries]);
+  }, [entries, isPremium, user, isInitialized]);
 
   // Calculate word count
   const calculateWordCount = (content) => {
@@ -80,7 +137,7 @@ export const useJournalEntries = () => {
     setIsLoading(true);
     try {
       const timestamp = new Date().toISOString();
-      const entryId = options.entryId || timestamp; // Use provided ID or timestamp
+      let entryId = options.entryId || timestamp; // Use provided ID or timestamp
       
       // Ensure topics is always an array
       const topicsArray = Array.isArray(topics) ? topics : topics ? [topics] : [];
@@ -107,10 +164,45 @@ export const useJournalEntries = () => {
         newEntry.createdAt = entries[options.entryId].createdAt;
       }
       
+      if (isPremium && user) {
+        // Save to database for premium users
+        try {
+          const token = localStorage.getItem('reflectWithin_token');
+          if (options.entryId) {
+            // Update existing entry
+            await axios.put(API_ENDPOINTS.JOURNAL_ENTRIES.UPDATE(options.entryId), newEntry, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+          } else {
+            // Create new entry
+            const response = await axios.post(API_ENDPOINTS.JOURNAL_ENTRIES.SAVE, newEntry, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            entryId = response.data.entry.id; // Use the database-generated ID
+          }
+          
+          // Update local state with database ID
+          setEntries(prev => ({
+            ...prev,
+            [entryId]: { ...newEntry, id: entryId }
+          }));
+          
+          console.log('✅ Journal entry saved to database');
+        } catch (error) {
+          console.error('Failed to save to database:', error);
+          // Fallback to localStorage
+          setEntries(prev => ({
+            ...prev,
+            [entryId]: newEntry
+          }));
+        }
+      } else {
+        // Save to localStorage for free users
       setEntries(prev => ({
         ...prev,
         [entryId]: newEntry
       }));
+      }
       
       await new Promise(resolve => setTimeout(resolve, 500));
       return { success: true, entryId };
@@ -120,7 +212,7 @@ export const useJournalEntries = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [entries]);
+  }, [entries, isPremium, user]);
 
   // Delete entry
   const deleteEntry = useCallback(async (entryId) => {
@@ -136,6 +228,20 @@ export const useJournalEntries = () => {
         });
       }
 
+      if (isPremium && user) {
+        // Delete from database for premium users
+        try {
+          const token = localStorage.getItem('reflectWithin_token');
+          await axios.delete(API_ENDPOINTS.JOURNAL_ENTRIES.DELETE(entryId), {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          console.log('✅ Journal entry deleted from database');
+        } catch (error) {
+          console.error('Failed to delete from database:', error);
+        }
+      }
+
+      // Remove from local state
       setEntries(prev => {
         const newEntries = { ...prev };
         delete newEntries[entryId];
@@ -150,7 +256,7 @@ export const useJournalEntries = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [entries]);
+  }, [entries, isPremium, user]);
 
   // Get entries for a specific date
   const getEntriesForDate = useCallback((date) => {
@@ -173,137 +279,91 @@ export const useJournalEntries = () => {
     return getAllEntries.slice(0, 10);
   }, [getAllEntries]);
 
-  // Search entries
-  const searchEntries = useCallback((query, filters = {}) => {
-    return getAllEntries.filter(entry => {
-      // Text search
-      const matchesSearch = !query || 
-        entry.content.toLowerCase().includes(query.toLowerCase()) ||
-        entry.topics?.some(topic => 
-          topic.toLowerCase().includes(query.toLowerCase())
-        ) ||
-        entry.tags?.some(tag => 
-          tag.toLowerCase().includes(query.toLowerCase())
-        );
-
-      // Date range filter
-      let matchesDateRange = true;
-      if (filters.dateRange && filters.dateRange !== 'all') {
+  // Get entries for a specific month
+  const getEntriesForMonth = useCallback((year, month) => {
+    const monthEntries = {};
+    Object.entries(entries).forEach(([id, entry]) => {
         const entryDate = new Date(entry.date);
-        const today = new Date();
-        const daysDiff = Math.floor((today - entryDate) / (1000 * 60 * 60 * 24));
-
-        switch (filters.dateRange) {
-          case 'today':
-            matchesDateRange = daysDiff === 0;
-            break;
-          case 'week':
-            matchesDateRange = daysDiff <= 7;
-            break;
-          case 'month':
-            matchesDateRange = daysDiff <= 30;
-            break;
-          case 'custom':
-            if (filters.dateFrom && filters.dateTo) {
-              const fromDate = new Date(filters.dateFrom);
-              const toDate = new Date(filters.dateTo);
-              matchesDateRange = entryDate >= fromDate && entryDate <= toDate;
-            }
-            break;
-          default:
-            matchesDateRange = true;
-            break;
+      if (entryDate.getFullYear() === year && entryDate.getMonth() === month) {
+        if (!monthEntries[entry.date]) {
+          monthEntries[entry.date] = [];
         }
+        monthEntries[entry.date].push({ id, ...entry });
       }
-
-      // Topics filter
-      const matchesTopics = !filters.topics || filters.topics.length === 0 ||
-        filters.topics.some(topic => 
-          entry.topics?.includes(topic)
-        );
-
-      // Attachments filter
-      const matchesAttachments = !filters.hasAttachments ||
-        (entry.attachments && entry.attachments.length > 0);
-
-      // Mood filter
-      const matchesMood = !filters.mood || entry.mood === filters.mood;
-
-      // Template filter
-      const matchesTemplate = !filters.template || entry.template === filters.template;
-
-      return matchesSearch && matchesDateRange && matchesTopics && matchesAttachments && matchesMood && matchesTemplate;
     });
-  }, [getAllEntries]);
+    return monthEntries;
+  }, [entries]);
+
+  // Search entries
+  const searchEntries = useCallback((query) => {
+    const searchTerm = query.toLowerCase();
+    return Object.entries(entries)
+      .filter(([id, entry]) => 
+        entry.content.toLowerCase().includes(searchTerm) ||
+        entry.topics.some(topic => topic.toLowerCase().includes(searchTerm)) ||
+        entry.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+      )
+      .map(([id, entry]) => ({ id, ...entry }))
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [entries]);
 
   // Get statistics
-  const getStats = useMemo(() => {
-    const totalEntries = getAllEntries.length;
-    const totalWords = getAllEntries.reduce((sum, entry) => sum + (entry.wordCount || 0), 0);
-    const totalAttachments = getAllEntries.reduce((sum, entry) => sum + (entry.attachments?.length || 0), 0);
+  const getStats = useCallback(() => {
+    const totalEntries = Object.keys(entries).length;
+    const totalWords = Object.values(entries).reduce((sum, entry) => sum + (entry.wordCount || 0), 0);
+    const averageWords = totalEntries > 0 ? Math.round(totalWords / totalEntries) : 0;
+    
+    // Get unique dates
+    const uniqueDates = new Set(Object.values(entries).map(entry => entry.date)).size;
+    
+    // Get total attachments
+    const totalAttachments = Object.values(entries).reduce((sum, entry) => 
+      sum + (entry.attachments?.length || 0), 0
+    );
     
     // Get unique topics
-    const allTopics = new Set();
-    getAllEntries.forEach(entry => {
-      if (entry.topics) {
-        entry.topics.forEach(topic => allTopics.add(topic));
-      }
-    });
+    const allTopics = Object.values(entries).flatMap(entry => entry.topics || []);
+    const uniqueTopics = [...new Set(allTopics)];
 
     // Get mood distribution
-    const moodCounts = {};
-    getAllEntries.forEach(entry => {
+    const moodStats = {};
+    Object.values(entries).forEach(entry => {
       if (entry.mood) {
-        moodCounts[entry.mood] = (moodCounts[entry.mood] || 0) + 1;
+        moodStats[entry.mood] = (moodStats[entry.mood] || 0) + 1;
       }
     });
 
-    // Get most used templates
-    const templateCounts = {};
-    getAllEntries.forEach(entry => {
-      if (entry.template) {
-        templateCounts[entry.template] = (templateCounts[entry.template] || 0) + 1;
-      }
+    // Get topic distribution
+    const topicStats = {};
+    Object.values(entries).forEach(entry => {
+      entry.topics.forEach(topic => {
+        topicStats[topic] = (topicStats[topic] || 0) + 1;
+      });
     });
 
     return {
       totalEntries,
       totalWords,
+      averageWords,
+      uniqueDates,
       totalAttachments,
-      uniqueTopics: Array.from(allTopics),
-      moodDistribution: moodCounts,
-      templateUsage: templateCounts,
-      averageWordsPerEntry: totalEntries > 0 ? Math.round(totalWords / totalEntries) : 0
+      uniqueTopics,
+      moodStats,
+      topicStats
     };
-  }, [getAllEntries]);
-
-  // Get entries with attachments
-  const getEntriesWithAttachments = useMemo(() => {
-    return getAllEntries.filter(entry => entry.attachments && entry.attachments.length > 0);
-  }, [getAllEntries]);
-
-  // Get entries by template
-  const getEntriesByTemplate = useCallback((template) => {
-    return getAllEntries.filter(entry => entry.template === template);
-  }, [getAllEntries]);
-
-  // Get entries by mood
-  const getEntriesByMood = useCallback((mood) => {
-    return getAllEntries.filter(entry => entry.mood === mood);
-  }, [getAllEntries]);
+  }, [entries]);
 
   return {
     entries,
     isLoading,
+    isInitialized,
     saveEntry,
     deleteEntry,
     getEntriesForDate,
     getAllEntries,
     getRecentEntries,
+    getEntriesForMonth,
     searchEntries,
-    getStats,
-    getEntriesWithAttachments,
-    getEntriesByTemplate,
-    getEntriesByMood
+    getStats
   };
 }; 

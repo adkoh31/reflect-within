@@ -52,9 +52,15 @@ export const useOnboarding = (user) => {
     // Save to localStorage with user-specific keys
     const userOnboardingKey = `reflectWithin_onboarding_completed_${user?.id || user?.email}`;
     const userOnboardingDataKey = `reflectWithin_onboarding_data_${user?.id || user?.email}`;
+    const userGoalsKey = `reflectWithin_user_goals_${user?.id || user?.email}`;
     
     localStorage.setItem(userOnboardingKey, 'true');
     localStorage.setItem(userOnboardingDataKey, JSON.stringify(data));
+    
+    // Save goals separately if they exist
+    if (data.goals) {
+      localStorage.setItem(userGoalsKey, JSON.stringify(data.goals));
+    }
   };
 
   const skipOnboarding = () => {

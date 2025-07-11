@@ -112,29 +112,12 @@ export const useMessages = (
   }, [setMessages]);
 
   const handleSaveChat = useCallback((onSuccess) => {
-    try {
-      const chatText = messages.map(msg => 
-        `[${msg.timestamp}] ${msg.sender === 'user' ? 'You' : 'ReflectWithin'}: ${msg.text}`
-      ).join('\n\n');
-      
-      const blob = new Blob([chatText], { type: 'text/plain' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `reflectwithin_${new Date().toISOString().split('T')[0]}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      
-      // Show success feedback
-      if (onSuccess) {
-        onSuccess();
-      }
-    } catch (error) {
-      console.error('Failed to save chat:', error);
+    // This function is deprecated - use DataManagementModal instead
+    console.warn('handleSaveChat is deprecated. Use DataManagementModal for chat export.');
+    if (onSuccess) {
+      onSuccess();
     }
-  }, [messages]);
+  }, []);
 
   const handleKeyPress = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {

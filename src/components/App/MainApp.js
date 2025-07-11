@@ -13,7 +13,6 @@ import HomeTab from './HomeTab';
 import ChatWindow from '../Chat/ChatWindow';
 import Journal from '../Journal/Journal';
 import InsightsDashboard from '../Insights/InsightsDashboard';
-import DisclaimerModal from '../DisclaimerModal';
 import UserProfile from '../Auth/UserProfile';
 import ErrorModal from '../ErrorModal';
 import NetworkStatus from '../NetworkStatus';
@@ -47,7 +46,6 @@ const MainApp = ({
   const [messages, setMessages] = React.useState([]);
   const [inputText, setInputText] = React.useState('');
   const [isLoading, setIsLoading] = React.useState(false);
-  const [showDisclaimer, setShowDisclaimer] = React.useState(false);
   const [isListening, setIsListening] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState('home');
   const [isPremium, setIsPremium] = React.useState(false);
@@ -117,12 +115,7 @@ const MainApp = ({
         localStorage.removeItem('reflectWithin_messages');
       }
     }
-    
-    const hasSeenDisclaimer = localStorage.getItem('reflectWithin_disclaimer');
-    if (!hasSeenDisclaimer) {
-      setShowDisclaimer(true);
-    }
-  }, [setMessages, setShowDisclaimer]);
+  }, [setMessages]);
 
   useEffect(() => {
     try {
@@ -143,12 +136,6 @@ const MainApp = ({
   }, [messages, activeTab, generateInsights]);
 
   // Handlers
-  const handleDisclaimerClose = useCallback(() => {
-    setShowDisclaimer(false);
-    localStorage.setItem('reflectWithin_disclaimer', 'true');
-  }, [setShowDisclaimer]);
-
-  // Home tab action handler
   const handleHomeAction = useCallback((action) => {
     if (action === 'voice') {
       setActiveTab('chat');
@@ -292,6 +279,9 @@ const MainApp = ({
                 browserSupportsSpeechRecognition={browserSupportsSpeechRecognition}
                 transcript={transcript}
                 microphoneStatus={microphoneStatus}
+                isPremium={isPremium}
+                user={user}
+                messages={messages}
               />
             </motion.div>
           )}
@@ -368,10 +358,6 @@ const MainApp = ({
         onRetry={() => setShowErrorModal(false)}
         onAction={handleErrorAction}
       />
-
-      {showDisclaimer && (
-        <DisclaimerModal showDisclaimer={showDisclaimer} onClose={handleDisclaimerClose} />
-      )}
 
       {/* Success Toast */}
       <SuccessToast 

@@ -101,17 +101,17 @@ const HomeTab = React.memo(({
             
             {/* The actual card */}
             <div className="relative bg-slate-950/95 backdrop-blur-md rounded-2xl border border-slate-700/50 p-4 sm:p-6 lg:p-8 text-center h-full">
-              <div className="flex flex-col items-center space-y-3 sm:space-y-4">
-                <div>
+              <div className="flex flex-col items-center justify-center space-y-3 sm:space-y-4 h-full">
+                <div className="w-full text-center">
                   <Typography 
                     variant="title" 
                     color="primary" 
                     weight="semibold" 
-                    className="mb-2 text-slate-50 text-lg sm:text-xl lg:text-2xl"
+                    className="mb-2 text-slate-50 text-lg sm:text-xl lg:text-2xl text-center"
                   >
                     {greeting}, {user?.name?.split(' ')[0] || 'there'}!
                   </Typography>
-                  <Typography variant="body" color="muted" weight="normal" className="text-base sm:text-lg text-slate-300">
+                  <Typography variant="body" color="muted" weight="normal" className="text-base sm:text-lg text-slate-300 text-center">
                     Ready to reflect on your journey?
                   </Typography>
                 </div>

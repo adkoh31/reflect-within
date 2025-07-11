@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 
+// Model for storing chat conversations (user input + AI response)
+// This is different from JournalEntry which stores structured journal entries
 const reflectionSchema = new mongoose.Schema({
   userInput: { type: String, required: true },
   aiQuestion: { type: String, required: true },

@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const { ipRateLimiter } = require('./middleware/rateLimit');
 require('dotenv').config();
 
 const app = express();
@@ -40,13 +41,15 @@ const corsOptions = {
 
 // Middleware
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' })); // Limit request body size
+app.use(ipRateLimiter); // Apply rate limiting to all routes
 
 // Import routes
 const reflectRoutes = require('./routes/reflect');
 const authRoutes = require('./routes/auth');
 const insightsRoutes = require('./routes/insights');
 const journalRoutes = require('./routes/journal');
+const journalEntriesRoutes = require('./routes/journalEntries');
 const workoutRoutes = require('./routes/workout');
 
 // Use routes
@@ -54,6 +57,7 @@ app.use('/api', reflectRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/insights', insightsRoutes);
 app.use('/api/journal', journalRoutes);
+app.use('/api/journal-entries', journalEntriesRoutes);
 app.use('/api/workout', workoutRoutes);
 
 // MongoDB connection
@@ -76,7 +80,12 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     message: 'ReflectWithin API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    security: {
+      rateLimiting: 'enabled',
+      contentValidation: 'enabled',
+      cors: 'configured'
+    }
   });
 });
 
@@ -106,4 +115,5 @@ app.listen(PORT, () => {
   console.log(`🚀 ReflectWithin server running on port ${PORT}`);
   console.log(`📱 Frontend should be running on http://localhost:3000`);
   console.log(`🔗 API available at http://localhost:${PORT}/api`);
+  console.log(`🔒 Security features: Rate limiting, Content validation, CORS enabled`);
 }); 

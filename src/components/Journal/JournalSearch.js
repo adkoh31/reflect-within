@@ -7,8 +7,6 @@ import {
   Clock, 
   MessageSquare, 
   TrendingUp, 
-  Zap, 
-  Heart,
   Filter
 } from 'lucide-react';
 

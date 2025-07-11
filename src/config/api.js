@@ -18,6 +18,14 @@ export const API_ENDPOINTS = {
   },
   JOURNAL: {
     GENERATE_ENTRY: `${API_BASE_URL}/api/generate-journal-entry`
+  },
+  JOURNAL_ENTRIES: {
+    SAVE: `${API_BASE_URL}/api/journal-entries`,
+    GET_ALL: `${API_BASE_URL}/api/journal-entries`,
+    GET_BY_ID: (id) => `${API_BASE_URL}/api/journal-entries/${id}`,
+    UPDATE: (id) => `${API_BASE_URL}/api/journal-entries/${id}`,
+    DELETE: (id) => `${API_BASE_URL}/api/journal-entries/${id}`,
+    STATS: `${API_BASE_URL}/api/journal-entries/stats`
   }
 };
 

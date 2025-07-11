@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import PremiumToggle from '../PremiumToggle';
+import ProfileGoalsSection from './ProfileGoalsSection';
 
 const UserProfile = ({ user, onLogout, onUpdateProfile, isPremium, onPremiumToggle }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -170,6 +171,9 @@ const UserProfile = ({ user, onLogout, onUpdateProfile, isPremium, onPremiumTogg
               }
             </p>
           </div>
+
+          {/* My Goals Section */}
+          <ProfileGoalsSection user={user} />
 
           <div className="pt-4 border-t border-border">
             <button

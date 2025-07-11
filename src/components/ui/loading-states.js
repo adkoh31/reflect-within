@@ -137,3 +137,42 @@ export const Shimmer = ({ className = "" }) => (
     <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
   </div>
 ); 
+
+// Progress Bar for Long Operations
+export const ProgressBar = ({ progress = 0, className = "", ...props }) => (
+  <div className={`w-full bg-slate-700/50 rounded-full h-2 ${className}`} {...props}>
+    <motion.div
+      className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full"
+      initial={{ width: 0 }}
+      animate={{ width: `${progress}%` }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+    />
+  </div>
+);
+
+// Content Shimmer Effect
+export const ContentShimmer = ({ className = "", ...props }) => (
+  <div className={`relative overflow-hidden ${className}`} {...props}>
+    <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+    <div className="h-full bg-slate-700/50 rounded" />
+  </div>
+);
+
+// Pulsing Button State
+export const PulsingButton = ({ children, isActive = false, className = "", ...props }) => (
+  <motion.button
+    className={`relative ${className}`}
+    animate={isActive ? { scale: [1, 1.05, 1] } : {}}
+    transition={{ duration: 1.5, repeat: isActive ? Infinity : 0 }}
+    {...props}
+  >
+    {children}
+    {isActive && (
+      <motion.div
+        className="absolute inset-0 rounded-full border-2 border-cyan-400"
+        animate={{ scale: [1, 1.2, 1], opacity: [1, 0, 1] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      />
+    )}
+  </motion.button>
+); 

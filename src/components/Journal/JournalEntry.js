@@ -1,20 +1,30 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { 
   Edit3, 
   Trash2, 
-  Zap, 
-  Heart,
-  FileText,
-  Image,
   Mic,
   MicOff,
   Save,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 import MediaAttachment from './MediaAttachment';
 import JournalTemplates from './JournalTemplates';
 import TopicSelector from './TopicSelector';
+
+// Lazy load RichTextEditor
+const RichTextEditor = lazy(() => import('../RichTextEditor'));
+
+// Loading component for rich text editor
+const EditorLoadingSpinner = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="flex flex-col items-center space-y-2">
+      <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
+      <span className="text-sm text-slate-400">Loading editor...</span>
+    </div>
+  </div>
+);
 
 const JournalEntry = ({ 
   selectedDate, 
@@ -37,7 +47,7 @@ const JournalEntry = ({
   const [isEditing, setIsEditing] = useState(!entry);
   const [showTemplates, setShowTemplates] = useState(false);
   const [wordCount, setWordCount] = useState(0);
-  const textareaRef = useRef(null);
+  const [useRichText, setUseRichText] = useState(true); // Default to rich text
 
   // Mood options
   const moodOptions = [
@@ -69,24 +79,27 @@ const JournalEntry = ({
     setIsEditing(!entry);
   }, [entry, selectedDate]);
 
-  useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, [isEditing]);
-
   // Update content when transcript changes
   useEffect(() => {
     if (transcript && isEditing) {
-      setContent(prev => prev + (prev ? ' ' : '') + transcript);
+      if (useRichText) {
+        // For rich text, append as plain text
+        setContent(prev => prev + (prev ? ' ' : '') + transcript);
+      } else {
+        // For plain text, append directly
+        setContent(prev => prev + (prev ? ' ' : '') + transcript);
+      }
     }
-  }, [transcript, isEditing]);
+  }, [transcript, isEditing, useRichText]);
 
-  // Calculate word count
+  // Calculate word count (strip HTML tags for rich text)
   useEffect(() => {
-    const words = content.trim().split(/\s+/).filter(word => word.length > 0);
+    const textContent = useRichText 
+      ? content.replace(/<[^>]*>/g, ' ') // Strip HTML tags
+      : content;
+    const words = textContent.trim().split(/\s+/).filter(word => word.length > 0);
     setWordCount(words.length);
-  }, [content]);
+  }, [content, useRichText]);
 
   const handleSave = () => {
     if (content.trim()) {
@@ -109,17 +122,13 @@ const JournalEntry = ({
     }
   };
 
-  const handleTemplateSelect = (selectedTemplate) => {
-    setTemplate(selectedTemplate.id);
-    setShowTemplates(false);
-    
-    // If content is empty, populate with template prompts
-    if (!content.trim()) {
-      const templateContent = selectedTemplate.prompts
-        .map((prompt, index) => `${index + 1}. ${prompt}`)
-        .join('\n\n');
-      setContent(templateContent);
-    }
+  const handleContentChange = (newContent) => {
+    setContent(newContent);
+  };
+
+  const isToday = (date) => {
+    const today = new Date();
+    return date.toDateString() === today.toDateString();
   };
 
   const formatDate = (date) => {
@@ -129,21 +138,6 @@ const JournalEntry = ({
       month: 'long', 
       day: 'numeric' 
     });
-  };
-
-  const isToday = (date) => {
-    const today = new Date();
-    return date.toDateString() === today.toDateString();
-  };
-
-  const getMoodEmoji = (moodValue) => {
-    const moodOption = moodOptions.find(m => m.value === moodValue);
-    return moodOption ? moodOption.emoji : '😐';
-  };
-
-  const getEnergyColor = (level) => {
-    const energyLevel = energyLevels.find(e => e.value === level);
-    return energyLevel ? energyLevel.color : 'from-slate-500 to-gray-500';
   };
 
   return (
@@ -203,7 +197,10 @@ const JournalEntry = ({
             {template && (
               <div className="p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
                 <p className="text-xs text-slate-300">
-                  <span className="font-medium">Using template:</span> {template}
+                  <span className="font-medium">Using template:</span> {template.title || template}
+                </p>
+                <p className="text-xs text-slate-400 mt-1">
+                  {template.description || 'Template selected'}
                 </p>
               </div>
             )}
@@ -211,30 +208,28 @@ const JournalEntry = ({
 
           {/* Mood and Energy Tracking */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Mood Selection */}
             <div>
               <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">
                 How are you feeling?
               </label>
-              <div className="flex flex-wrap gap-2">
-                {moodOptions.map((moodOption) => (
+              <div className="flex gap-1">
+                {moodOptions.map((option) => (
                   <button
-                    key={moodOption.value}
-                    onClick={() => setMood(moodOption.value)}
-                    className={`flex items-center gap-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                      mood === moodOption.value
-                        ? `bg-gradient-to-r ${moodOption.color} text-white shadow-lg`
+                    key={option.value}
+                    onClick={() => setMood(option.value)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                      mood === option.value
+                        ? `bg-gradient-to-r ${option.color} text-white shadow-lg`
                         : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700/80 border border-slate-600/50'
                     }`}
                   >
-                    <span>{moodOption.emoji}</span>
-                    {moodOption.label}
+                    <span className="mr-1">{option.emoji}</span>
+                    {option.label}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Energy Level */}
             <div>
               <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">
                 Energy Level (1-5)
@@ -265,89 +260,71 @@ const JournalEntry = ({
             />
           </div>
           
-          {/* Content Textarea */}
+          {/* Content Editor */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-xs sm:text-sm font-medium text-slate-300">
                 Your Entry
               </label>
-              <span className="text-xs text-slate-500">
-                {wordCount} words
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500">
+                  {wordCount} words
+                </span>
+                <button
+                  onClick={() => setUseRichText(!useRichText)}
+                  className="text-xs text-slate-400 hover:text-slate-300 transition-colors"
+                  title={useRichText ? "Switch to plain text" : "Switch to rich text"}
+                >
+                  {useRichText ? "Plain Text" : "Rich Text"}
+                </button>
+              </div>
             </div>
-            <div className="relative">
-              <textarea
-                ref={textareaRef}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Write your private thoughts, reflections, or experiences for today..."
-                className="w-full h-32 sm:h-48 p-3 sm:p-4 pr-12 border border-slate-700/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 bg-slate-800/50 text-slate-50 placeholder-slate-400 font-normal text-sm resize-none"
-              />
-              {/* Voice Input Button */}
-              <button
-                onClick={onSpeechToggle}
-                disabled={!browserSupportsSpeechRecognition || microphoneStatus === 'requesting'}
-                className="absolute top-2 sm:top-3 right-2 sm:right-3 p-2 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg transition-all duration-200 border border-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed min-h-[32px] min-w-[32px] flex items-center justify-center"
-                title={
-                  !browserSupportsSpeechRecognition ? 'Speech recognition not supported' : 
-                  microphoneStatus === 'requesting' ? 'Requesting microphone access...' :
-                  microphoneStatus === 'denied' ? 'Microphone access denied. Please allow access in browser settings.' :
-                  isListening ? 'Stop listening' : 'Click to speak - I\'ll listen for up to 30 seconds'
-                }
-              >
-                {microphoneStatus === 'requesting' ? (
-                  <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-                ) : isListening ? (
-                  <MicOff className="w-4 h-4 text-slate-300" />
-                ) : (
-                  <Mic className="w-4 h-4 text-slate-300" />
+            
+            {useRichText ? (
+              <Suspense fallback={<EditorLoadingSpinner />}>
+                <RichTextEditor
+                  content={content}
+                  onChange={handleContentChange}
+                  placeholder="Write your private thoughts, reflections, or experiences for today..."
+                  autoFocus={isEditing}
+                  className="min-h-[200px]"
+                />
+              </Suspense>
+            ) : (
+              <div className="relative">
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Write your private thoughts, reflections, or experiences for today..."
+                  className="w-full h-32 sm:h-48 p-3 sm:p-4 pr-12 border border-slate-700/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 bg-slate-800/50 text-slate-50 placeholder-slate-400 font-normal text-sm resize-none"
+                />
+                {/* Voice Input Button */}
+                {browserSupportsSpeechRecognition && (
+                  <button
+                    onClick={onSpeechToggle}
+                    disabled={isListening}
+                    className="absolute right-3 bottom-3 p-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 hover:text-slate-100 transition-all duration-200 disabled:opacity-50"
+                    title={isListening ? "Stop recording" : "Start voice input"}
+                  >
+                    {isListening ? (
+                      <MicOff className="w-4 h-4" />
+                    ) : (
+                      <Mic className="w-4 h-4" />
+                    )}
+                  </button>
                 )}
-              </button>
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Media Attachments */}
           <div>
-            <label className="block text-xs sm:text-sm font-medium text-slate-300 mb-2">
-              Media Attachments
-            </label>
             <MediaAttachment
               attachments={attachments}
               onAttachmentsChange={setAttachments}
-              disabled={false}
+              disabled={isLoading}
             />
           </div>
-          
-          {/* Listening Indicator for Journal */}
-          {isListening && (
-            <div className="p-3 sm:p-4 bg-slate-800/80 rounded-lg border border-slate-700/50">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs sm:text-sm text-slate-300 font-normal">
-                  <span className="font-medium">Listening...</span>
-                </p>
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-300 font-normal mb-2">
-                {transcript || 'Start speaking...'}
-              </p>
-              <div className="text-xs text-slate-400 font-normal">
-                💡 Speak your thoughts naturally. I'll stop listening after 3 seconds of silence.
-              </div>
-            </div>
-          )}
-
-          {/* Microphone Access Error */}
-          {microphoneStatus === 'denied' && (
-            <div className="p-3 bg-red-900/20 border border-red-700/30 rounded-lg">
-              <p className="text-xs sm:text-sm text-red-300 font-normal">
-                <span className="font-medium">Microphone access denied.</span> Please allow microphone access in your browser settings to use voice input.
-              </p>
-            </div>
-          )}
           
           <div className="flex flex-col sm:flex-row gap-3">
             <button
@@ -377,34 +354,20 @@ const JournalEntry = ({
           </div>
         </div>
       ) : (
-        /* Read-only view */
+        // Read-only view
         <div className="space-y-4">
-          {/* Entry Metadata */}
-          {(mood || energy || template || attachments.length > 0) && (
-            <div className="flex flex-wrap gap-2 p-3 bg-slate-800/50 rounded-lg border border-slate-600/50">
+          {/* Mood and Energy Display */}
+          {(mood || energy) && (
+            <div className="flex flex-wrap gap-2">
               {mood && (
-                <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/80 rounded-full text-xs">
-                  <span>{getMoodEmoji(mood)}</span>
-                  <span className="text-slate-300">Mood</span>
-                </div>
+                <span className="px-3 py-1 bg-slate-800/50 text-slate-300 rounded-full text-sm font-medium">
+                  {moodOptions.find(m => m.value === mood)?.emoji} {moodOptions.find(m => m.value === mood)?.label}
+                </span>
               )}
               {energy && (
-                <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/80 rounded-full text-xs">
-                  <Zap className="w-3 h-3 text-yellow-400" />
-                  <span className="text-slate-300">Energy: {energy}/5</span>
-                </div>
-              )}
-              {template && (
-                <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/80 rounded-full text-xs">
-                  <FileText className="w-3 h-3 text-cyan-400" />
-                  <span className="text-slate-300">{template}</span>
-                </div>
-              )}
-              {attachments.length > 0 && (
-                <div className="flex items-center gap-1 px-2 py-1 bg-slate-700/80 rounded-full text-xs">
-                  <Image className="w-3 h-3 text-green-400" />
-                  <span className="text-slate-300">{attachments.length} attachment{attachments.length !== 1 ? 's' : ''}</span>
-                </div>
+                <span className="px-3 py-1 bg-slate-800/50 text-slate-300 rounded-full text-sm font-medium">
+                  Energy: {energy}/5
+                </span>
               )}
             </div>
           )}
@@ -425,9 +388,16 @@ const JournalEntry = ({
 
           {/* Content */}
           <div className="prose prose-invert max-w-none">
-            <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
-              {content}
-            </p>
+            {useRichText ? (
+              <div 
+                className="text-slate-300 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: content }}
+              />
+            ) : (
+              <p className="text-slate-300 leading-relaxed whitespace-pre-wrap">
+                {content}
+              </p>
+            )}
           </div>
 
           {/* Attachments Display */}
@@ -470,7 +440,15 @@ const JournalEntry = ({
       <AnimatePresence>
         {showTemplates && (
           <JournalTemplates
-            onSelectTemplate={handleTemplateSelect}
+            onSelectTemplate={(selectedTemplate) => {
+              setTemplate(selectedTemplate);
+              // Populate content with template prompts
+              const templateContent = selectedTemplate.prompts.map((prompt, index) => 
+                `${index + 1}. ${prompt}\n\n`
+              ).join('');
+              setContent(templateContent);
+              setShowTemplates(false);
+            }}
             onClose={() => setShowTemplates(false)}
           />
         )}

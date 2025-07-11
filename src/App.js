@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import axios from 'axios';
 import { AppProvider } from './contexts/AppContext';
 import ViewManager from './components/App/ViewManager';
 import { useAppState } from './hooks/useAppState';

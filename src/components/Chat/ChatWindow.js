@@ -1,6 +1,12 @@
-import React, { memo, useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, memo, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Mic, MicOff } from 'lucide-react';
+
+// Enhanced UI components
+import { GestureButton } from '../ui/gesture-feedback';
+import { VoiceVisualizer, VoiceStatusIndicator } from '../ui/voice-visualizer';
+import { EnhancedTypingIndicator } from '../ui/typing-indicator';
+import { PulsingButton } from '../ui/loading-states';
 
 const ChatWindow = memo(({ 
   messages,
@@ -225,16 +231,10 @@ const ChatWindow = memo(({
         
         {isLoading && (
           <div className="flex justify-start" role="status" aria-live="polite">
-            <div className="bg-slate-800/80 border border-slate-700/50 px-4 py-3 rounded-xl max-w-[85%] sm:max-w-[70%] lg:max-w-[60%]">
-              <div className="flex items-center space-x-2">
-                <div className="flex space-x-1" aria-hidden="true">
-                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-                <span className="text-xs text-slate-300">Reflecting...</span>
-              </div>
-            </div>
+            <EnhancedTypingIndicator 
+              state="generating"
+              message="Crafting a thoughtful response..."
+            />
           </div>
         )}
         <div ref={chatEndRef} />
@@ -265,8 +265,9 @@ const ChatWindow = memo(({
               </div>
               
               {/* Voice Input Button */}
-              <button
-                onClick={onSpeechToggle}
+              <GestureButton
+                onPress={onSpeechToggle}
+                hapticType="medium"
                 disabled={!browserSupportsSpeechRecognition || microphoneStatus === 'requesting'}
                 className="p-3 bg-slate-800/80 hover:bg-slate-700/80 rounded-xl transition-all duration-200 border border-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] min-w-[44px] flex items-center justify-center"
                 aria-label={
@@ -283,17 +284,18 @@ const ChatWindow = memo(({
                 ) : (
                   <Mic className="w-5 h-5 text-slate-300" aria-hidden="true" />
                 )}
-              </button>
+              </GestureButton>
               
               {/* Send Button */}
-              <button
+              <PulsingButton
                 onClick={onSend}
+                isActive={isLoading}
                 disabled={!inputText.trim() || isLoading}
                 className="px-6 py-3 bg-cyan-500 text-slate-900 rounded-xl hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm transition-all duration-200 min-w-[80px] text-sm sm:text-base min-h-[44px]"
                 aria-label="Send message"
               >
                 {isLoading ? '...' : 'Send'}
-              </button>
+              </PulsingButton>
             </div>
             
             {/* Input Help Text */}
@@ -301,19 +303,18 @@ const ChatWindow = memo(({
               Press Enter to send your message, or use the voice button to speak your reflection.
             </div>
             
-            {/* Listening Indicator */}
+            {/* Enhanced Listening Indicator */}
             {isListening && (
               <div className="mt-3 p-4 bg-slate-800/80 rounded-xl border border-slate-600/50" role="status" aria-live="polite">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm text-slate-200 font-medium">
-                    Listening...
-                  </p>
-                  <div className="flex space-x-1" aria-hidden="true">
-                    <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                    <div className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  </div>
+                <div className="flex items-center justify-between mb-3">
+                  <VoiceStatusIndicator status="listening" />
                 </div>
+                
+                {/* Voice Visualizer */}
+                <div className="mb-3">
+                  <VoiceVisualizer isListening={isListening} barCount={15} />
+                </div>
+                
                 <p className="text-sm text-slate-300 mb-2">
                   {transcript || 'Start speaking...'}
                 </p>

@@ -639,3 +639,228 @@ body {
 .isolate {
   isolation: isolate;
 } 
+
+/* Custom styles for the app */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  min-height: 100vh;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Rich Text Editor Styles */
+.rich-text-editor .ProseMirror {
+  outline: none;
+  min-height: 200px;
+  padding: 1rem;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.rich-text-editor .ProseMirror p {
+  margin: 0.5rem 0;
+}
+
+.rich-text-editor .ProseMirror h1,
+.rich-text-editor .ProseMirror h2,
+.rich-text-editor .ProseMirror h3,
+.rich-text-editor .ProseMirror h4,
+.rich-text-editor .ProseMirror h5,
+.rich-text-editor .ProseMirror h6 {
+  margin: 1rem 0 0.5rem 0;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.rich-text-editor .ProseMirror h1 { font-size: 1.5rem; }
+.rich-text-editor .ProseMirror h2 { font-size: 1.25rem; }
+.rich-text-editor .ProseMirror h3 { font-size: 1.125rem; }
+
+.rich-text-editor .ProseMirror ul,
+.rich-text-editor .ProseMirror ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.rich-text-editor .ProseMirror li {
+  margin: 0.25rem 0;
+}
+
+.rich-text-editor .ProseMirror blockquote {
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  border-left: 4px solid #06b6d4;
+  background: rgba(6, 182, 212, 0.1);
+  border-radius: 0.25rem;
+  font-style: italic;
+}
+
+.rich-text-editor .ProseMirror a {
+  color: #06b6d4;
+  text-decoration: underline;
+}
+
+.rich-text-editor .ProseMirror a:hover {
+  color: #0891b2;
+}
+
+.rich-text-editor .ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.rich-text-editor .ProseMirror mark {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+.rich-text-editor .ProseMirror .is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #64748b;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Focus styles */
+.rich-text-editor .ProseMirror:focus {
+  outline: none;
+}
+
+/* Selection styles */
+.rich-text-editor .ProseMirror ::selection {
+  background: rgba(6, 182, 212, 0.3);
+}
+
+/* Placeholder styles */
+.rich-text-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #64748b;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Text alignment styles */
+.rich-text-editor .ProseMirror .text-left {
+  text-align: left;
+}
+
+.rich-text-editor .ProseMirror .text-center {
+  text-align: center;
+}
+
+.rich-text-editor .ProseMirror .text-right {
+  text-align: right;
+}
+
+/* Code block styles */
+.rich-text-editor .ProseMirror pre {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.rich-text-editor .ProseMirror code {
+  background: #334155;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
+.rich-text-editor .ProseMirror pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Table styles */
+.rich-text-editor .ProseMirror table {
+  border-collapse: collapse;
+  margin: 1rem 0;
+  width: 100%;
+}
+
+.rich-text-editor .ProseMirror th,
+.rich-text-editor .ProseMirror td {
+  border: 1px solid #475569;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.rich-text-editor .ProseMirror th {
+  background: #334155;
+  font-weight: 600;
+}
+
+/* Horizontal rule styles */
+.rich-text-editor .ProseMirror hr {
+  border: none;
+  border-top: 1px solid #475569;
+  margin: 1rem 0;
+}
+
+/* Custom scrollbar for the editor */
+.rich-text-editor .ProseMirror::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rich-text-editor .ProseMirror::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.rich-text-editor .ProseMirror::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+.rich-text-editor .ProseMirror::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Animation for toolbar buttons */
+.rich-text-editor .toolbar-button {
+  transition: all 0.2s ease-in-out;
+}
+
+.rich-text-editor .toolbar-button:hover {
+  transform: translateY(-1px);
+}
+
+.rich-text-editor .toolbar-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive design for mobile */
+@media (max-width: 640px) {
+  .rich-text-editor .ProseMirror {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  .rich-text-editor .toolbar {
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+  
+  .rich-text-editor .toolbar-button {
+    padding: 0.5rem;
+  }
+} 

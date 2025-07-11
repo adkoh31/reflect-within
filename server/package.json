@@ -11,8 +11,10 @@
     "axios": "^1.4.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
+    "dompurify": "^3.2.6",
     "dotenv": "^16.1.4",
     "express": "^4.18.2",
+    "jsdom": "^26.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.16.1"
   },

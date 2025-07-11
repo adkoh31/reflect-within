@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LampBackground } from '../ui/lamp';
 import { TextPressure } from '../ui/interactive-text-pressure';
+import GoalSettingStep from './GoalSettingStep';
 
 const OnboardingFlow = ({ onComplete, onSkip, user }) => {
   const [currentStep, setCurrentStep] = useState(0);
@@ -79,6 +80,15 @@ const OnboardingFlow = ({ onComplete, onSkip, user }) => {
     },
     {
       id: 3,
+      type: 'goal-setting',
+      title: "Set Your Goals",
+      subtitle: "Personalize your experience",
+      description: "Choose what matters most to you and set up your tracking preferences.",
+      icon: "",
+      fields: []
+    },
+    {
+      id: 4,
       title: "You're Ready to Reflect!",
       subtitle: "Start your fitness journey",
       description: "Your workout reflection space is ready. Remember, every workout is progress - let's understand your body better together.",
@@ -118,19 +128,41 @@ const OnboardingFlow = ({ onComplete, onSkip, user }) => {
   };
 
   const handleComplete = () => {
-    // Include user data from authentication
+    // Include user data from authentication and goals
     const onboardingData = {
       email: user?.email,
       name: user?.name,
-      preferredMode: formData.preferredMode
+      preferredMode: formData.preferredMode,
+      goals: formData.goals || null
     };
     onComplete(onboardingData);
+  };
+
+  const handleGoalSettingComplete = (goalData) => {
+    // Store goal data and move to next step
+    setFormData(prev => ({ ...prev, goals: goalData }));
+    setCurrentStep(currentStep + 1);
+  };
+
+  const handleGoalSettingBack = () => {
+    setCurrentStep(currentStep - 1);
   };
 
   const isStepValid = () => {
     // For all steps, always valid since we removed the radio button requirement
     return true;
   };
+
+  // If current step is goal-setting, render the GoalSettingStep component
+  if (currentStepData.type === 'goal-setting') {
+    return (
+      <GoalSettingStep
+        onComplete={handleGoalSettingComplete}
+        onBack={handleGoalSettingBack}
+        user={user}
+      />
+    );
+  }
 
   const renderField = (field) => {
     const commonClasses = "w-full px-4 py-3 border border-white/20 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent bg-white/10 text-white placeholder-white/50 transition-colors duration-200 backdrop-blur-sm";
