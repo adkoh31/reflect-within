@@ -2,10 +2,20 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import ThemeChart from './ThemeChart';
 import MoodChart from './MoodChart';
+import GoalAnalytics from './GoalAnalytics';
 import { BarChart3 } from 'lucide-react';
 import { Typography } from '../Typography/Typography';
 
-const InsightsDashboard = ({ insights, isGeneratingInsights, isPremium, onPremiumToggle, messages = [], onAction }) => {
+const InsightsDashboard = ({ 
+  insights, 
+  isGeneratingInsights, 
+  isPremium, 
+  onPremiumToggle, 
+  messages = [], 
+  onAction,
+  goals = null,
+  journalEntries = {}
+}) => {
   if (!isPremium) {
     return (
       <div className="bg-card rounded-2xl border border-border p-8 text-center">
@@ -33,6 +43,10 @@ const InsightsDashboard = ({ insights, isGeneratingInsights, isPremium, onPremiu
           <div className="flex items-center space-x-3 text-left">
             <div className="w-2 h-2 bg-primary-400 rounded-full"></div>
             <span className="text-sm text-foreground font-light">Visualize your personal growth journey</span>
+          </div>
+          <div className="flex items-center space-x-3 text-left">
+            <div className="w-2 h-2 bg-primary-400 rounded-full"></div>
+            <span className="text-sm text-foreground font-light">Track progress against your personal goals</span>
           </div>
         </div>
         
@@ -71,13 +85,35 @@ const InsightsDashboard = ({ insights, isGeneratingInsights, isPremium, onPremiu
           </div>
         </motion.div>
 
+        {/* Goal Analytics Section */}
+        {goals && (
+          <motion.div
+            className="relative mb-6 sm:mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            {/* Goal Analytics Glow Effect */}
+            <div className="absolute -inset-4 rounded-2xl bg-green-500/20 blur-xl opacity-50"></div>
+            
+            {/* Goal Analytics Content */}
+            <div className="relative bg-slate-900/80 backdrop-blur-md rounded-2xl border border-slate-700/50 p-4 sm:p-6">
+              <GoalAnalytics 
+                goals={goals} 
+                journalEntries={journalEntries} 
+                messages={messages} 
+              />
+            </div>
+          </motion.div>
+        )}
+
         {/* Insights Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           {/* Theme Analysis */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+            transition={{ duration: 0.5, delay: goals ? 0.2 : 0.1 }}
           >
             <ThemeChart insights={insights} />
           </motion.div>
@@ -86,14 +122,14 @@ const InsightsDashboard = ({ insights, isGeneratingInsights, isPremium, onPremiu
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.5, delay: goals ? 0.3 : 0.2 }}
           >
             <MoodChart insights={insights} />
           </motion.div>
         </div>
 
         {/* Empty State */}
-        {(!insights || Object.keys(insights).length === 0) && (
+        {(!insights || Object.keys(insights).length === 0) && !goals && (
           <motion.div
             className="relative mt-6 sm:mt-8"
             initial={{ opacity: 0, y: 20 }}

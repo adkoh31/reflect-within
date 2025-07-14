@@ -28,6 +28,8 @@ import { useUtils } from '../../hooks/useUtils';
 import { useTheme } from '../../hooks/useTheme';
 import { useStreak } from '../../hooks/useStreak';
 import { useSuccessFeedback } from '../../hooks/useSuccessFeedback';
+import { useGoals } from '../../hooks/useGoals';
+import { useJournalEntries } from '../../hooks/useJournalEntries';
 
 const MainApp = ({ 
   user: propUser,
@@ -89,6 +91,10 @@ const MainApp = ({
 
   // Theme
   useTheme();
+
+  // Goals and Journal Entries for analytics
+  const { goals } = useGoals(user);
+  const { entries: journalEntries } = useJournalEntries(isPremium, user);
 
   console.log('🔍 MainApp Debug:', {
     user: user?.email,
@@ -300,6 +306,10 @@ const MainApp = ({
                 isGeneratingInsights={isGeneratingInsights}
                 isPremium={isPremium}
                 onPremiumToggle={() => setIsPremium(!isPremium)}
+                goals={goals}
+                journalEntries={journalEntries}
+                messages={messages}
+                onAction={handleHomeAction}
               />
             </motion.div>
           )}

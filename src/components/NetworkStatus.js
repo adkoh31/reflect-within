@@ -122,24 +122,24 @@ const NetworkStatus = () => {
                 </div>
                 <div className="flex-1">
                   <h3 className="text-sm font-semibold text-slate-50">
-                    You're Offline
-                  </h3>
+              You're Offline
+            </h3>
                   <p className="text-xs text-slate-300 mt-1">
                     Your reflections will be saved locally
-                  </p>
+            </p>
                 </div>
-                <button
-                  onClick={() => setShowOfflineMessage(false)}
+            <button
+              onClick={() => setShowOfflineMessage(false)}
                   className="text-slate-400 hover:text-slate-300 transition-colors"
-                >
+            >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                </button>
-              </div>
-            </div>
+            </button>
+          </div>
+        </div>
           </motion.div>
-        )}
+      )}
       </AnimatePresence>
 
       {/* Sync status toast */}

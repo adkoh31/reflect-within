@@ -6,6 +6,7 @@ import LandingPage from '../Landing/LandingPage';
 import AuthPage from '../Auth/AuthPage';
 import MainApp from './MainApp';
 import OnboardingFlow from '../Onboarding/OnboardingFlow';
+import GoalSettingModal from '../Onboarding/GoalSettingModal';
 
 const ViewManager = ({ 
   currentView, 
@@ -25,6 +26,7 @@ const ViewManager = ({
 }) => {
   const [transitioning, setTransitioning] = useState(false);
   const [previousView, setPreviousView] = useState(currentView);
+  const [showGoalSetting, setShowGoalSetting] = useState(false);
 
   // Handle view transitions
   useEffect(() => {
@@ -38,10 +40,39 @@ const ViewManager = ({
     }
   }, [currentView, previousView]);
 
+  // Show goal-setting modal after onboarding completion
+  useEffect(() => {
+    if (user && !showOnboarding && onboardingData && !onboardingData.goals) {
+      // User completed onboarding but hasn't set goals yet
+      console.log('🎯 Showing goal-setting modal for new user');
+      setShowGoalSetting(true);
+    }
+  }, [user, showOnboarding, onboardingData]);
+
+  // Handle goal-setting completion
+  const handleGoalSettingComplete = (goalData) => {
+    console.log('🎯 Goal-setting completed:', goalData);
+    setShowGoalSetting(false);
+    
+    // Update onboarding data with goals
+    const completeData = {
+      ...onboardingData,
+      goals: goalData.goals
+    };
+    onOnboardingComplete(completeData);
+  };
+
+  // Handle goal-setting skip
+  const handleGoalSettingSkip = () => {
+    console.log('⏭️ Goal-setting skipped');
+    setShowGoalSetting(false);
+  };
+
   // Render different views based on current state
   console.log('🔍 ViewManager Debug:', {
     currentView,
     showOnboarding,
+    showGoalSetting,
     user: user?.email,
     transitioning
   });
@@ -87,6 +118,14 @@ const ViewManager = ({
         setShowProfile={setShowProfile}
         setCurrentView={setCurrentView}
         currentView={currentView}
+      />
+      
+      {/* Goal Setting Modal - appears over main app */}
+      <GoalSettingModal
+        isOpen={showGoalSetting}
+        onClose={handleGoalSettingSkip}
+        onComplete={handleGoalSettingComplete}
+        user={user}
       />
     </LampTransition>
   );

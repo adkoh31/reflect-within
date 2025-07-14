@@ -1,20 +1,48 @@
 import React, { useState } from 'react';
 import { useGoals } from '../../hooks/useGoals';
-import GoalSettingStep from '../Onboarding/GoalSettingStep';
-import { Edit3, CheckCircle } from 'lucide-react';
+import { Edit3, CheckCircle, X, Plus } from 'lucide-react';
 
 const ProfileGoalsSection = ({ user }) => {
   const { goals, saveGoals } = useGoals(user);
   const [isEditing, setIsEditing] = useState(false);
   const [showSaved, setShowSaved] = useState(false);
+  const [editingGoals, setEditingGoals] = useState(goals || { goals: [] });
 
-  const handleEdit = () => setIsEditing(true);
+  const handleEdit = () => {
+    setEditingGoals(goals || { goals: [] });
+    setIsEditing(true);
+  };
+  
   const handleCancel = () => setIsEditing(false);
-  const handleSave = (goalData) => {
-    saveGoals(goalData);
+  
+  const handleSave = () => {
+    saveGoals(editingGoals);
     setIsEditing(false);
     setShowSaved(true);
     setTimeout(() => setShowSaved(false), 2000);
+  };
+
+  const addPersonalGoal = () => {
+    setEditingGoals(prev => ({
+      ...prev,
+      goals: [...(prev.goals || []), { id: Date.now(), title: '', description: '' }]
+    }));
+  };
+
+  const updatePersonalGoal = (id, field, value) => {
+    setEditingGoals(prev => ({
+      ...prev,
+      goals: prev.goals.map(goal => 
+        goal.id === id ? { ...goal, [field]: value } : goal
+      )
+    }));
+  };
+
+  const removePersonalGoal = (id) => {
+    setEditingGoals(prev => ({
+      ...prev,
+      goals: prev.goals.filter(goal => goal.id !== id)
+    }));
   };
 
   if (!user) return null;
@@ -22,11 +50,64 @@ const ProfileGoalsSection = ({ user }) => {
   if (isEditing) {
     return (
       <div className="bg-card rounded-2xl border border-border p-6 mt-6 max-h-[70vh] overflow-y-auto">
-        <GoalSettingStep
-          onComplete={handleSave}
-          onBack={handleCancel}
-          user={user}
-        />
+        <div className="flex items-center justify-between mb-4">
+          <h4 className="text-base font-semibold text-foreground">Edit Goals</h4>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSave}
+              className="px-3 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              Save
+            </button>
+            <button
+              onClick={handleCancel}
+              className="px-3 py-2 text-sm bg-muted hover:bg-accent rounded-lg text-muted-foreground hover:text-accent-foreground transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-foreground mb-2">Personal Goals</label>
+            <div className="space-y-3">
+              {editingGoals.goals?.map((goal) => (
+                <div key={goal.id} className="flex gap-2">
+                  <div className="flex-1 space-y-2">
+                    <input
+                      type="text"
+                      value={goal.title}
+                      onChange={(e) => updatePersonalGoal(goal.id, 'title', e.target.value)}
+                      placeholder="Goal title"
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground"
+                    />
+                    <input
+                      type="text"
+                      value={goal.description || ''}
+                      onChange={(e) => updatePersonalGoal(goal.id, 'description', e.target.value)}
+                      placeholder="Description (optional)"
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground"
+                    />
+                  </div>
+                  <button
+                    onClick={() => removePersonalGoal(goal.id)}
+                    className="p-2 text-red-500 hover:bg-red-50 rounded-lg"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              <button
+                onClick={addPersonalGoal}
+                className="w-full p-3 border-2 border-dashed border-border rounded-lg text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors flex items-center justify-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Goal
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
