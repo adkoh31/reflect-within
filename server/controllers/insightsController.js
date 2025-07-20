@@ -10,11 +10,18 @@ exports.insightsHandler = async (req, res) => {
     const reflectionTexts = reflections.map(r => 
       `User: "${r.userInput}" AI: "${r.aiQuestion}"`
     ).join('\n');
-    const analysisPrompt = `Analyze these reflections and identify the top 3 themes and mood trends. Return ONLY a JSON object with this exact structure:\n{\n  "themes": [\n    {"name": "Theme Name", "count": number},\n    {"name": "Theme Name", "count": number},\n    {"name": "Theme Name", "count": number}\n  ],\n  "moods": [\n    {"name": "Mood Name", "count": number},\n    {"name": "Mood Name", "count": number},\n    {"name": "Mood Name", "count": number}\n  ]\n}\n\nCommon themes: Purpose, Stress, Relationships, Career, Health, Growth, Family, Work, Love, Fear, Joy, Creativity, Identity, Change, Success, Failure, Dreams, Goals, Anxiety, Confidence, Self-worth, Spirituality, Community, Learning, Balance, Time, Money, Friendship, Trust, Communication, Boundaries, Expectations, Gratitude, Forgiveness, Acceptance, Courage, Vulnerability, Strength, Weakness, Hope, Despair, Excitement, Boredom, Loneliness, Connection, Independence, Dependence, Control, Surrender, Perfectionism, Authenticity, Comparison, Competition, Cooperation, Leadership, Followership, Innovation, Tradition, Risk, Safety, Adventure, Comfort, Challenge, Support, Criticism, Praise, Recognition, Invisibility, Belonging, Isolation, Inclusion, Exclusion, Power, Powerlessness, Freedom, Constraint, Choice, Obligation, Desire, Need, Want, Should, Must, Can, Will, Might, Could, Would, Should, Must, Can, Will, Might, Could, Would.\n\nCommon moods: Positive, Negative, Stressed, Calm, Excited, Anxious, Happy, Sad, Angry, Grateful, Frustrated, Hopeful, Despairing, Confident, Insecure, Motivated, Overwhelmed, Inspired, Tired, Energetic, Peaceful, Agitated, Content, Dissatisfied, Proud, Ashamed, Loved, Lonely, Connected, Isolated, Empowered, Helpless, Curious, Bored, Interested, Indifferent, Passionate, Apathetic, Optimistic, Pessimistic, Realistic, Idealistic, Practical, Dreamy, Focused, Scattered, Present, Distracted, Mindful, Unconscious, Aware, Oblivious, Conscious, Unconscious, Awake, Sleepy, Alert, Drowsy, Sharp, Dull, Quick, Slow, Fast, Slow, Active, Passive, Dynamic, Static, Fluid, Rigid, Flexible, Stiff, Adaptable, Inflexible, Resilient, Fragile, Strong, Weak, Brave, Fearful, Courageous, Cowardly, Bold, Timid, Adventurous, Cautious, Spontaneous, Planned, Impulsive, Deliberate, Intuitive, Logical, Emotional, Rational, Irrational, Sensible, Foolish, Wise, Foolish, Smart, Stupid, Intelligent, Ignorant, Knowledgeable, Uninformed, Educated, Uneducated, Skilled, Unskilled, Talented, Untalented, Gifted, Ordinary, Special, Common, Unique, Similar, Different, Alike, Unlike, Same, Other, Identical, Distinct, Similar, Different, Alike, Unlike, Same, Other, Identical, Distinct.\n\nReflections to analyze:\n${reflectionTexts}`;
+    const analysisPrompt = `Analyze these reflections and identify the top 3 themes and mood trends. Return ONLY a JSON object with this structure:
+{
+  "themes": [{"name": "Theme Name", "count": number}],
+  "moods": [{"name": "Mood Name", "count": number}]
+}
+
+Reflections to analyze:
+${reflectionTexts}`;
     let apiResponse;
     if (process.env.OPENAI_API_KEY) {
       apiResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: 'ft:gpt-4o-mini-2024-07-18:personal:dataset-metcon:Bryj0os9',
+        model: process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:dataset-metcon:Bryj0os9',
         messages: [
           { role: 'system', content: 'You are an expert at analyzing emotional and psychological themes in personal reflections. Return only valid JSON.' },
           { role: 'user', content: analysisPrompt }
