@@ -169,14 +169,28 @@ const UserProfile = ({ user, onLogout, onUpdateProfile, isPremium, onPremiumTogg
           <div>
             <span className="text-sm text-muted-foreground font-light">Member since</span>
             <p className="text-foreground font-light">
-              {new Date(user.createdAt).toLocaleDateString()}
+              {(() => {
+                try {
+                  const date = new Date(user.createdAt);
+                  return isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+                } catch (error) {
+                  return 'Unknown date';
+                }
+              })()}
             </p>
           </div>
 
           <div>
             <span className="text-sm text-muted-foreground font-light">Last login</span>
             <p className="text-foreground font-light">
-              {new Date(user.lastLogin).toLocaleDateString()}
+              {(() => {
+                try {
+                  const date = new Date(user.lastLogin);
+                  return isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+                } catch (error) {
+                  return 'Unknown date';
+                }
+              })()}
             </p>
           </div>
 

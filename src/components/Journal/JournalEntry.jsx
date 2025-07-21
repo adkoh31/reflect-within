@@ -153,7 +153,14 @@ const JournalEntry = ({
           </h3>
           {entry && (
             <p className="text-xs sm:text-sm text-slate-400 font-normal">
-              Last updated: {new Date(entry.updatedAt || entry.createdAt).toLocaleString()}
+              Last updated: {(() => {
+                try {
+                  const date = new Date(entry.updatedAt || entry.createdAt);
+                  return isNaN(date.getTime()) ? 'Unknown time' : date.toLocaleString();
+                } catch (error) {
+                  return 'Unknown time';
+                }
+              })()}
             </p>
           )}
         </div>

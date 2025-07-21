@@ -63,7 +63,16 @@ const MigrationStatus = ({
     }
     
     if (migrationStatus.completed) {
-      return `Your data was successfully migrated on ${migrationStatus.date?.toLocaleDateString()}.`;
+      return `Your data was successfully migrated on ${(() => {
+        try {
+          const date = migrationStatus.date;
+          if (!date) return 'Unknown date';
+          const dateObj = new Date(date);
+          return isNaN(dateObj.getTime()) ? 'Unknown date' : dateObj.toLocaleDateString();
+        } catch (error) {
+          return 'Unknown date';
+        }
+      })()}.`;
     }
     
     return 'Your data needs to be migrated to the new format for better performance and features.';

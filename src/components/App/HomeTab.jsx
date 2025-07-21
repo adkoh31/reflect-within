@@ -175,28 +175,42 @@ const HomeTab = React.memo(({
 
     // Calculate weekly entries (last 7 days)
     const weeklyEntries = last5JournalEntries.filter(entry => {
-      // Parse the date string from the entry
-      const dateMatch = entry.date.match(/(\w+)\s+(\d+),\s+(\d+)/);
-      if (!dateMatch) return false;
-      
-      const [, month, day, year] = dateMatch;
-      const monthIndex = new Date(`${month} 1, 2000`).getMonth();
-      const entryDate = new Date(parseInt(year), monthIndex, parseInt(day));
-      
-      return entryDate >= weekAgo;
+      try {
+        // Parse the date string from the entry
+        const dateMatch = entry.date.match(/(\w+)\s+(\d+),\s+(\d+)/);
+        if (!dateMatch) return false;
+        
+        const [, month, day, year] = dateMatch;
+        const monthIndex = new Date(`${month} 1, 2000`).getMonth();
+        const entryDate = new Date(parseInt(year), monthIndex, parseInt(day));
+        
+        // Check if the date is valid
+        if (isNaN(entryDate.getTime())) return false;
+        
+        return entryDate >= weekAgo;
+      } catch (error) {
+        return false;
+      }
     }).length;
 
     // Calculate monthly entries (last 30 days)
     const monthlyEntries = last5JournalEntries.filter(entry => {
-      // Parse the date string from the entry
-      const dateMatch = entry.date.match(/(\w+)\s+(\d+),\s+(\d+)/);
-      if (!dateMatch) return false;
-      
-      const [, month, day, year] = dateMatch;
-      const monthIndex = new Date(`${month} 1, 2000`).getMonth();
-      const entryDate = new Date(parseInt(year), monthIndex, parseInt(day));
-      
-      return entryDate >= monthAgo;
+      try {
+        // Parse the date string from the entry
+        const dateMatch = entry.date.match(/(\w+)\s+(\d+),\s+(\d+)/);
+        if (!dateMatch) return false;
+        
+        const [, month, day, year] = dateMatch;
+        const monthIndex = new Date(`${month} 1, 2000`).getMonth();
+        const entryDate = new Date(parseInt(year), monthIndex, parseInt(day));
+        
+        // Check if the date is valid
+        if (isNaN(entryDate.getTime())) return false;
+        
+        return entryDate >= monthAgo;
+      } catch (error) {
+        return false;
+      }
     }).length;
 
     // Calculate total entries

@@ -155,7 +155,14 @@ const ErrorModal = ({
                   <div className="mt-2 p-3 bg-slate-800/50 rounded-lg text-xs text-slate-400 font-mono">
                     <div><strong>Type:</strong> {errorInfo.type}</div>
                     <div><strong>Message:</strong> {errorInfo.technicalMessage}</div>
-                    <div><strong>Time:</strong> {new Date(errorInfo.timestamp).toLocaleString()}</div>
+                    <div><strong>Time:</strong> {(() => {
+                      try {
+                        const date = new Date(errorInfo.timestamp);
+                        return isNaN(date.getTime()) ? 'Unknown time' : date.toLocaleString();
+                      } catch (error) {
+                        return 'Unknown time';
+                      }
+                    })()}</div>
                     <div><strong>Retryable:</strong> {errorInfo.isRetryable ? 'Yes' : 'No'}</div>
                   </div>
                 </details>

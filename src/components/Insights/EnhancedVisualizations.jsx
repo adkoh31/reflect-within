@@ -155,9 +155,30 @@ export const MoodTrendAnalysis = ({ journalEntries }) => {
     
     // Sort by date and calculate trends
     return filteredEntries
-      .sort((a, b) => new Date(a.createdAt || a.timestamp) - new Date(b.createdAt || b.timestamp))
+      .sort((a, b) => {
+        try {
+          const dateA = new Date(a.createdAt || a.timestamp);
+          const dateB = new Date(b.createdAt || b.timestamp);
+          
+          // Handle invalid dates by putting them at the end
+          if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+          if (isNaN(dateA.getTime())) return 1;
+          if (isNaN(dateB.getTime())) return -1;
+          
+          return dateA - dateB;
+        } catch (error) {
+          return 0;
+        }
+      })
       .map(entry => ({
-        date: new Date(entry.createdAt || entry.timestamp).toLocaleDateString(),
+        date: (() => {
+          try {
+            const date = new Date(entry.createdAt || entry.timestamp);
+            return isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+          } catch (error) {
+            return 'Unknown date';
+          }
+        })(),
         mood: entry.mood || entry.energy || 5,
         content: entry.content?.substring(0, 50) + '...'
       }));

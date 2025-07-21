@@ -29,12 +29,25 @@ import { useMobileGestures } from '../../hooks/useMobileGestures.js';
 // Utility function to format timestamp
 const formatTimestamp = (timestamp) => {
   if (!timestamp) return '';
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', { 
-    hour: 'numeric', 
-    minute: '2-digit',
-    hour12: true 
-  });
+  
+  try {
+    const date = new Date(timestamp);
+    
+    // Check if the date is valid
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid timestamp received:', timestamp);
+      return '';
+    }
+    
+    return date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+  } catch (error) {
+    console.warn('Error formatting timestamp:', timestamp, error);
+    return '';
+  }
 };
 
 // Memory Insights Component
@@ -315,7 +328,21 @@ const ConversationHeader = ({
             ) : (
               <div className="py-2">
                 {conversations
-                  .sort((a, b) => new Date(b.lastActive) - new Date(a.lastActive))
+                  .sort((a, b) => {
+                    try {
+                      const dateA = new Date(a.lastActive);
+                      const dateB = new Date(b.lastActive);
+                      
+                      // Handle invalid dates by putting them at the end
+                      if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+                      if (isNaN(dateA.getTime())) return 1;
+                      if (isNaN(dateB.getTime())) return -1;
+                      
+                      return dateB - dateA;
+                    } catch (error) {
+                      return 0;
+                    }
+                  })
                   .map((conversation) => (
                     <button
                       key={conversation.id}
@@ -344,7 +371,14 @@ const ConversationHeader = ({
                             {conversation.title}
                           </div>
                           <div className="text-slate-400 text-xs">
-                            {conversation.messages.length} messages • {new Date(conversation.lastActive).toLocaleDateString()}
+                            {conversation.messages.length} messages • {(() => {
+                              try {
+                                const date = new Date(conversation.lastActive);
+                                return isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+                              } catch (error) {
+                                return 'Unknown date';
+                              }
+                            })()}
                           </div>
                         </div>
                         {conversation.metadata.topics.length > 0 && (

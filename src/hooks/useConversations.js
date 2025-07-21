@@ -21,7 +21,21 @@ export const useConversations = (user, isPremium) => {
       // Set current conversation to the most recent one
       if (userData.conversations.length > 0) {
         const mostRecent = userData.conversations
-          .sort((a, b) => new Date(b.lastActive) - new Date(a.lastActive))[0];
+          .sort((a, b) => {
+            try {
+              const dateA = new Date(a.lastActive);
+              const dateB = new Date(b.lastActive);
+              
+              // Handle invalid dates by putting them at the end
+              if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+              if (isNaN(dateA.getTime())) return 1;
+              if (isNaN(dateB.getTime())) return -1;
+              
+              return dateB - dateA;
+            } catch (error) {
+              return 0;
+            }
+          })[0];
         setCurrentConversationId(mostRecent.id);
       }
     }
@@ -257,7 +271,21 @@ export const useConversations = (user, isPremium) => {
     if (conversationId === currentConversationId) {
       if (updatedConversations.length > 0) {
         const mostRecent = updatedConversations
-          .sort((a, b) => new Date(b.lastActive) - new Date(a.lastActive))[0];
+          .sort((a, b) => {
+            try {
+              const dateA = new Date(a.lastActive);
+              const dateB = new Date(b.lastActive);
+              
+              // Handle invalid dates by putting them at the end
+              if (isNaN(dateA.getTime()) && isNaN(dateB.getTime())) return 0;
+              if (isNaN(dateA.getTime())) return 1;
+              if (isNaN(dateB.getTime())) return -1;
+              
+              return dateB - dateA;
+            } catch (error) {
+              return 0;
+            }
+          })[0];
         setCurrentConversationId(mostRecent.id);
       } else {
         setCurrentConversationId(null);

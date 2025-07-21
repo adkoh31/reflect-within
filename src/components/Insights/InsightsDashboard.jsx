@@ -418,8 +418,15 @@ const InsightsDashboard = ({
   // Find most active day
   const dayCounts = {};
   entriesArray.forEach(entry => {
-    const day = new Date(entry.createdAt || entry.timestamp).toLocaleDateString('en-US', { weekday: 'short' });
-    dayCounts[day] = (dayCounts[day] || 0) + 1;
+    try {
+      const date = new Date(entry.createdAt || entry.timestamp);
+      if (!isNaN(date.getTime())) {
+        const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+        dayCounts[day] = (dayCounts[day] || 0) + 1;
+      }
+    } catch (error) {
+      // Skip invalid dates
+    }
   });
   const mostActiveDay = Object.entries(dayCounts).sort(([,a], [,b]) => b - a)[0];
   
@@ -653,7 +660,14 @@ const InsightsDashboard = ({
                       {entriesWithMood.slice(-3).reverse().map((entry, index) => (
                         <div key={index} className="flex items-center justify-between text-sm">
                           <span className="text-slate-300">
-                            {new Date(entry.createdAt || entry.timestamp).toLocaleDateString()}
+                            {(() => {
+                              try {
+                                const date = new Date(entry.createdAt || entry.timestamp);
+                                return isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+                              } catch (error) {
+                                return 'Unknown date';
+                              }
+                            })()}
                           </span>
                           <span className={`font-medium ${
                             (entry.mood || entry.energy) >= 8 ? 'text-green-400' :
