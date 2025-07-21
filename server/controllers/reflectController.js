@@ -337,11 +337,21 @@ Have a natural conversation to understand their day and feelings. Ask 1-2 though
         shouldGenerateEntry: false
       });
     } else {
-      // ENTRY GENERATION PHASE - Generate structured entry
+      // ENTRY GENERATION PHASE - Generate natural language entry
       let entryPrompt = `${context}Conversation:
 ${conversationHistory.map(msg => `${msg.sender}: ${msg.text}`).join('\n')}
 
-Create a structured journal entry in JSON format. Extract date, mood, workout details, activities, reflection, and goals. Only include information actually mentioned.`;
+Create a natural, readable journal entry based on this conversation. Write it as if the user is writing their own reflection, but with AI assistance to capture all the important details.
+
+Structure it with these sections (but write naturally, not as headers):
+- How they're feeling and their overall mood
+- Key highlights and activities from their day
+- Workout details (if mentioned) - describe naturally like "Hit a new PR on back squats at 115kg"
+- What they learned or insights gained
+- Goals or focus for tomorrow
+- A brief gratitude note
+
+Write in first person, as if the user is writing their own entry. Make it engaging and personal, not robotic. Include specific details mentioned in the conversation.`;
 
       // Add context from past entries if available
       if (pastEntries.length > 0) {
@@ -349,20 +359,20 @@ Create a structured journal entry in JSON format. Extract date, mood, workout de
         pastEntries.forEach(entry => {
           entryPrompt += `\n- ${entry.date}: "${entry.input}"`;
         });
-        entryPrompt += `\n\nUse this context to maintain consistency in formatting and style.`;
+        entryPrompt += `\n\nUse this context to maintain consistency in writing style and tone.`;
       }
 
-          const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: modelToUse,
+      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+        model: modelToUse,
         messages: [
           {
             role: 'system',
-            content: `You are ReflectWithin, an AI assistant for creating structured journal entries. Respond with ONLY valid JSON. Use the user's name: ${user ? user.name : 'you'}.`
+            content: `You are ReflectWithin, an AI assistant that helps users create natural, personal journal entries. Write in the user's voice - as if they're writing their own reflection with your help. Make entries engaging, personal, and readable. Use natural language, not structured data. Include specific details and emotions mentioned in the conversation. Write in first person perspective.`
           },
           { role: 'user', content: entryPrompt }
         ],
         max_tokens: 1000,
-        temperature: 0.4,
+        temperature: 0.7,
         presence_penalty: 0.1,
         frequency_penalty: 0.1
       }, {
@@ -374,23 +384,18 @@ Create a structured journal entry in JSON format. Extract date, mood, workout de
 
       const content = response.data.choices[0].message.content.trim();
       
-      // Try to parse JSON response
-      try {
-        const structuredEntry = JSON.parse(content);
-        res.json({ structuredEntry });
-      } catch (parseError) {
-        console.error('Failed to parse AI response as JSON:', parseError);
-        // Fallback to basic structure
-        res.json({ 
-          structuredEntry: {
-            date: new Date().toISOString().split('T')[0],
-            mood: 'Unknown',
-            workout: { exercises: [] },
-            activities: [],
-            reflection: content
-          }
-        });
-      }
+      // Create a structured entry object for the frontend, but with natural language content
+      const structuredEntry = {
+        date: new Date().toISOString().split('T')[0],
+        mood: 'reflected', // Will be extracted from content if needed
+        content: content,
+        reflection: content,
+        activities: [],
+        goals: [],
+        workout: null
+      };
+
+      res.json({ structuredEntry });
     }
   } catch (error) {
     console.error('Journal entry generation error:', error);

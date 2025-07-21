@@ -25,14 +25,21 @@ import { useGoalAnalytics } from '../../hooks/useGoalAnalytics';
 const SparklineChart = ({ data, color = "from-cyan-500 to-blue-500", height = 20 }) => {
   if (!data || data.length < 2) return null;
   
-  const max = Math.max(...data);
-  const min = Math.min(...data);
+  // Filter out invalid data
+  const validData = data.filter(value => !isNaN(value) && isFinite(value));
+  if (validData.length < 2) return null;
+  
+  const max = Math.max(...validData);
+  const min = Math.min(...validData);
   const range = max - min || 1;
   
-  const points = data.map((value, index) => {
-    const x = (index / (data.length - 1)) * 100;
+  const points = validData.map((value, index) => {
+    const x = (index / (validData.length - 1)) * 100;
     const y = 100 - ((value - min) / range) * 100;
-    return `${x}% ${y}%`;
+    // Ensure valid coordinates
+    const validX = isNaN(x) ? 0 : Math.max(0, Math.min(100, x));
+    const validY = isNaN(y) ? 50 : Math.max(0, Math.min(100, y));
+    return `${validX} ${validY}`;
   }).join(', ');
   
   return (
@@ -59,9 +66,10 @@ const SparklineChart = ({ data, color = "from-cyan-500 to-blue-500", height = 20
 // Weekly Activity Heatmap Component
 const WeeklyHeatmap = ({ dayCounts, maxCount }) => {
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const max = maxCount || Math.max(...Object.values(dayCounts)) || 1;
+  const max = maxCount && !isNaN(maxCount) ? maxCount : Math.max(...Object.values(dayCounts)) || 1;
   
   const getIntensity = (count) => {
+    if (!count || count === 0) return 'bg-slate-800/30';
     const intensity = count / max;
     if (intensity === 0) return 'bg-slate-800/30';
     if (intensity < 0.25) return 'bg-cyan-500/20';
@@ -88,10 +96,13 @@ const WeeklyHeatmap = ({ dayCounts, maxCount }) => {
 
 // Radial Progress Ring Component
 const RadialProgress = ({ progress, size = 60, strokeWidth = 4, color = "from-cyan-500 to-blue-500" }) => {
+  // Ensure progress is a valid number
+  const validProgress = isNaN(progress) ? 0 : Math.max(0, Math.min(100, progress));
+  
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const strokeDasharray = circumference;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
+  const strokeDashoffset = circumference - (validProgress / 100) * circumference;
   
   return (
     <div className="relative inline-flex items-center justify-center">
@@ -124,7 +135,7 @@ const RadialProgress = ({ progress, size = 60, strokeWidth = 4, color = "from-cy
         </defs>
       </svg>
       <div className="absolute text-center">
-        <div className="text-sm font-bold text-slate-50">{Math.round(progress)}%</div>
+        <div className="text-sm font-bold text-slate-50">{Math.round(validProgress)}%</div>
       </div>
     </div>
   );
@@ -139,14 +150,21 @@ const MoodLineChart = ({ entries }) => {
     .slice(-7) // Last 7 entries
     .map(entry => entry.mood || entry.energy || 5);
   
-  const max = Math.max(...chartData);
-  const min = Math.min(...chartData);
+  // Filter out invalid data
+  const validChartData = chartData.filter(value => !isNaN(value) && isFinite(value));
+  if (validChartData.length < 2) return null;
+  
+  const max = Math.max(...validChartData);
+  const min = Math.min(...validChartData);
   const range = max - min || 1;
   
-  const points = chartData.map((value, index) => {
-    const x = (index / (chartData.length - 1)) * 100;
+  const points = validChartData.map((value, index) => {
+    const x = (index / (validChartData.length - 1)) * 100;
     const y = 100 - ((value - min) / range) * 100;
-    return `${x}% ${y}%`;
+    // Ensure valid coordinates
+    const validX = isNaN(x) ? 0 : Math.max(0, Math.min(100, x));
+    const validY = isNaN(y) ? 50 : Math.max(0, Math.min(100, y));
+    return `${validX} ${validY}`;
   }).join(', ');
   
   const getMoodColor = (mood) => {
@@ -182,14 +200,16 @@ const MoodLineChart = ({ entries }) => {
         />
         
         {/* Data points */}
-        {chartData.map((value, index) => {
-          const x = (index / (chartData.length - 1)) * 100;
+        {validChartData.map((value, index) => {
+          const x = (index / (validChartData.length - 1)) * 100;
           const y = 100 - ((value - min) / range) * 100;
+          const validX = isNaN(x) ? 0 : Math.max(0, Math.min(100, x));
+          const validY = isNaN(y) ? 50 : Math.max(0, Math.min(100, y));
           return (
             <circle
               key={index}
-              cx={x}
-              cy={y}
+              cx={validX}
+              cy={validY}
               r="2"
               fill={getMoodColor(value)}
               stroke="white"
@@ -379,7 +399,10 @@ const InsightsDashboard = ({
   // Calculate mood data
   const entriesWithMood = entriesArray.filter(entry => entry.mood || entry.energy);
   const averageMood = entriesWithMood.length > 0 
-    ? Math.round(entriesWithMood.reduce((sum, entry) => sum + (entry.mood || entry.energy || 5), 0) / entriesWithMood.length)
+    ? Math.round(entriesWithMood.reduce((sum, entry) => {
+        const moodValue = entry.mood || entry.energy || 5;
+        return sum + (isNaN(moodValue) ? 5 : moodValue);
+      }, 0) / entriesWithMood.length)
     : 0;
   
   // Calculate goal progress
@@ -519,7 +542,9 @@ const InsightsDashboard = ({
                 <div className="text-xs text-slate-300">Day Streak</div>
               </div>
               <div className="bg-slate-900/80 backdrop-blur-md rounded-xl border border-slate-700/50 p-3 text-center">
-                <div className="text-lg font-bold text-purple-400">{averageMood}</div>
+                <div className="text-lg font-bold text-purple-400">
+                  {isNaN(averageMood) ? 'N/A' : averageMood}
+                </div>
                 <div className="text-xs text-slate-300">Avg Mood</div>
               </div>
               <div className="bg-slate-900/80 backdrop-blur-md rounded-xl border border-slate-700/50 p-3 text-center">
@@ -595,7 +620,7 @@ const InsightsDashboard = ({
             {hasJournalEntries && entriesWithMood.length > 0 && (
               <InsightCard
                 title="Mood Trends"
-                subtitle={`Average mood: ${averageMood}/10 over ${entriesWithMood.length} entries`}
+                subtitle={`Average mood: ${isNaN(averageMood) ? 'N/A' : averageMood}/10 over ${entriesWithMood.length} entries`}
                 icon={Brain}
                 color="from-purple-500 to-pink-500"
                 expanded={expandedCards.has('mood')}
@@ -605,7 +630,9 @@ const InsightsDashboard = ({
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-slate-800/50 rounded-lg p-3 text-center">
-                      <div className="text-2xl font-bold text-purple-400">{averageMood}</div>
+                      <div className="text-2xl font-bold text-purple-400">
+                        {isNaN(averageMood) ? 'N/A' : averageMood}
+                      </div>
                       <div className="text-xs text-slate-300">Average Mood</div>
                     </div>
                     <div className="bg-slate-800/50 rounded-lg p-3 text-center">

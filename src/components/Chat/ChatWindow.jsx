@@ -665,12 +665,11 @@ const ChatWindow = memo(({
               onChange={handleInputChange}
               onKeyDown={onKeyDown}
               onFocus={handleInputFocus}
-              placeholder="Share your thoughts..."
+              placeholder="Share your thoughts... (Shift+Enter for new line)"
               className="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-slate-100 placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-base leading-relaxed"
-              rows={1}
               style={{ 
                 minHeight: '44px', 
-                maxHeight: '120px',
+                maxHeight: '200px',
                 fontSize: '16px' // Prevent zoom on iOS
               }}
             />

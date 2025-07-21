@@ -284,6 +284,12 @@ const AIJournalAssistant = ({
   };
 
   const formatStructuredEntry = (entry) => {
+    // If the entry has natural language content, use it directly
+    if (entry.content && typeof entry.content === 'string') {
+      return entry.content;
+    }
+    
+    // Fallback to old structured format if needed
     let content = `Date: ${entry.date}\nMood: ${entry.mood}\n\n`;
 
     if (entry.workout && entry.workout.exercises && entry.workout.exercises.length > 0) {
@@ -352,43 +358,53 @@ const AIJournalAssistant = ({
         </div>
         
         <div className="space-y-3 text-sm">
-          <div><span className="font-medium">Date:</span> {entry.date}</div>
-          <div><span className="font-medium">Mood:</span> {entry.mood}</div>
-          
-          {entry.workout && entry.workout.exercises && entry.workout.exercises.length > 0 && (
-            <div>
-              <div className="font-medium mb-2">Workout Summary:</div>
-              {entry.workout.exercises.map((exercise, index) => (
-                <div key={index} className="ml-2 mb-2">
-                  <div className="font-medium">• {exercise.name}: {exercise.sets || ''}x{exercise.reps || ''} {exercise.weight || ''}</div>
-                  {exercise.notes && (
-                    <div className="ml-4 text-xs text-slate-400 mt-1">
-                      <span className="font-medium">Notes:</span> {exercise.notes}
+          {/* Display natural language content */}
+          {entry.content && typeof entry.content === 'string' ? (
+            <div className="text-slate-100 leading-relaxed whitespace-pre-wrap">
+              {entry.content}
+            </div>
+          ) : (
+            /* Fallback to old structured format */
+            <>
+              <div><span className="font-medium">Date:</span> {entry.date}</div>
+              <div><span className="font-medium">Mood:</span> {entry.mood}</div>
+              
+              {entry.workout && entry.workout.exercises && entry.workout.exercises.length > 0 && (
+                <div>
+                  <div className="font-medium mb-2">Workout Summary:</div>
+                  {entry.workout.exercises.map((exercise, index) => (
+                    <div key={index} className="ml-2 mb-2">
+                      <div className="font-medium">• {exercise.name}: {exercise.sets || ''}x{exercise.reps || ''} {exercise.weight || ''}</div>
+                      {exercise.notes && (
+                        <div className="ml-4 text-xs text-slate-400 mt-1">
+                          <span className="font-medium">Notes:</span> {exercise.notes}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-          
-          {entry.activities && entry.activities.length > 0 && (
-            <div><span className="font-medium">Activities:</span> {entry.activities.join(', ')}</div>
-          )}
-          
-          {entry.reflection && (
-            <div>
-              <div className="font-medium mb-1">Reflections:</div>
-              <div className="ml-2 text-xs text-slate-400">{entry.reflection}</div>
-            </div>
-          )}
+              )}
+              
+              {entry.activities && entry.activities.length > 0 && (
+                <div><span className="font-medium">Activities:</span> {entry.activities.join(', ')}</div>
+              )}
+              
+              {entry.reflection && (
+                <div>
+                  <div className="font-medium mb-1">Reflections:</div>
+                  <div className="ml-2 text-xs text-slate-400">{entry.reflection}</div>
+                </div>
+              )}
 
-          {entry.goals && entry.goals.length > 0 && (
-            <div>
-              <div className="font-medium mb-1">Goals Moving Forward:</div>
-              {entry.goals.map((goal, index) => (
-                <div key={index} className="ml-2 text-xs text-slate-400">• {goal}</div>
-              ))}
-            </div>
+              {entry.goals && entry.goals.length > 0 && (
+                <div>
+                  <div className="font-medium mb-1">Goals Moving Forward:</div>
+                  {entry.goals.map((goal, index) => (
+                    <div key={index} className="ml-2 text-xs text-slate-400">• {goal}</div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </motion.div>
@@ -398,37 +414,56 @@ const AIJournalAssistant = ({
   const renderEditableEntry = (entry) => {
     return (
       <motion.div 
-        className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 max-h-96 overflow-y-auto"
+        className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <div className="flex items-center justify-between mb-4 sticky top-0 bg-slate-800/50 -mx-4 -mt-4 p-4 border-b border-slate-700/50">
+        <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-medium text-slate-50">Edit Journal Entry</h3>
           <div className="flex gap-2">
             <button
               onClick={handleSaveEdits}
-              className="px-3 py-1 text-xs bg-cyan-500 text-slate-900 rounded-lg hover:bg-cyan-400 transition-colors"
+              className="flex items-center gap-1 px-2 py-1 text-xs bg-cyan-500/20 text-cyan-400 rounded-lg hover:bg-cyan-500/30 transition-colors"
             >
-              Save Edits
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Save
             </button>
             <button
               onClick={handleCancelEdit}
-              className="px-3 py-1 text-xs bg-slate-800/80 text-slate-50 rounded-lg hover:bg-slate-700/80 transition-colors"
+              className="flex items-center gap-1 px-2 py-1 text-xs bg-slate-800/80 text-slate-50 rounded-lg hover:bg-slate-700/80 transition-colors"
             >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
               Cancel
             </button>
           </div>
         </div>
         
-        <div className="space-y-4 text-sm">
+        <div className="space-y-4">
+          {/* Main content editing */}
+          <div>
+            <label className="block text-xs font-medium text-slate-50 mb-1">Journal Entry:</label>
+            <textarea
+              value={entry.content || entry.reflection || ''}
+              onChange={(e) => updateEditableField('content', e.target.value)}
+              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-50 text-sm resize-none"
+              placeholder="Your journal entry..."
+              rows="12"
+            />
+          </div>
+
           {/* Date */}
           <div>
             <label className="block text-xs font-medium text-slate-50 mb-1">Date:</label>
             <input
-              type="date"
-              value={entry.date}
+              type="text"
+              value={entry.date || ''}
               onChange={(e) => updateEditableField('date', e.target.value)}
               className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-50 text-sm"
+              placeholder="Date"
             />
           </div>
 
@@ -437,101 +472,12 @@ const AIJournalAssistant = ({
             <label className="block text-xs font-medium text-slate-50 mb-1">Mood:</label>
             <input
               type="text"
-              value={entry.mood}
+              value={entry.mood || ''}
               onChange={(e) => updateEditableField('mood', e.target.value)}
               className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-50 text-sm"
-              placeholder="How are you feeling?"
+              placeholder="How you're feeling"
             />
           </div>
-
-          {/* Workout Exercises */}
-          {entry.workout && entry.workout.exercises && entry.workout.exercises.length > 0 && (
-            <div>
-              <label className="block text-xs font-medium text-slate-50 mb-2">Workout Exercises:</label>
-              {entry.workout.exercises.map((exercise, index) => (
-                <div key={index} className="space-y-2 mb-4 p-3 bg-slate-700/30 rounded-lg">
-                  <input
-                    type="text"
-                    value={exercise.name}
-                    onChange={(e) => updateWorkoutExercise(index, 'name', e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-50 text-sm"
-                    placeholder="Exercise name"
-                  />
-                  <div className="grid grid-cols-3 gap-2">
-                    <input
-                      type="number"
-                      value={exercise.sets || ''}
-                      onChange={(e) => updateWorkoutExercise(index, 'sets', e.target.value)}
-                      className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-50 text-sm"
-                      placeholder="Sets"
-                    />
-                    <input
-                      type="number"
-                      value={exercise.reps || ''}
-                      onChange={(e) => updateWorkoutExercise(index, 'reps', e.target.value)}
-                      className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-50 text-sm"
-                      placeholder="Reps"
-                    />
-                    <input
-                      type="text"
-                      value={exercise.weight || ''}
-                      onChange={(e) => updateWorkoutExercise(index, 'weight', e.target.value)}
-                      className="px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-50 text-sm"
-                      placeholder="Weight"
-                    />
-                  </div>
-                  <textarea
-                    value={exercise.notes || ''}
-                    onChange={(e) => updateWorkoutExercise(index, 'notes', e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-50 text-sm resize-none"
-                    placeholder="Notes about this exercise..."
-                    rows="2"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Activities */}
-          <div>
-            <label className="block text-xs font-medium text-slate-50 mb-1">Activities:</label>
-            <input
-              type="text"
-              value={entry.activities ? entry.activities.join(', ') : ''}
-              onChange={(e) => updateEditableField('activities', e.target.value.split(',').map(s => s.trim()))}
-              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-50 text-sm"
-              placeholder="Activities (comma-separated)"
-            />
-          </div>
-
-          {/* Reflection */}
-          <div>
-            <label className="block text-xs font-medium text-slate-50 mb-1">Reflections:</label>
-            <textarea
-              value={entry.reflection || ''}
-              onChange={(e) => updateEditableField('reflection', e.target.value)}
-              className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-50 text-sm resize-none"
-              placeholder="Your reflections on the day..."
-              rows="4"
-            />
-          </div>
-
-          {/* Goals */}
-          {entry.goals && entry.goals.length > 0 && (
-            <div>
-              <label className="block text-xs font-medium text-slate-50 mb-1">Goals Moving Forward:</label>
-              {entry.goals.map((goal, index) => (
-                <input
-                  key={index}
-                  type="text"
-                  value={goal}
-                  onChange={(e) => updateGoal(index, e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-slate-50 text-sm mb-2"
-                  placeholder={`Goal ${index + 1}`}
-                />
-              ))}
-            </div>
-          )}
         </div>
       </motion.div>
     );

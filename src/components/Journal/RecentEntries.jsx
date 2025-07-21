@@ -36,7 +36,7 @@ const RecentEntries = ({ entries = [], onEntryClick }) => {
       <div className="max-h-64 overflow-y-auto space-y-3 pr-2 pb-2 scrollbar-thin scrollbar-thumb-slate-400 scrollbar-track-transparent">
         {entries.slice(0, 10).map((entry, index) => (
           <motion.button
-            key={entry.date}
+            key={entry.id || `${entry.date}-${index}`}
             onClick={() => {
               const safeDate = safeCreateDate(entry.date);
               if (safeDate) {
@@ -54,9 +54,9 @@ const RecentEntries = ({ entries = [], onEntryClick }) => {
               <div className="flex-1">
                 {entry.topics && entry.topics.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-1">
-                    {entry.topics.map((topic, index) => (
+                    {entry.topics.map((topic, topicIndex) => (
                       <span 
-                        key={index}
+                        key={`${topic}-${topicIndex}`}
                         className="text-xs text-slate-50 font-medium"
                       >
                         {topic}
