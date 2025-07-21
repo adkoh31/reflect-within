@@ -811,6 +811,315 @@ CONVERSATION FLOW:
   return prompt;
 };
 
+/**
+ * Build enhanced user context with conversation history
+ */
+const buildConversationUserContext = (user, pastEntries = [], conversationContext = []) => {
+  let context = `USER CONTEXT:
+- Name: ${user.name || 'User'}
+- Email: ${user.email}
+- Goals: ${user.goals ? user.goals.join(', ') : 'Not specified'}
+- Activity Level: ${user.activityLevel || 'Not specified'}
+
+`;
+
+  // Add past entries context
+  if (pastEntries && pastEntries.length > 0) {
+    context += `RECENT JOURNAL ENTRIES (last 5):
+${pastEntries.map(entry => `- ${entry.date}: "${entry.input}" → "${entry.question}"`).join('\n')}
+
+`;
+  }
+
+  // Add conversation context summary
+  if (conversationContext && conversationContext.length > 0) {
+    const userMessages = conversationContext.filter(msg => msg.role === 'user');
+    const aiMessages = conversationContext.filter(msg => msg.role === 'assistant');
+    
+    context += `CONVERSATION SUMMARY:
+- Total messages in this conversation: ${conversationContext.length}
+- User messages: ${userMessages.length}
+- AI responses: ${aiMessages.length}
+- Recent topics discussed: ${extractTopicsFromConversation(conversationContext).join(', ')}
+
+`;
+  }
+
+  return context;
+};
+
+/**
+ * Analyze conversation context for enhanced AI responses
+ */
+const analyzeConversationContext = (conversationContext) => {
+  const analysis = {
+    emotionalState: 'neutral',
+    engagementLevel: 'medium',
+    depth: 'shallow',
+    topics: [],
+    sentiment: 0
+  };
+
+  if (!conversationContext || conversationContext.length === 0) {
+    return analysis;
+  }
+
+  // Analyze emotional state from recent messages
+  const recentMessages = conversationContext.slice(-5);
+  let positiveCount = 0;
+  let negativeCount = 0;
+  let totalSentiment = 0;
+
+  recentMessages.forEach(msg => {
+    if (msg.role === 'user') {
+      const sentiment = analyzeMessageSentiment(msg.content);
+      totalSentiment += sentiment;
+      
+      if (sentiment > 0.2) positiveCount++;
+      else if (sentiment < -0.2) negativeCount++;
+    }
+  });
+
+  // Determine emotional state
+  if (positiveCount > negativeCount) {
+    analysis.emotionalState = 'positive';
+  } else if (negativeCount > positiveCount) {
+    analysis.emotionalState = 'negative';
+  }
+
+  // Calculate engagement level
+  const avgMessageLength = recentMessages
+    .filter(msg => msg.role === 'user')
+    .reduce((sum, msg) => sum + (msg.content?.length || 0), 0) / 
+    Math.max(recentMessages.filter(msg => msg.role === 'user').length, 1);
+
+  if (avgMessageLength > 100) analysis.engagementLevel = 'high';
+  else if (avgMessageLength > 50) analysis.engagementLevel = 'medium';
+  else analysis.engagementLevel = 'low';
+
+  // Determine conversation depth
+  if (conversationContext.length > 20) analysis.depth = 'deep';
+  else if (conversationContext.length > 10) analysis.depth = 'medium';
+  else analysis.depth = 'shallow';
+
+  // Extract topics
+  analysis.topics = extractTopicsFromConversation(conversationContext);
+  analysis.sentiment = totalSentiment / recentMessages.length;
+
+  return analysis;
+};
+
+/**
+ * Analyze message sentiment for emotional context
+ */
+const analyzeMessageSentiment = (message) => {
+  if (!message) return 0;
+
+  const text = message.toLowerCase();
+  let sentiment = 0;
+
+  // Positive keywords
+  const positiveWords = [
+    'happy', 'excited', 'grateful', 'proud', 'motivated', 'confident', 
+    'amazing', 'incredible', 'fantastic', 'wonderful', 'great', 'love',
+    'joy', 'peaceful', 'content', 'satisfied', 'achieved', 'success'
+  ];
+
+  // Negative keywords
+  const negativeWords = [
+    'sad', 'angry', 'frustrated', 'anxious', 'worried', 'stressed',
+    'overwhelmed', 'exhausted', 'burnout', 'terrible', 'awful', 'hate',
+    'depressed', 'hopeless', 'desperate', 'tired', 'bored', 'disappointed'
+  ];
+
+  // Count positive words
+  positiveWords.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'g');
+    const matches = text.match(regex);
+    if (matches) {
+      sentiment += matches.length * 0.3;
+    }
+  });
+
+  // Count negative words
+  negativeWords.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'g');
+    const matches = text.match(regex);
+    if (matches) {
+      sentiment -= matches.length * 0.3;
+    }
+  });
+
+  // Clamp sentiment to [-1, 1]
+  return Math.max(-1, Math.min(1, sentiment));
+};
+
+/**
+ * Build enhanced context with long-term memory patterns
+ */
+const buildEnhancedContextWithMemory = (user, pastEntries = [], conversationContext = [], memoryInsights = null) => {
+  let context = buildConversationUserContext(user, pastEntries, conversationContext);
+
+  // Add memory insights if available
+  if (memoryInsights) {
+    context += `LONG-TERM MEMORY INSIGHTS:
+`;
+
+    // Add conversation patterns
+    if (memoryInsights.conversationPatterns) {
+      const patterns = memoryInsights.conversationPatterns;
+      context += `- Total conversations: ${patterns.totalConversations}
+- Average messages per conversation: ${patterns.averageMessagesPerConversation}
+- Most active time: ${patterns.mostActiveTime || 'Not available'}
+- Conversation duration distribution: ${patterns.conversationDuration.short} short, ${patterns.conversationDuration.medium} medium, ${patterns.conversationDuration.long} long
+
+`;
+    }
+
+    // Add emotional trends
+    if (memoryInsights.emotionalTrends) {
+      const trends = memoryInsights.emotionalTrends;
+      context += `- Overall emotional trend: ${trends.overallSentiment}
+- Emotional stability: ${Math.round(trends.emotionalStability * 100)}%
+- Emotional triggers: ${trends.emotionalTriggers.join(', ') || 'None identified'}
+
+`;
+    }
+
+    // Add topic evolution
+    if (memoryInsights.topicEvolution) {
+      const evolution = memoryInsights.topicEvolution;
+      context += `- Primary topics: ${evolution.primaryTopics.join(', ')}
+- Emerging topics: ${evolution.emergingTopics.join(', ') || 'None'}
+- Declining topics: ${evolution.decliningTopics.join(', ') || 'None'}
+
+`;
+    }
+
+    // Add engagement metrics
+    if (memoryInsights.engagementMetrics) {
+      const metrics = memoryInsights.engagementMetrics;
+      context += `- Engagement score: ${metrics.engagementScore}/100
+- Average message length: ${metrics.averageMessageLength} characters
+- Peak engagement times: ${metrics.peakEngagementTimes.join(', ')}
+
+`;
+    }
+
+    // Add long-term patterns
+    if (memoryInsights.longTermPatterns) {
+      const patterns = memoryInsights.longTermPatterns;
+      context += `- Recurring themes: ${patterns.recurringThemes.join(', ') || 'None'}
+- Recent achievements: ${patterns.achievementPatterns.length > 0 ? patterns.achievementPatterns.slice(-3).map(a => a.achievement).join(', ') : 'None'}
+- Stress patterns: ${patterns.stressPatterns.length > 0 ? `${patterns.stressPatterns.length} stress indicators identified` : 'No stress patterns'}
+
+`;
+    }
+  }
+
+  return context;
+};
+
+/**
+ * Build context with conversation memory for AI responses
+ */
+const buildConversationMemoryContext = (conversationContext, memoryInsights = null) => {
+  let context = '';
+
+  if (conversationContext && conversationContext.length > 0) {
+    // Analyze current conversation
+    const analysis = analyzeConversationContext(conversationContext);
+    
+    context += `CURRENT CONVERSATION ANALYSIS:
+- Emotional state: ${analysis.emotionalState}
+- Engagement level: ${analysis.engagementLevel}
+- Conversation depth: ${analysis.depth}
+- Recent sentiment: ${analysis.sentiment > 0.2 ? 'positive' : analysis.sentiment < -0.2 ? 'negative' : 'neutral'}
+- Topics discussed: ${analysis.topics.join(', ')}
+
+`;
+
+    // Add memory insights for context
+    if (memoryInsights) {
+      context += `MEMORY CONTEXT:
+`;
+
+      // Reference recurring themes if relevant
+      if (memoryInsights.longTermPatterns?.recurringThemes) {
+        const relevantThemes = memoryInsights.longTermPatterns.recurringThemes
+          .filter(theme => analysis.topics.some(topic => 
+            theme.toLowerCase().includes(topic.toLowerCase()) || 
+            topic.toLowerCase().includes(theme.toLowerCase())
+          ));
+        
+        if (relevantThemes.length > 0) {
+          context += `- This conversation touches on recurring themes: ${relevantThemes.join(', ')}
+`;
+        }
+      }
+
+      // Reference emotional patterns
+      if (memoryInsights.emotionalTrends?.emotionalTriggers) {
+        const currentTopics = analysis.topics.join(' ').toLowerCase();
+        const relevantTriggers = memoryInsights.emotionalTrends.emotionalTriggers
+          .filter(trigger => currentTopics.includes(trigger.toLowerCase()));
+        
+        if (relevantTriggers.length > 0) {
+          context += `- Emotional triggers identified: ${relevantTriggers.join(', ')}
+`;
+        }
+      }
+
+      // Reference engagement patterns
+      if (memoryInsights.engagementMetrics?.peakEngagementTimes) {
+        const currentHour = new Date().getHours();
+        const peakTimes = memoryInsights.engagementMetrics.peakEngagementTimes
+          .map(time => parseInt(time.split(':')[0]));
+        
+        if (peakTimes.includes(currentHour)) {
+          context += `- User is typically most engaged at this time
+`;
+        }
+      }
+    }
+  }
+
+  return context;
+};
+
+/**
+ * Extract topics from conversation context
+ */
+const extractTopicsFromConversation = (conversationContext) => {
+  const topics = new Set();
+  
+  conversationContext.forEach(msg => {
+    const content = msg.content || msg.text || '';
+    const contentLower = content.toLowerCase();
+    
+    // Define topic keywords
+    const topicKeywords = {
+      'work': ['work', 'job', 'career', 'office', 'meeting', 'project'],
+      'fitness': ['workout', 'exercise', 'gym', 'run', 'train', 'fitness'],
+      'stress': ['stress', 'anxiety', 'worried', 'overwhelmed', 'pressure'],
+      'relationships': ['friend', 'family', 'partner', 'relationship', 'social'],
+      'health': ['health', 'sick', 'pain', 'doctor', 'medical'],
+      'goals': ['goal', 'target', 'achieve', 'success', 'progress'],
+      'mood': ['happy', 'sad', 'angry', 'excited', 'depressed', 'joy'],
+      'sleep': ['sleep', 'tired', 'rest', 'insomnia', 'bedtime'],
+      'meditation': ['meditation', 'mindfulness', 'zen', 'breath', 'calm']
+    };
+
+    Object.entries(topicKeywords).forEach(([topic, keywords]) => {
+      if (keywords.some(keyword => contentLower.includes(keyword))) {
+        topics.add(topic);
+      }
+    });
+  });
+
+  return Array.from(topics);
+};
+
 module.exports = {
   extractStructuredData,
   extractEmotionalContext,
@@ -818,6 +1127,7 @@ module.exports = {
   buildContext,
   buildEnhancedPrompt,
   buildEnhancedUserContext,
+  buildConversationUserContext,
   buildBasicContext,
   buildPremiumEnhancedPrompt,
   analyzeReflectionThemes,
@@ -829,5 +1139,10 @@ module.exports = {
   TIME_PATTERNS,
   STRETCH_RECOMMENDATIONS,
   EMOTIONAL_SUPPORT_PATTERNS,
-  getCachedContext
+  getCachedContext,
+  extractTopicsFromConversation,
+  buildEnhancedContextWithMemory,
+  buildConversationMemoryContext,
+  analyzeConversationContext,
+  analyzeMessageSentiment
 }; 

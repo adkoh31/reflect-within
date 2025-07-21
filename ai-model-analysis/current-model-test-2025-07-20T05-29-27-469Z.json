@@ -1,0 +1,437 @@
+{
+  "timestamp": "2025-07-20T05:29:27.462Z",
+  "summary": {
+    "totalTests": 12,
+    "passedTests": 0,
+    "failedTests": 12,
+    "averageScore": 0.47625
+  },
+  "overallScore": 0.47625,
+  "categoryBreakdown": {
+    "fitness": {
+      "score": 44,
+      "performance": "Fair"
+    },
+    "emotional": {
+      "score": 52,
+      "performance": "Fair"
+    },
+    "goals": {
+      "score": 51,
+      "performance": "Fair"
+    },
+    "contextual": {
+      "score": 51,
+      "performance": "Fair"
+    },
+    "personality": {
+      "score": 41,
+      "performance": "Fair"
+    }
+  },
+  "strengths": [
+    {
+      "strength": "length",
+      "frequency": 12
+    }
+  ],
+  "weaknesses": [
+    {
+      "weakness": "domainKnowledge",
+      "frequency": 12
+    },
+    {
+      "weakness": "empathy",
+      "frequency": 9
+    }
+  ],
+  "recommendations": [
+    "Add more empathy indicators like 'I hear you' or 'That sounds challenging'",
+    "Incorporate more fitness and wellness terminology and practical advice",
+    "Add pattern recognition to identify recurring themes in user conversations",
+    "Include more motivational and encouraging language",
+    "Use more supportive and encouraging language",
+    "Provide more actionable and practical suggestions",
+    "Include more open-ended questions to encourage deeper reflection",
+    "Improve context awareness to reference previous parts of conversations"
+  ],
+  "detailedResults": [
+    {
+      "category": "fitness",
+      "scenarios": [
+        {
+          "scenario": "Fitness Progress Frustration",
+          "userInput": "I'm feeling really discouraged about my fitness progress. I've been working out for months but don't see the results I want.",
+          "aiResponse": "That's great that you're working on your fitness! Have you tried setting specific goals? What kind of results are you looking for?",
+          "analysis": {
+            "overallScore": 0.4525,
+            "qualityScores": {
+              "length": 0.9,
+              "empathy": 0,
+              "questions": 0.7,
+              "domainKnowledge": 0.15,
+              "tone": 0.6
+            },
+            "strengths": [
+              "length"
+            ],
+            "weaknesses": [
+              "empathy",
+              "domainKnowledge"
+            ],
+            "recommendations": [
+              "Add more empathy indicators like 'I hear you' or 'That sounds challenging'",
+              "Incorporate more fitness and wellness terminology and practical advice"
+            ]
+          },
+          "passed": false
+        },
+        {
+          "scenario": "Workout Consistency Struggle",
+          "userInput": "I'm struggling to stay consistent with my workouts. I start strong but always fall off after a few weeks.",
+          "aiResponse": "That's great that you're working on your fitness! Have you tried setting specific goals? What kind of results are you looking for?",
+          "analysis": {
+            "overallScore": 0.4525,
+            "qualityScores": {
+              "length": 0.9,
+              "empathy": 0,
+              "questions": 0.7,
+              "domainKnowledge": 0.15,
+              "tone": 0.6
+            },
+            "strengths": [
+              "length"
+            ],
+            "weaknesses": [
+              "empathy",
+              "domainKnowledge"
+            ],
+            "recommendations": [
+              "Add more empathy indicators like 'I hear you' or 'That sounds challenging'",
+              "Incorporate more fitness and wellness terminology and practical advice",
+              "Add pattern recognition to identify recurring themes in user conversations",
+              "Include more motivational and encouraging language"
+            ]
+          },
+          "passed": false
+        },
+        {
+          "scenario": "Injury Recovery Support",
+          "userInput": "My shoulders are really tight after yesterday's snatch work",
+          "aiResponse": "That's interesting. Can you tell me more about that? What's been on your mind?",
+          "analysis": {
+            "overallScore": 0.41000000000000003,
+            "qualityScores": {
+              "length": 0.9,
+              "empathy": 0,
+              "questions": 0.7,
+              "domainKnowledge": 0,
+              "tone": 0.5
+            },
+            "strengths": [
+              "length"
+            ],
+            "weaknesses": [
+              "empathy",
+              "domainKnowledge"
+            ],
+            "recommendations": [
+              "Add more empathy indicators like 'I hear you' or 'That sounds challenging'",
+              "Incorporate more fitness and wellness terminology and practical advice",
+              "Use more supportive and encouraging language",
+              "Provide more actionable and practical suggestions"
+            ]
+          },
+          "passed": false
+        }
+      ],
+      "averageScore": 0.4383333333333333
+    },
+    {
+      "category": "emotional",
+      "scenarios": [
+        {
+          "scenario": "Work Stress Overwhelm",
+          "userInput": "I'm feeling really overwhelmed with work lately",
+          "aiResponse": "I understand that can be really challenging. What's been the most difficult part? Have you found anything that helps you manage stress?",
+          "analysis": {
+            "overallScore": 0.6074999999999999,
+            "qualityScores": {
+              "length": 0.9,
+              "empathy": 0.7,
+              "questions": 0.7,
+              "domainKnowledge": 0.15,
+              "tone": 0.5
+            },
+            "strengths": [
+              "length"
+            ],
+            "weaknesses": [
+              "domainKnowledge"
+            ],
+            "recommendations": [
+              "Incorporate more fitness and wellness terminology and practical advice",
+              "Use more supportive and encouraging language"
+            ]
+          },
+          "passed": false
+        },
+        {
+          "scenario": "Loneliness Support",
+          "userInput": "I'm feeling really lonely lately.",
+          "aiResponse": "That sounds really hard. Loneliness can be so difficult to deal with. What kind of connection are you looking for right now?",
+          "analysis": {
+            "overallScore": 0.535,
+            "qualityScores": {
+              "length": 0.9,
+              "empathy": 0.7,
+              "questions": 0.5,
+              "domainKnowledge": 0,
+              "tone": 0.5
+            },
+            "strengths": [
+              "length"
+            ],
+            "weaknesses": [
+              "domainKnowledge"
+            ],
+            "recommendations": [
+              "Include more open-ended questions to encourage deeper reflection",
+              "Incorporate more fitness and wellness terminology and practical advice",
+              "Use more supportive and encouraging language"
+            ]
+          },
+          "passed": false
+        },
+        {
+          "scenario": "Decision Uncertainty",
+          "userInput": "I'm not sure if I'm making the right decisions in my life.",
+          "aiResponse": "That's interesting. Can you tell me more about that? What's been on your mind?",
+          "analysis": {
+            "overallScore": 0.41000000000000003,
+            "qualityScores": {
+              "length": 0.9,
+              "empathy": 0,
+              "questions": 0.7,
+              "domainKnowledge": 0,
+              "tone": 0.5
+            },
+            "strengths": [
+              "length"
+            ],
+            "weaknesses": [
+              "empathy",
+              "domainKnowledge"
+            ],
+            "recommendations": [
+              "Add more empathy indicators like 'I hear you' or 'That sounds challenging'",
+              "Incorporate more fitness and wellness terminology and practical advice",
+              "Use more supportive and encouraging language"
+            ]
+          },
+          "passed": false
+        }
+      ],
+      "averageScore": 0.5175000000000001
+    },
+    {
+      "category": "goals",
+      "scenarios": [
+        {
+          "scenario": "Goal Setting Uncertainty",
+          "userInput": "I want to set some goals but I'm not sure what's realistic for me right now.",
+          "aiResponse": "Setting goals can be tricky. What areas of your life feel most important to focus on? And what would success look like to you?",
+          "analysis": {
+            "overallScore": 0.505,
+            "qualityScores": {
+              "length": 0.9,
+              "empathy": 0.2,
+              "questions": 0.7,
+              "domainKnowledge": 0.3,
+              "tone": 0.5
+            },
+            "strengths": [
+              "length"
+            ],
+            "weaknesses": [
+              "empathy",
+              "domainKnowledge"
+            ],
+            "recommendations": [
+              "Add more empathy indicators like 'I hear you' or 'That sounds challenging'",
+              "Incorporate more fitness and wellness terminology and practical advice",
+              "Use more supportive and encouraging language"
+            ]
+          },
+          "passed": false
+        },
+        {
+          "scenario": "Goal Achievement Failure",
+          "userInput": "I keep setting goals but never achieve them. I feel like a failure.",
+          "aiResponse": "Setting goals can be tricky. What areas of your life feel most important to focus on? And what would success look like to you?",
+          "analysis": {
+            "overallScore": 0.505,
+            "qualityScores": {
+              "length": 0.9,
+              "empathy": 0.2,
+              "questions": 0.7,
+              "domainKnowledge": 0.3,
+              "tone": 0.5
+            },
+            "strengths": [
+              "length"
+            ],
+            "weaknesses": [
+              "empathy",
+              "domainKnowledge"
+            ],
+            "recommendations": [
+              "Add more empathy indicators like 'I hear you' or 'That sounds challenging'",
+              "Incorporate more fitness and wellness terminology and practical advice",
+              "Use more supportive and encouraging language"
+            ]
+          },
+          "passed": false
+        }
+      ],
+      "averageScore": 0.505
+    },
+    {
+      "category": "contextual",
+      "scenarios": [
+        {
+          "scenario": "Recurring Stress Pattern",
+          "userInput": "I'm struggling with the same work stress again",
+          "aiResponse": "I understand that can be really challenging. What's been the most difficult part? Have you found anything that helps you manage stress?",
+          "analysis": {
+            "overallScore": 0.6074999999999999,
+            "qualityScores": {
+              "length": 0.9,
+              "empathy": 0.7,
+              "questions": 0.7,
+              "domainKnowledge": 0.15,
+              "tone": 0.5
+            },
+            "strengths": [
+              "length"
+            ],
+            "weaknesses": [
+              "domainKnowledge"
+            ],
+            "recommendations": [
+              "Incorporate more fitness and wellness terminology and practical advice",
+              "Use more supportive and encouraging language",
+              "Add pattern recognition to identify recurring themes in user conversations"
+            ]
+          },
+          "passed": false
+        },
+        {
+          "scenario": "Multi-turn Conversation",
+          "userInput": [
+            {
+              "role": "user",
+              "content": "I've been feeling really stressed about work"
+            },
+            {
+              "role": "assistant",
+              "content": "I can hear how heavy that work stress feels. What's been the most challenging part of it lately?"
+            },
+            {
+              "role": "user",
+              "content": "I have this big presentation coming up and I'm worried I'll mess it up"
+            }
+          ],
+          "aiResponse": "That's interesting. Can you tell me more about that? What's been on your mind?",
+          "analysis": {
+            "overallScore": 0.41000000000000003,
+            "qualityScores": {
+              "length": 0.9,
+              "empathy": 0,
+              "questions": 0.7,
+              "domainKnowledge": 0,
+              "tone": 0.5
+            },
+            "strengths": [
+              "length"
+            ],
+            "weaknesses": [
+              "empathy",
+              "domainKnowledge"
+            ],
+            "recommendations": [
+              "Add more empathy indicators like 'I hear you' or 'That sounds challenging'",
+              "Incorporate more fitness and wellness terminology and practical advice",
+              "Use more supportive and encouraging language",
+              "Improve context awareness to reference previous parts of conversations"
+            ]
+          },
+          "passed": false
+        }
+      ],
+      "averageScore": 0.50875
+    },
+    {
+      "category": "personality",
+      "scenarios": [
+        {
+          "scenario": "Bad Day Support",
+          "userInput": "I'm having a really bad day",
+          "aiResponse": "That's interesting. Can you tell me more about that? What's been on your mind?",
+          "analysis": {
+            "overallScore": 0.41000000000000003,
+            "qualityScores": {
+              "length": 0.9,
+              "empathy": 0,
+              "questions": 0.7,
+              "domainKnowledge": 0,
+              "tone": 0.5
+            },
+            "strengths": [
+              "length"
+            ],
+            "weaknesses": [
+              "empathy",
+              "domainKnowledge"
+            ],
+            "recommendations": [
+              "Add more empathy indicators like 'I hear you' or 'That sounds challenging'",
+              "Incorporate more fitness and wellness terminology and practical advice",
+              "Use more supportive and encouraging language"
+            ]
+          },
+          "passed": false
+        },
+        {
+          "scenario": "Need to Talk",
+          "userInput": "I just need someone to talk to",
+          "aiResponse": "That's interesting. Can you tell me more about that? What's been on your mind?",
+          "analysis": {
+            "overallScore": 0.41000000000000003,
+            "qualityScores": {
+              "length": 0.9,
+              "empathy": 0,
+              "questions": 0.7,
+              "domainKnowledge": 0,
+              "tone": 0.5
+            },
+            "strengths": [
+              "length"
+            ],
+            "weaknesses": [
+              "empathy",
+              "domainKnowledge"
+            ],
+            "recommendations": [
+              "Add more empathy indicators like 'I hear you' or 'That sounds challenging'",
+              "Incorporate more fitness and wellness terminology and practical advice",
+              "Use more supportive and encouraging language"
+            ]
+          },
+          "passed": false
+        }
+      ],
+      "averageScore": 0.41000000000000003
+    }
+  ]
+}

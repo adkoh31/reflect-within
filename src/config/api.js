@@ -1,10 +1,12 @@
 // API Configuration for different environments
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? (process.env.REACT_APP_RAILWAY_URL || 'https://reflect-within-production.up.railway.app')
-  : (process.env.REACT_APP_API_URL || 'http://localhost:3001');
+const API_BASE_URL = import.meta.env.PROD 
+  ? (import.meta.env.VITE_RAILWAY_URL || 'https://reflect-within-production.up.railway.app')
+  : (import.meta.env.VITE_API_URL || 'http://localhost:3001');
 
 export const API_ENDPOINTS = {
   REFLECT: `${API_BASE_URL}/api/reflect`,
+  ENHANCED_REFLECT: `${API_BASE_URL}/api/enhanced-reflect`,
+  ENHANCED_REFLECT_PUBLIC: `${API_BASE_URL}/api/enhanced-reflect-public`,
   SAVE_REFLECTION: `${API_BASE_URL}/api/save-reflection`,
   INSIGHTS: `${API_BASE_URL}/api/insights`,
   AUTH: {

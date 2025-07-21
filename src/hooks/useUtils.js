@@ -1,9 +1,10 @@
 import { useCallback, useMemo } from 'react';
+import { safeCreateDate, safeFormatDate, safeFormatTime } from '../utils/dateUtils';
 
 export const useUtils = (messages) => {
   const formatTimestamp = useCallback(() => {
     const now = new Date();
-    return now.toLocaleTimeString('en-US', { 
+    return safeFormatTime(now, { 
       hour: 'numeric', 
       minute: '2-digit',
       hour12: true 
@@ -11,8 +12,7 @@ export const useUtils = (messages) => {
   }, []);
 
   const formatDateCallback = useCallback((timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString('en-US', { 
+    return safeFormatDate(timestamp, { 
       month: 'long', 
       day: 'numeric', 
       year: 'numeric',

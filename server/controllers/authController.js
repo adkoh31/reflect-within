@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const { generateToken } = require('../middleware/auth');
+const jwt = require('jsonwebtoken'); // Added for refresh token
 
 // Register new user
 const register = async (req, res) => {
@@ -295,6 +296,56 @@ const resetPassword = async (req, res) => {
   }
 };
 
+// Refresh token
+const refreshToken = async (req, res) => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        error: 'Token required',
+        message: 'Refresh token is required'
+      });
+    }
+
+    // Verify the token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Find the user
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({
+        error: 'Invalid token',
+        message: 'User not found'
+      });
+    }
+
+    // Generate new token
+    const newToken = generateToken(user._id);
+
+    res.json({
+      message: 'Token refreshed successfully',
+      token: newToken,
+      user: user.toPublicJSON()
+    });
+
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    
+    if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        error: 'Invalid token',
+        message: 'Token is invalid or expired'
+      });
+    }
+
+    res.status(500).json({
+      error: 'Failed to refresh token',
+      message: 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -302,5 +353,6 @@ module.exports = {
   updateProfile,
   changePassword,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  refreshToken
 }; 

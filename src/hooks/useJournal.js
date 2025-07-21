@@ -1,17 +1,11 @@
-import { useCallback } from 'react';
+// This hook has been deprecated in favor of useUnifiedData
+// All journal functionality is now handled by the unified data system
+// For data export/import, use DataManagementModal component
 
-// Hook for journal functionality
-// For data export/import, see utils/dataManagement.js
-export const useJournal = (messages, onSuccess) => {
-  // This hook is now primarily for journal-related utilities
-  // PDF export functionality has been moved to utils/dataManagement.js
+export const useJournal = () => {
+  console.warn('useJournal is deprecated. Use useUnifiedData for journal functionality.');
   
-  const handleDownloadJournal = useCallback(async () => {
-    // This function is deprecated - use DataManagementModal instead
-    console.warn('handleDownloadJournal is deprecated. Use DataManagementModal for PDF export.');
-  }, []);
-
   return {
-    handleDownloadJournal
+    // Empty object to prevent breaking changes
   };
 }; 

@@ -1,8 +1,8 @@
-# ReflectWithin
+# Myra
 
-**A fitness and mental well-being journaling companion that asks empathetic, progress-aware questions.**
+**Your AI-powered companion for reflection and personal growth.**
 
-ReflectWithin is your friend-like companion for tracking workouts, daily life, and mental state. Record reflections via speech or text, and receive supportive, progress-aware questions based on your recent entries. Premium users unlock Journal Mode and an Insights Dashboard for deeper self-discovery.
+Myra is your friend-like companion for tracking workouts, daily life, and mental state. Record reflections via speech or text, and receive supportive, progress-aware questions based on your recent entries. Premium users unlock Journal Mode and an Insights Dashboard for deeper self-discovery.
 
 ## Features
 

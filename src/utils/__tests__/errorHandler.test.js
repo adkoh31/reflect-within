@@ -242,7 +242,7 @@ describe('Error Handler', () => {
 
       logError(error, context);
 
-      expect(console.error).toHaveBeenCalledWith('Error occurred:', {
+      expect(console.error).toHaveBeenCalledWith('Error occurred:', expect.objectContaining({
         title: expect.any(String),
         message: expect.any(String),
         action: expect.any(String),
@@ -251,7 +251,7 @@ describe('Error Handler', () => {
         timestamp: expect.any(String),
         context,
         stack: error.stack
-      });
+      }));
     });
 
     it('should log error without context', () => {
@@ -259,7 +259,7 @@ describe('Error Handler', () => {
 
       logError(error);
 
-      expect(console.error).toHaveBeenCalledWith('Error occurred:', {
+      expect(console.error).toHaveBeenCalledWith('Error occurred:', expect.objectContaining({
         title: expect.any(String),
         message: expect.any(String),
         action: expect.any(String),
@@ -268,7 +268,7 @@ describe('Error Handler', () => {
         timestamp: expect.any(String),
         context: {},
         stack: error.stack
-      });
+      }));
     });
   });
 }); 

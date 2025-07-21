@@ -15,7 +15,7 @@ describe('useAppState', () => {
     expect(result.current.isLoading).toBe(false);
     expect(result.current.showDisclaimer).toBe(false);
     expect(result.current.isListening).toBe(false);
-    expect(result.current.activeTab).toBe('chat');
+    expect(result.current.activeTab).toBe('home');
     expect(result.current.isPremium).toBe(false);
     expect(result.current.insights).toEqual({ themes: [], moods: [] });
     expect(result.current.isGeneratingInsights).toBe(false);

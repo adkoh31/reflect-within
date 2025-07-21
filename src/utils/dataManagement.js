@@ -1,5 +1,3 @@
-import { default as jsPDF } from 'jspdf';
-
 /**
  * Comprehensive data management utilities for ReflectWithin
  * Handles PDF export, JSON import/export, and backup/restore functionality
@@ -14,6 +12,9 @@ import { default as jsPDF } from 'jspdf';
  */
 export const exportJournalEntriesAsPDF = async (entries, filename = null) => {
   try {
+    // Dynamically import jsPDF only when needed
+    const { default: jsPDF } = await import('jspdf');
+    
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;
@@ -46,7 +47,11 @@ export const exportJournalEntriesAsPDF = async (entries, filename = null) => {
 
     const sortedEntries = Object.entries(entries)
       .map(([id, entry]) => ({ id, ...entry }))
-      .sort((a, b) => new Date(b.date) - new Date(a.date));
+      .sort((a, b) => {
+        const dateA = a.date instanceof Date ? a.date : new Date(a.date);
+        const dateB = b.date instanceof Date ? b.date : new Date(b.date);
+        return dateB - dateA;
+      });
 
     for (const entry of sortedEntries) {
       // Check if we need a new page
@@ -59,7 +64,8 @@ export const exportJournalEntriesAsPDF = async (entries, filename = null) => {
       doc.setFontSize(12);
       doc.setTextColor(30, 58, 138);
       doc.setFont(undefined, 'bold');
-      doc.text(new Date(entry.date).toLocaleDateString(), margin, yPosition);
+      const entryDate = entry.date instanceof Date ? entry.date : new Date(entry.date);
+      doc.text(entryDate.toLocaleDateString(), margin, yPosition);
       yPosition += 8;
 
       // Topics
@@ -113,6 +119,9 @@ export const exportJournalEntriesAsPDF = async (entries, filename = null) => {
  */
 export const exportChatAsPDF = async (messages, filename = null) => {
   try {
+    // Dynamically import jsPDF only when needed
+    const { default: jsPDF } = await import('jspdf');
+    
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;
@@ -392,17 +401,19 @@ export const getDataStats = () => {
     const totalMessages = chatMessages.length;
     
     // Get date range
-    const entryDates = Object.values(journalEntries).map(entry => new Date(entry.date));
-    const dateRange = entryDates.length > 0 ? {
-      earliest: new Date(Math.min(...entryDates)).toISOString().split('T')[0],
-      latest: new Date(Math.max(...entryDates)).toISOString().split('T')[0]
-    } : null;
+    const entryDates = Object.values(journalEntries).map(entry => {
+      const dateInput = entry.date;
+      return dateInput instanceof Date ? dateInput : new Date(dateInput);
+    });
+    
+    const earliest = new Date(Math.min(...entryDates.map(d => d.getTime()))).toISOString().split('T')[0];
+    const latest = new Date(Math.max(...entryDates.map(d => d.getTime()))).toISOString().split('T')[0];
 
     return {
       journalEntries: totalEntries,
       chatMessages: totalMessages,
       totalWords,
-      dateRange,
+      dateRange: { earliest, latest },
       lastBackup: localStorage.getItem('reflectWithin_last_backup'),
       backupSize: JSON.stringify(journalEntries).length + JSON.stringify(chatMessages).length
     };

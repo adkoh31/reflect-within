@@ -15,16 +15,10 @@ describe('useAuth', () => {
     localStorage.clear();
     delete axios.defaults.headers.common['Authorization'];
     
-    // Ensure localStorage methods are properly mocked
-    if (!localStorage.setItem.mock) {
-      localStorage.setItem = jest.fn();
-    }
-    if (!localStorage.getItem.mock) {
-      localStorage.getItem = jest.fn();
-    }
-    if (!localStorage.removeItem.mock) {
-      localStorage.removeItem = jest.fn();
-    }
+    // Ensure localStorage methods are properly mocked as Jest functions
+    localStorage.setItem = jest.fn();
+    localStorage.getItem = jest.fn();
+    localStorage.removeItem = jest.fn();
   });
 
   it('should initialize with default state', () => {
@@ -77,7 +71,8 @@ describe('useAuth', () => {
 
     expect(result.current.user).toEqual(mockUser);
     expect(axios.defaults.headers.common['Authorization']).toBe(`Bearer ${mockToken}`);
-    expect(mockSetCurrentView).toHaveBeenCalledWith('app');
+    // Note: handleAuthSuccess no longer calls setCurrentView to prevent race conditions
+    // The app handles navigation separately in the main App component
   });
 
   it('should handle logout correctly', () => {
@@ -146,7 +141,7 @@ describe('useAuth', () => {
     expect(result.current.user).toEqual(mockUser);
     expect(result.current.showProfile).toBe(true);
     expect(axios.defaults.headers.common['Authorization']).toBe(`Bearer ${mockToken}`);
-    expect(mockSetCurrentView).toHaveBeenCalledWith('app');
+    // Note: handleAuthSuccess no longer calls setCurrentView to prevent race conditions
   });
 
   it('should handle logout when no user is logged in', () => {

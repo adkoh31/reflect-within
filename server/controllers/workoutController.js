@@ -23,7 +23,7 @@ const saveWorkoutFromMessage = async (req, res) => {
 
     // Parse journal details to extract exercise information
     const journalDetails = extractedData.journalDetails;
-    let exercises = [];
+    const exercises = [];
     
     if (journalDetails) {
       // Parse exercise details from journal string
@@ -95,7 +95,7 @@ const getWorkoutHistory = async (req, res) => {
     const userId = req.user._id;
     const { page = 1, limit = 20, type, exercise } = req.query;
 
-    let query = { userId };
+    const query = { userId };
     
     if (type) {
       query.type = type;

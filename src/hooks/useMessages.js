@@ -1,27 +1,16 @@
-import { useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { API_ENDPOINTS } from '../config/api';
-import { retryWithBackoff } from '../utils/errorHandler';
+import { API_ENDPOINTS } from '../config/api.js';
+import { retryWithBackoff } from '../utils/errorHandler.js';
 
 export const useMessages = (
-  messages,
-  setMessages,
-  inputText,
-  setInputText,
-  isLoading,
-  setIsLoading,
-  isListening,
-  setIsListening,
-  resetTranscript,
-  formatTimestamp,
-  last5JournalEntries,
-  isPremium,
-  user,
-  handleError,
-  onMessageSent
+  messages, setMessages, inputText, setInputText, isChatLoading, setIsChatLoading,
+  isListening, setIsListening, resetTranscript, formatTimestamp,
+  last5JournalEntries, isPremium, user, handleError, onMessageSent,
+  conversationPersistence
 ) => {
   const handleSendMessage = useCallback(async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || isChatLoading) return;
 
     const userMessage = {
       id: Date.now(),
@@ -30,25 +19,45 @@ export const useMessages = (
       timestamp: formatTimestamp()
     };
 
-    // Always add user message to chat first
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
-    
-    if (isListening) {
-      // Stop speech recognition
-      setIsListening(false);
-      resetTranscript();
-    }
-
-    // Only set loading for AI response, not for user message
-    setIsLoading(true);
+    setIsChatLoading(true);
 
     try {
+      // Get auth token from localStorage
+      const token = localStorage.getItem('reflectWithin_token');
+      console.log('Chat - Token:', token ? 'Present' : 'Missing');
+      
+      // Get conversation context for AI
+      let conversationContext = [];
+      if (conversationPersistence?.currentConversation) {
+        // Use last 10 messages from current conversation for context
+        const recentMessages = conversationPersistence.currentConversation.messages
+          .slice(-10)
+          .map(msg => ({
+            role: msg.sender === 'user' ? 'user' : 'assistant',
+            content: msg.text || msg.content
+          }));
+        conversationContext = recentMessages;
+      }
+
+      // Get memory insights for enhanced AI responses
+      const memoryInsights = conversationPersistence?.getMemoryInsightsForAI?.() || null;
+      
       const response = await retryWithBackoff(async () => {
         return await axios.post(API_ENDPOINTS.REFLECT, { 
           message: inputText, 
           pastEntries: last5JournalEntries,
-          isPremium: isPremium
+          conversationContext: conversationContext,
+          isPremium: isPremium,
+          memoryInsights: memoryInsights
+        }, {
+          headers: token ? {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          } : {
+            'Content-Type': 'application/json'
+          }
         });
       });
       
@@ -61,50 +70,87 @@ export const useMessages = (
 
       setMessages(prev => [...prev, aiMessage]);
 
+      // Add AI message to conversation persistence if available
+      if (conversationPersistence) {
+        await conversationPersistence.addMessageToConversation(aiMessage);
+      }
+
       // Show success feedback
       if (onMessageSent) {
         onMessageSent();
       }
 
-      if (isPremium && user) {
-        try {
-          await axios.post(API_ENDPOINTS.SAVE_REFLECTION, {
-            userInput: inputText,
-            aiQuestion: response.data.question
-          });
-        } catch (error) {
-          console.error('Failed to save to MongoDB:', error);
-        }
+      // Reset transcript after successful send
+      if (resetTranscript) {
+        resetTranscript();
       }
+
     } catch (error) {
-      // Don't remove user message - just show error and add a fallback AI message
-      console.error('AI response failed:', error);
+      console.error('Failed to send message:', error);
+      handleError?.(error);
       
-      const fallbackMessage = {
+      // Add error message to chat
+      const errorMessage = {
         id: Date.now() + 1,
-        text: "I'm having trouble connecting right now, but I've saved your reflection. You can continue journaling and I'll respond when I'm back online.",
+        text: "I'm having trouble connecting right now. Please try again in a moment.",
         sender: 'ai',
-        timestamp: formatTimestamp()
+        timestamp: formatTimestamp(),
+        isError: true
       };
       
-      setMessages(prev => [...prev, fallbackMessage]);
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
-      setIsLoading(false);
+      setIsChatLoading(false);
     }
   }, [
-    inputText, 
-    setMessages, 
-    setInputText, 
-    isListening, 
-    setIsListening, 
-    resetTranscript, 
-    setIsLoading, 
-    formatTimestamp, 
-    last5JournalEntries, 
-    isPremium, 
-    user, 
-    onMessageSent
+    inputText, isChatLoading, setMessages, setInputText, setIsChatLoading,
+    formatTimestamp, last5JournalEntries, isPremium, user, handleError,
+    onMessageSent, resetTranscript, conversationPersistence
   ]);
+
+  // Load messages from conversation
+  const loadConversationMessages = useCallback(async (conversationId) => {
+    if (!conversationPersistence) return;
+
+    const conversationMessages = conversationPersistence.getConversationMessages(conversationId);
+    setMessages(conversationMessages);
+  }, [conversationPersistence, setMessages]);
+
+  // Create new conversation
+  const createNewConversation = useCallback(async (title = null) => {
+    if (!conversationPersistence) return null;
+
+    // Immediate UI feedback - clear messages first
+    setMessages([]);
+    
+    const conversationId = await conversationPersistence.createNewConversation(title);
+    return conversationId;
+  }, [conversationPersistence, setMessages]);
+
+  // Switch to conversation
+  const switchToConversation = useCallback(async (conversationId) => {
+    if (!conversationPersistence) return;
+
+    // Immediate UI feedback - clear messages first
+    setMessages([]);
+    
+    conversationPersistence.switchToConversation(conversationId);
+    await loadConversationMessages(conversationId);
+  }, [conversationPersistence, loadConversationMessages, setMessages]);
+
+  // Delete conversation
+  const deleteConversation = useCallback(async (conversationId) => {
+    if (!conversationPersistence) return;
+
+    await conversationPersistence.deleteConversation(conversationId);
+    
+    // If we deleted the current conversation, load the new current one
+    if (conversationPersistence.currentConversationId) {
+      await loadConversationMessages(conversationPersistence.currentConversationId);
+    } else {
+      setMessages([]); // No conversations left
+    }
+  }, [conversationPersistence, loadConversationMessages, setMessages]);
 
   const handleClearChat = useCallback(() => {
     setMessages([]);
@@ -130,6 +176,10 @@ export const useMessages = (
     handleSendMessage,
     handleClearChat,
     handleSaveChat,
-    handleKeyPress
+    handleKeyPress,
+    loadConversationMessages,
+    createNewConversation,
+    switchToConversation,
+    deleteConversation
   };
 }; 

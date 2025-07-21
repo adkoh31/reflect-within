@@ -86,7 +86,7 @@ const getJournalEntries = async (req, res) => {
     const userId = req.user._id;
     const { date, limit = 50, skip = 0, searchQuery, dateRange, topics, hasAttachments } = req.query;
 
-    let query = { userId };
+    const query = { userId };
     
     // Date filter
     if (date) {

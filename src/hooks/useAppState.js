@@ -9,7 +9,10 @@ export const useAppState = () => {
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
-  const [isPremium, setIsPremium] = useState(false);
+  const [isPremium, setIsPremium] = useState(() => {
+    // Initialize premium state from localStorage
+    return localStorage.getItem('reflectWithin_isPremium') === 'true';
+  });
   const [insights, setInsights] = useState({ themes: [], moods: [] });
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
   const [isJournaling, setIsJournaling] = useState(false);

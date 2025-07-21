@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { safeCreateDate, isToday } from '../utils/dateUtils';
 
 export const useStreak = (messages) => {
   const [streak, setStreak] = useState(0);
@@ -14,7 +15,14 @@ export const useStreak = (messages) => {
     // Filter user messages and sort by timestamp
     const userMessages = messages
       .filter(msg => msg.sender === 'user')
-      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      .sort((a, b) => {
+        const dateA = safeCreateDate(a.timestamp);
+        const dateB = safeCreateDate(b.timestamp);
+        
+        if (!dateA || !dateB) return 0;
+        return dateB - dateA;
+      })
+      .filter(msg => safeCreateDate(msg.timestamp)); // Filter out invalid dates
 
     if (userMessages.length === 0) {
       setStreak(0);
@@ -25,7 +33,13 @@ export const useStreak = (messages) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const lastEntry = new Date(userMessages[0].timestamp);
+    const lastEntry = safeCreateDate(userMessages[0].timestamp);
+    if (!lastEntry) {
+      setStreak(0);
+      setLastEntryDate(null);
+      return 0;
+    }
+    
     lastEntry.setHours(0, 0, 0, 0);
 
     // If last entry is not today, streak is 0
@@ -36,12 +50,14 @@ export const useStreak = (messages) => {
     }
 
     let currentStreak = 1;
-    let currentDate = new Date(today);
+    const currentDate = new Date(today);
     currentDate.setDate(currentDate.getDate() - 1);
 
     // Check consecutive days backwards
     for (let i = 1; i < userMessages.length; i++) {
-      const messageDate = new Date(userMessages[i].timestamp);
+      const messageDate = safeCreateDate(userMessages[i].timestamp);
+      if (!messageDate) continue;
+      
       messageDate.setHours(0, 0, 0, 0);
 
       if (messageDate.getTime() === currentDate.getTime()) {

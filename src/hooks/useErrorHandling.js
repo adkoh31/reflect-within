@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { getErrorInfo, logError, ERROR_TYPES } from '../utils/errorHandler';
+import { getErrorInfo, logError, ERROR_TYPES } from '../utils/errorHandler.js';
 
 export const useErrorHandling = (currentView, activeTab, handleLogout) => {
   const [error, setError] = useState(null);

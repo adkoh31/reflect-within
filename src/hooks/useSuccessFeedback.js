@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { playSuccessChime, triggerHapticFeedback } from '../utils/audio';
+import { playSuccessChime, triggerHapticFeedback } from '../utils/audio.js';
 
 export const useSuccessFeedback = () => {
   const [toast, setToast] = useState({
