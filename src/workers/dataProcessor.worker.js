@@ -159,269 +159,16 @@ const extractTopics = (text) => {
   return topics.sort((a, b) => b.relevance - a.relevance);
 };
 
-// Analyze writing patterns
-const analyzeWritingPatterns = (entries) => {
-  if (!Array.isArray(entries) || entries.length === 0) {
-    return {
-      averageLength: 0,
-      timeDistribution: {},
-      consistency: 0,
-      complexity: 0,
-      patterns: []
-    };
-  }
-  
-  const patterns = {
-    averageLength: 0,
-    timeDistribution: {},
-    consistency: 0,
-    complexity: 0,
-    patterns: []
-  };
-  
-  // Calculate average length
-  const totalWords = entries.reduce((sum, entry) => {
-    return sum + (entry.content || '').split(/\s+/).length;
-  }, 0);
-  patterns.averageLength = Math.round(totalWords / entries.length);
-  
-  // Analyze time distribution
-  entries.forEach(entry => {
-    const hour = new Date(entry.timestamp || entry.date).getHours();
-    patterns.timeDistribution[hour] = (patterns.timeDistribution[hour] || 0) + 1;
-  });
-  
-  // Calculate consistency (entries per week)
-  const timeSpan = entries.length > 1 ? 
-    (new Date(entries[entries.length - 1].timestamp) - new Date(entries[0].timestamp)) / (1000 * 60 * 60 * 24 * 7) : 1;
-  patterns.consistency = Math.round(entries.length / timeSpan * 10) / 10;
-  
-  // Calculate complexity (average sentence length, vocabulary diversity)
-  const allText = entries.map(e => e.content || '').join(' ');
-  const sentences = allText.split(/[.!?]+/).filter(s => s.trim().length > 0);
-  const avgSentenceLength = sentences.reduce((sum, sentence) => 
-    sum + sentence.split(/\s+/).length, 0) / sentences.length;
-  
-  const uniqueWords = new Set(allText.toLowerCase().split(/\s+/));
-  const vocabularyDiversity = uniqueWords.size / allText.split(/\s+/).length;
-  
-  patterns.complexity = Math.round((avgSentenceLength + vocabularyDiversity * 100) / 2);
-  
-  // Identify patterns
-  patterns.patterns = identifyWritingPatterns(entries);
-  
-  return patterns;
-};
-
-// Identify specific writing patterns
-const identifyWritingPatterns = (entries) => {
-  const patterns = [];
-  
-  // Check for goal-oriented writing
-  const goalEntries = entries.filter(entry => 
-    (entry.content || '').toLowerCase().includes('goal') ||
-    (entry.content || '').toLowerCase().includes('target')
-  );
-  if (goalEntries.length > entries.length * 0.3) {
-    patterns.push('goal-focused');
-  }
-  
-  // Check for reflection patterns
-  const reflectionEntries = entries.filter(entry => 
-    (entry.content || '').toLowerCase().includes('learned') ||
-    (entry.content || '').toLowerCase().includes('realized') ||
-    (entry.content || '').toLowerCase().includes('discovered')
-  );
-  if (reflectionEntries.length > entries.length * 0.2) {
-    patterns.push('reflective');
-  }
-  
-  // Check for progress tracking
-  const progressEntries = entries.filter(entry => 
-    (entry.content || '').toLowerCase().includes('progress') ||
-    (entry.content || '').toLowerCase().includes('improved') ||
-    (entry.content || '').toLowerCase().includes('achieved')
-  );
-  if (progressEntries.length > entries.length * 0.2) {
-    patterns.push('progress-oriented');
-  }
-  
-  return patterns;
-};
-
-// Predict goal achievement likelihood
-const predictGoalAchievement = (goals, journalEntries, trackingData) => {
-  if (!goals || !Array.isArray(journalEntries)) {
-    return { likelihood: 0, confidence: 0, factors: [] };
-  }
-  
-  const factors = [];
-  let totalScore = 0;
-  let maxScore = 0;
-  
-  // Analyze journaling consistency
-  const recentEntries = journalEntries.filter(entry => {
-    const entryDate = new Date(entry.timestamp || entry.date);
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    return entryDate > weekAgo;
-  });
-  
-  const consistencyScore = Math.min(1, recentEntries.length / 7);
-  factors.push({ factor: 'journaling_consistency', score: consistencyScore, weight: 0.3 });
-  totalScore += consistencyScore * 0.3;
-  maxScore += 0.3;
-  
-  // Analyze sentiment trends
-  const recentSentiments = recentEntries.map(entry => 
-    analyzeSentiment(entry.content || '')
-  );
-  
-  const avgSentiment = recentSentiments.reduce((sum, s) => sum + s.score, 0) / recentSentiments.length;
-  const sentimentScore = Math.max(0, (avgSentiment + 1) / 2); // Normalize to 0-1
-  factors.push({ factor: 'positive_mindset', score: sentimentScore, weight: 0.25 });
-  totalScore += sentimentScore * 0.25;
-  maxScore += 0.25;
-  
-  // Analyze goal-specific mentions
-  const goalMentions = recentEntries.filter(entry => {
-    const content = (entry.content || '').toLowerCase();
-    return goals.some(goal => 
-      content.includes(goal.toLowerCase()) || 
-      content.includes('goal') || 
-      content.includes('target')
-    );
-  }).length;
-  
-  const goalFocusScore = Math.min(1, goalMentions / recentEntries.length);
-  factors.push({ factor: 'goal_focus', score: goalFocusScore, weight: 0.25 });
-  totalScore += goalFocusScore * 0.25;
-  maxScore += 0.25;
-  
-  // Analyze tracking consistency
-  const recentTracking = trackingData?.filter(track => {
-    const trackDate = new Date(track.timestamp || track.date);
-    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-    return trackDate > weekAgo;
-  }) || [];
-  
-  const trackingScore = Math.min(1, recentTracking.length / 7);
-  factors.push({ factor: 'tracking_consistency', score: trackingScore, weight: 0.2 });
-  totalScore += trackingScore * 0.2;
-  maxScore += 0.2;
-  
-  const likelihood = maxScore > 0 ? totalScore / maxScore : 0;
-  const confidence = Math.min(0.9, recentEntries.length / 10);
-  
-  return {
-    likelihood: Math.round(likelihood * 100) / 100,
-    confidence: Math.round(confidence * 100) / 100,
-    factors: factors.sort((a, b) => b.score - a.score)
-  };
-};
-
-// Generate personalized insights
-const generatePersonalizedInsights = (userData) => {
-  const insights = [];
-  
-  if (!userData) return insights;
-  
-  const { journalEntries = [], goals = null, trackingData = [] } = userData;
-  
-  // Analyze recent entries
-  const recentEntries = journalEntries
-    .filter(entry => {
-      const entryDate = new Date(entry.timestamp || entry.date);
-      const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      return entryDate > weekAgo;
-    })
-    .slice(-5); // Last 5 entries
-  
-  if (recentEntries.length > 0) {
-    // Sentiment trend analysis
-    const sentiments = recentEntries.map(entry => 
-      analyzeSentiment(entry.content || '')
-    );
-    
-    const avgSentiment = sentiments.reduce((sum, s) => sum + s.score, 0) / sentiments.length;
-    
-    if (avgSentiment > 0.3) {
-      insights.push({
-        type: 'positive_trend',
-        title: 'Positive Momentum',
-        message: 'Your recent entries show a positive emotional trend. Keep up this momentum!',
-        priority: 'high',
-        actionable: true
-      });
-    } else if (avgSentiment < -0.3) {
-      insights.push({
-        type: 'support_needed',
-        title: 'Supportive Reflection',
-        message: 'Consider focusing on self-compassion and celebrating small wins in your next entry.',
-        priority: 'high',
-        actionable: true
-      });
-    }
-    
-    // Topic analysis
-    const allTopics = recentEntries.flatMap(entry => 
-      extractTopics(entry.content || '')
-    );
-    
-    const topicFrequency = {};
-    allTopics.forEach(topic => {
-      topicFrequency[topic.topic] = (topicFrequency[topic.topic] || 0) + topic.relevance;
-    });
-    
-    const mostFrequentTopic = Object.entries(topicFrequency)
-      .sort(([,a], [,b]) => b - a)[0];
-    
-    if (mostFrequentTopic) {
-      insights.push({
-        type: 'topic_focus',
-        title: `Focus on ${mostFrequentTopic[0].charAt(0).toUpperCase() + mostFrequentTopic[0].slice(1)}`,
-        message: `You've been reflecting a lot on ${mostFrequentTopic[0]}. Consider setting specific goals in this area.`,
-        priority: 'medium',
-        actionable: true
-      });
-    }
-  }
-  
-  // Goal achievement prediction
-  if (goals && goals.personalGoals && goals.personalGoals.length > 0) {
-    const prediction = predictGoalAchievement(goals.personalGoals, journalEntries, trackingData);
-    
-    if (prediction.likelihood > 0.7) {
-      insights.push({
-        type: 'goal_success',
-        title: 'Goal Achievement Likely',
-        message: 'Your current patterns suggest strong progress toward your goals. Keep up the great work!',
-        priority: 'high',
-        actionable: false
-      });
-    } else if (prediction.likelihood < 0.3) {
-      insights.push({
-        type: 'goal_support',
-        title: 'Goal Support Needed',
-        message: 'Consider breaking down your goals into smaller, more manageable steps.',
-        priority: 'high',
-        actionable: true
-      });
-    }
-  }
-  
-  return insights;
-};
-
 // Data processing functions
 const processAnalytics = (data) => {
   const startTime = performance.now();
   
   try {
-    const { journalEntries, chatMessages, trackingData } = data;
+    const { journalEntries = [], chatMessages = [], trackingData = [] } = data;
     
     // Calculate sentiment analysis
     const sentimentScores = journalEntries.map(entry => {
-      const text = entry.content.toLowerCase();
+      const text = (entry.content || '').toLowerCase();
       const positiveWords = ['happy', 'joy', 'excited', 'grateful', 'love', 'wonderful', 'amazing'];
       const negativeWords = ['sad', 'angry', 'frustrated', 'anxious', 'worried', 'depressed'];
       
@@ -442,8 +189,8 @@ const processAnalytics = (data) => {
 
     // Calculate writing patterns
     const writingPatterns = journalEntries.reduce((patterns, entry) => {
-      const wordCount = entry.content.split(' ').length;
-      const timeOfDay = new Date(entry.timestamp).getHours();
+      const wordCount = (entry.content || '').split(' ').length;
+      const timeOfDay = new Date(entry.timestamp || entry.date).getHours();
       
       patterns.wordCounts.push(wordCount);
       patterns.timeDistribution[timeOfDay] = (patterns.timeDistribution[timeOfDay] || 0) + 1;
@@ -457,21 +204,8 @@ const processAnalytics = (data) => {
       userMessages: chatMessages.filter(m => m.role === 'user').length,
       aiMessages: chatMessages.filter(m => m.role === 'assistant').length,
       averageResponseTime: calculateAverageResponseTime(chatMessages),
-      conversationTopics: extractTopics(chatMessages)
+      conversationTopics: extractTopics(chatMessages.map(m => m.content || '').join(' '))
     };
-
-    // Calculate tracking data insights
-    const trackingInsights = trackingData.reduce((insights, entry) => {
-      if (entry.type === 'mood') {
-        insights.moodTrends.push({
-          value: entry.value,
-          date: entry.timestamp
-        });
-      } else if (entry.type === 'activity') {
-        insights.activityFrequency[entry.value] = (insights.activityFrequency[entry.value] || 0) + 1;
-      }
-      return insights;
-    }, { moodTrends: [], activityFrequency: {} });
 
     const processingTime = performance.now() - startTime;
     
@@ -481,7 +215,6 @@ const processAnalytics = (data) => {
         sentimentScores,
         writingPatterns,
         chatMetrics,
-        trackingInsights,
         processingTime
       }
     };
@@ -513,26 +246,19 @@ const processAdvancedAnalytics = (userData) => {
       date: entry.timestamp || entry.date
     }));
     
-    const writingPatterns = analyzeWritingPatterns(journalEntries);
-    const goalPrediction = predictGoalAchievement(goals?.personalGoals || [], journalEntries, trackingData);
-    const personalizedInsights = generatePersonalizedInsights(userData);
-    
     // Enhanced chat analysis
     const chatAnalysis = {
       totalMessages: chatMessages.length,
       userMessages: chatMessages.filter(m => m.role === 'user').length,
       aiMessages: chatMessages.filter(m => m.role === 'assistant').length,
       averageResponseTime: calculateAverageResponseTime(chatMessages),
-      conversationTopics: extractTopicsFromMessages(chatMessages),
+      conversationTopics: extractTopics(chatMessages.map(m => m.content || '').join(' ')),
       engagementScore: calculateEngagementScore(chatMessages)
     };
     
     const result = {
       sentimentAnalysis,
       topicAnalysis,
-      writingPatterns,
-      goalPrediction,
-      personalizedInsights,
       chatAnalysis,
       processingTime: performance.now() - startTime
     };
@@ -555,8 +281,8 @@ const calculateAverageResponseTime = (messages) => {
   
   for (let i = 0; i < messages.length - 1; i++) {
     if (messages[i].role === 'user' && messages[i + 1].role === 'assistant') {
-      const userTime = new Date(messages[i].timestamp).getTime();
-      const aiTime = new Date(messages[i + 1].timestamp).getTime();
+      const userTime = new Date(messages[i].timestamp || Date.now()).getTime();
+      const aiTime = new Date(messages[i + 1].timestamp || Date.now()).getTime();
       totalTime += aiTime - userTime;
       responseCount++;
     }
@@ -575,27 +301,6 @@ const calculateEngagementScore = (messages) => {
   const responseRate = messages.filter(m => m.role === 'assistant').length / userMessages.length;
   
   return Math.round((avgMessageLength / 100 + responseRate) / 2 * 100) / 100;
-};
-
-const extractTopicsFromMessages = (messages) => {
-  const topics = {};
-  const stopWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by'];
-  
-  messages.forEach(message => {
-    const words = message.content.toLowerCase()
-      .replace(/[^\w\s]/g, '')
-      .split(' ')
-      .filter(word => word.length > 3 && !stopWords.includes(word));
-    
-    words.forEach(word => {
-      topics[word] = (topics[word] || 0) + 1;
-    });
-  });
-  
-  return Object.entries(topics)
-    .sort(([,a], [,b]) => b - a)
-    .slice(0, 10)
-    .map(([word, count]) => ({ word, count }));
 };
 
 const processDataMigration = (oldData) => {

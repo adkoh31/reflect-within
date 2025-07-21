@@ -78,5 +78,10 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'framer-motion', 'fast-deep-equal', 'jspdf'],
     exclude: []
+  },
+  // Web Worker configuration
+  worker: {
+    format: 'es',
+    plugins: []
   }
 }) 
