@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { useUnifiedData } from './hooks/useUnifiedData.js';
@@ -73,8 +73,8 @@ function App() {
   const [isListening, setIsListening] = useState(false);
   const [insights, setInsights] = useState({ themes: [], moods: [] });
   const [isGeneratingInsights, setIsGeneratingInsights] = useState(false);
-  const chatEndRef = React.useRef(null);
-  const inputRef = React.useRef(null);
+  const chatEndRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Conversation persistence
   const conversationPersistence = useConversationPersistence(stableUser, isPremium);
