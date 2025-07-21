@@ -502,6 +502,7 @@ function App() {
                   inputText={inputText}
                   onInputChange={(e) => setInputText(e.target.value)}
                   onSend={handleSendMessage}
+
                   onSpeechToggle={handleSpeechToggle}
                   isListening={isListening}
                   isLoading={isChatLoading}

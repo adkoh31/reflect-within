@@ -328,7 +328,16 @@ const Journal = ({
                   </LoadingButton>
                   <button
                     onClick={() => setShowDataManagement(true)}
-                    className="p-2 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg transition-colors border border-slate-600/50"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setShowDataManagement(true);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label="Open data management"
+                    className="p-2 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg transition-colors border border-slate-600/50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50"
                     title="Data management"
                     data-testid="data-management-button"
                   >
@@ -336,7 +345,16 @@ const Journal = ({
                   </button>
                   <button
                     onClick={() => setShowSearch(true)}
-                    className="p-2 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg transition-colors border border-slate-600/50"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setShowSearch(true);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label="Search journal entries"
+                    className="p-2 bg-slate-800/80 hover:bg-slate-700/80 rounded-lg transition-colors border border-slate-600/50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50"
                     title="Search entries"
                     data-testid="search-button"
                   >
@@ -345,7 +363,16 @@ const Journal = ({
                   {isSearchMode && (
                     <button
                       onClick={() => setIsSearchMode(false)}
-                      className="px-3 py-2 text-xs bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 rounded-lg transition-colors border border-slate-600/50"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setIsSearchMode(false);
+                        }
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      aria-label="Exit search mode"
+                      className="px-3 py-2 text-xs bg-slate-800/80 hover:bg-slate-700/80 text-slate-300 rounded-lg transition-colors border border-slate-600/50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50"
                     >
                       Exit Search
                     </button>
@@ -807,7 +834,16 @@ const Journal = ({
                   >
                     <motion.button
                       onClick={handleSmartAddEntry}
-                      className="flex items-center justify-center space-x-3 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-900 rounded-xl transition-all duration-300 font-semibold shadow-lg shadow-cyan-500/25 hover:shadow-xl hover:shadow-cyan-500/30 group"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleSmartAddEntry();
+                        }
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      aria-label="Start writing a new journal entry"
+                      className="flex items-center justify-center space-x-3 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-900 rounded-xl transition-all duration-300 font-semibold shadow-lg shadow-cyan-500/25 hover:shadow-xl hover:shadow-cyan-500/30 group focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50"
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       data-testid="add-entry-button"

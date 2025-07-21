@@ -24,7 +24,7 @@ import { EnhancedTypingIndicator } from '../ui/typing-indicator';
 import { PulsingButton } from '../ui/loading-states';
 import { LoadingButton } from '../ui/LoadingButton.jsx';
 import { useMobileGestures } from '../../hooks/useMobileGestures.js';
-import SmartStarters from './SmartStarters.jsx';
+
 
 // Utility function to format timestamp
 const formatTimestamp = (timestamp) => {
@@ -57,7 +57,16 @@ const MemoryInsights = ({ memoryInsights, isVisible, onToggle }) => {
             </h4>
             <button
               onClick={onToggle}
-              className="text-slate-400 hover:text-slate-300 transition-colors"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onToggle();
+                }
+              }}
+              tabIndex={0}
+              role="button"
+              aria-label="Close conversation insights"
+              className="text-slate-400 hover:text-slate-300 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50 rounded"
             >
               <X className="w-4 h-4" />
             </button>
@@ -216,7 +225,17 @@ const ConversationHeader = ({
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowConversationList(!showConversationList)}
-                className="flex items-center space-x-2 text-slate-50 hover:text-cyan-400 transition-colors"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setShowConversationList(!showConversationList);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`${showConversationList ? 'Hide' : 'Show'} conversation list`}
+                aria-expanded={showConversationList}
+                className="flex items-center space-x-2 text-slate-50 hover:text-cyan-400 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50 rounded"
               >
                 <span className="font-medium text-sm">
                   {currentConversation?.title || 'New Conversation'}
@@ -227,14 +246,32 @@ const ConversationHeader = ({
               <div className="flex items-center space-x-1">
                 <button
                   onClick={handleTitleEdit}
-                  className="p-1 text-slate-400 hover:text-slate-300 transition-colors"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleTitleEdit();
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label="Edit conversation title"
+                  className="p-1 text-slate-400 hover:text-slate-300 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50 rounded"
                   title="Edit title"
                 >
                   <Edit3 className="w-3 h-3" />
                 </button>
                 <button
                   onClick={handleDeleteConversation}
-                  className="p-1 text-slate-400 hover:text-red-400 transition-colors"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleDeleteConversation();
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  aria-label="Delete conversation"
+                  className="p-1 text-slate-400 hover:text-red-400 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50 rounded"
                   title="Delete conversation"
                 >
                   <Trash2 className="w-3 h-3" />
@@ -246,7 +283,16 @@ const ConversationHeader = ({
 
         <button
           onClick={onNewConversation}
-          className="flex items-center space-x-2 bg-cyan-500 hover:bg-cyan-600 text-slate-900 px-3 py-2 rounded-lg transition-colors text-sm font-medium"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onNewConversation();
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label="Start new conversation"
+          className="flex items-center space-x-2 bg-cyan-500 hover:bg-cyan-600 text-slate-900 px-3 py-2 rounded-lg transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50"
         >
           <Plus className="w-4 h-4" />
           <span>New</span>
@@ -277,7 +323,18 @@ const ConversationHeader = ({
                         onSwitchConversation(conversation.id);
                         setShowConversationList(false);
                       }}
-                      className={`w-full text-left px-4 py-3 hover:bg-slate-800 transition-colors ${
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onSwitchConversation(conversation.id);
+                          setShowConversationList(false);
+                        }
+                      }}
+                      tabIndex={0}
+                      role="button"
+                      aria-label={`Switch to conversation: ${conversation.title}`}
+                      aria-selected={conversation.id === currentConversation?.id}
+                      className={`w-full text-left px-4 py-3 hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50 ${
                         conversation.id === currentConversation?.id ? 'bg-slate-800/50' : ''
                       }`}
                     >
@@ -368,7 +425,6 @@ const ChatWindow = memo(({
 }) => {
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(false);
   const [showMemoryInsights, setShowMemoryInsights] = useState(false);
-  const [showSmartStarters, setShowSmartStarters] = useState(false);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -405,18 +461,7 @@ const ChatWindow = memo(({
     }
   }, [messages.length, showWelcomeMessage]);
 
-  // Show smart starters when appropriate
-  useEffect(() => {
-    if (conversationPersistence && messages.length === 0) {
-      // Show starters for new conversations
-      setShowSmartStarters(true);
-    } else if (messages.length > 0 && messages.length < 3) {
-      // Show starters for short conversations that might need direction
-      setShowSmartStarters(true);
-    } else {
-      setShowSmartStarters(false);
-    }
-  }, [conversationPersistence, messages.length]);
+
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -515,13 +560,7 @@ const ChatWindow = memo(({
     }
   };
 
-  // Handle smart starter selection
-  const handleStarterSelect = (starterText) => {
-    // Set the starter text as input
-    onInputChange({ target: { value: starterText } });
-    // Focus the input
-    inputRef.current?.focus();
-  };
+
 
   return (
     <div 
@@ -543,7 +582,17 @@ const ChatWindow = memo(({
         <div className="px-4 py-2 border-b border-slate-700/50">
           <button
             onClick={() => setShowMemoryInsights(!showMemoryInsights)}
-            className="flex items-center gap-2 text-slate-400 hover:text-slate-300 transition-colors text-sm"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setShowMemoryInsights(!showMemoryInsights);
+              }
+            }}
+            tabIndex={0}
+            role="button"
+            aria-label={`${showMemoryInsights ? 'Hide' : 'Show'} conversation insights`}
+            aria-expanded={showMemoryInsights}
+            className="flex items-center gap-2 text-slate-400 hover:text-slate-300 transition-colors text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50 rounded"
           >
             <Brain className="w-4 h-4" />
             <span>View Conversation Insights</span>
@@ -561,15 +610,7 @@ const ChatWindow = memo(({
         />
       )}
 
-      {/* Smart Starters */}
-      {conversationPersistence && (
-        <SmartStarters
-          isVisible={showSmartStarters}
-          onStarterSelect={handleStarterSelect}
-          onClose={() => setShowSmartStarters(false)}
-          conversationPersistence={conversationPersistence}
-        />
-      )}
+
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -634,16 +675,7 @@ const ChatWindow = memo(({
               }}
             />
             
-            {/* Smart Starters Trigger Button */}
-            {conversationPersistence && !showSmartStarters && (
-              <button
-                onClick={() => setShowSmartStarters(true)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1.5 text-slate-400 hover:text-cyan-400 transition-colors"
-                title="Get conversation suggestions"
-              >
-                <Sparkles className="w-4 h-4" />
-              </button>
-            )}
+
           </div>
           
           <div className="flex space-x-2">
@@ -651,6 +683,7 @@ const ChatWindow = memo(({
               onClick={onSpeechToggle}
               disabled={!browserSupportsSpeechRecognition || isLoading}
               hapticType="light"
+              aria-label={isListening ? "Stop voice input" : "Start voice input"}
               className={`p-4 rounded-full transition-all duration-200 touch-manipulation ${
                 isListening
                   ? 'bg-red-500 hover:bg-red-600 text-white'
@@ -668,6 +701,7 @@ const ChatWindow = memo(({
               loadingText=""
               variant="primary"
               size="small"
+              aria-label="Send message"
               className="p-4 rounded-full touch-manipulation"
               style={{ minWidth: '56px', minHeight: '56px' }}
             >

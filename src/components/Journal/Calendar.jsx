@@ -100,7 +100,16 @@ const Calendar = ({
       <div className="flex items-center justify-between mb-4">
         <motion.button
           onClick={getPreviousMonth}
-          className="p-2 hover:bg-slate-800/80 rounded-lg transition-colors text-slate-300 hover:text-slate-100"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              getPreviousMonth();
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label="Go to previous month"
+          className="p-2 hover:bg-slate-800/80 rounded-lg transition-colors text-slate-300 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -113,7 +122,16 @@ const Calendar = ({
         </h3>
         <motion.button
           onClick={getNextMonth}
-          className="p-2 hover:bg-slate-800/80 rounded-lg transition-colors text-slate-300 hover:text-slate-100"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              getNextMonth();
+            }
+          }}
+          tabIndex={0}
+          role="button"
+          aria-label="Go to next month"
+          className="p-2 hover:bg-slate-800/80 rounded-lg transition-colors text-slate-300 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -153,9 +171,18 @@ const Calendar = ({
             <motion.button
               key={day}
               onClick={() => onDateSelect(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onDateSelect(new Date(currentDate.getFullYear(), currentDate.getMonth(), day));
+                }
+              }}
               onMouseEnter={(e) => handleDayHover(day, e)}
               onMouseLeave={handleDayLeave}
-              className={`h-10 rounded-lg text-sm font-medium transition-all duration-200 relative group ${
+              tabIndex={0}
+              role="button"
+              aria-label={`${day} ${getMonthName(currentDate)}${hasEntryOnDay ? ` - ${entryCount} entries` : ''}${isTodayDate ? ' - Today' : ''}`}
+              className={`h-10 rounded-lg text-sm font-medium transition-all duration-200 relative group focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50 ${
                 isSelected
                   ? 'bg-cyan-500 text-slate-900 shadow-lg shadow-cyan-500/25 ring-2 ring-cyan-300'
                   : isTodayDate

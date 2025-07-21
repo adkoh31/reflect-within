@@ -42,8 +42,16 @@ const SmartStarters = ({
   };
 
   const handleStarterClick = (starter) => {
+    // Send the starter directly as an AI response, not as user input
     onStarterSelect(starter.text);
     onClose();
+  };
+
+  const handleKeyDown = (e, starter) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleStarterClick(starter);
+    }
   };
 
   const getStarterIcon = (type) => {
@@ -135,7 +143,11 @@ const SmartStarters = ({
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
                 onClick={() => handleStarterClick(starter)}
-                className={`w-full text-left p-3 rounded-lg border transition-all duration-200 hover:scale-[1.02] hover:shadow-lg ${getStarterColor(starter.type)}`}
+                onKeyDown={(e) => handleKeyDown(e, starter)}
+                tabIndex={0}
+                role="button"
+                aria-label={`Select conversation starter: ${starter.text}`}
+                className={`w-full text-left p-3 rounded-lg border transition-all duration-200 hover:scale-[1.02] hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-opacity-50 ${getStarterColor(starter.type)}`}
               >
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0 mt-0.5">
