@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo, useMemo, useRef } from 'react';
+import { memo, useRef, useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mic, 
@@ -410,7 +410,7 @@ const ChatWindow = memo(({
   inputText, 
   onInputChange, 
   onSend, 
-  onKeyPress, 
+  onKeyDown, 
   isLoading, 
   isListening, 
   onSpeechToggle, 
@@ -663,7 +663,7 @@ const ChatWindow = memo(({
               ref={inputRef}
               value={inputText}
               onChange={handleInputChange}
-              onKeyPress={onKeyPress}
+              onKeyDown={onKeyDown}
               onFocus={handleInputFocus}
               placeholder="Share your thoughts..."
               className="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3 text-slate-100 placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-base leading-relaxed"

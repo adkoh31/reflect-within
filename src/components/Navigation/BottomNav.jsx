@@ -1,4 +1,3 @@
-import React from 'react';
 import { LimelightNav } from '../ui/limelight-nav.jsx';
 
 // Custom icons for our app

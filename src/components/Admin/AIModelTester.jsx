@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { TEST_SCENARIOS, testAIModel, generateTestReport, analyzeResponseQuality } from '../../utils/aiModelAnalyzer';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';

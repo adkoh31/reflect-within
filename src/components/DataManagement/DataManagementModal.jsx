@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, 
@@ -31,10 +31,10 @@ const DataManagementModal = ({ isOpen, onClose, journalEntries = {}, chatMessage
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [stats, setStats] = useState(null);
-  const fileInputRef = React.useRef(null);
+  const fileInputRef = useRef(null);
 
   // Load stats when modal opens
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setStats(getDataStats());
     }

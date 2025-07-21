@@ -1,8 +1,8 @@
-import React from 'react';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Toast = ({ message, type = 'info', isVisible, onClose, duration = 3000 }) => {
-  React.useEffect(() => {
+  useEffect(() => {
     if (isVisible && duration > 0) {
       const timer = setTimeout(() => {
         onClose();

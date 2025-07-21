@@ -31,13 +31,13 @@ export class ComponentErrorBoundary extends React.Component {
     }
   }
 
-  handleRetry = () => {
+  handleRetry() {
     this.setState({ hasError: false, error: null, errorInfo: null });
-  };
+  }
 
-  handleDismiss = () => {
+  handleDismiss() {
     this.setState({ hasError: false, error: null, errorInfo: null });
-  };
+  }
 
   render() {
     if (this.state.hasError) {

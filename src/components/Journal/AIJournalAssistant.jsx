@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Mic, MicOff, Bot, Edit3 } from 'lucide-react';
 import axios from 'axios';

@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy, useEffect } from 'react';
+import { useState, Suspense, lazy, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Search, 

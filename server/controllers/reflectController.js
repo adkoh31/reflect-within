@@ -265,6 +265,15 @@ const generateJournalEntry = async (req, res) => {
       });
     }
 
+    // Log which model is being used
+    const modelToUse = process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:dataset-metcon:Bryj0os9';
+    console.log(`🤖 Using model: ${modelToUse}`);
+    if (process.env.FINE_TUNED_MODEL_ID) {
+      console.log('✅ Fine-tuned model detected!');
+    } else {
+      console.log('⚠️ Using base model - add FINE_TUNED_MODEL_ID to .env for custom model');
+    }
+
     // Get user context if available (from auth middleware)
     let user = null;
     let context = '';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { analyzeConversationForTraining, convertToOpenAIFormat, generateTrainingDataReport } from '../../utils/fineTuningDataCollector';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';

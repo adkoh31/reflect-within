@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { getErrorInfo, isRetryableError } from '../../utils/errorHandler.js';
 import { RefreshCw, AlertCircle, Wifi, WifiOff, Settings, HelpCircle } from 'lucide-react';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { useUnifiedData } from './hooks/useUnifiedData.js';
@@ -124,7 +124,7 @@ function App() {
   );
   const { 
     handleSendMessage, 
-    handleKeyPress, 
+    handleKeyDown, 
     loadConversationMessages, 
     createNewConversation, 
     switchToConversation, 
@@ -510,7 +510,7 @@ function App() {
                   transcript={transcript}
                   inputRef={inputRef}
                   chatEndRef={chatEndRef}
-                  handleKeyPress={handleKeyPress}
+                  onKeyDown={handleKeyDown}
                   user={stableUser}
                   streak={streak}
                   microphoneStatus={microphoneStatus}

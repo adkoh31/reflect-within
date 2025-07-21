@@ -165,7 +165,7 @@ export const useMessages = (
     }
   }, []);
 
-  const handleKeyPress = useCallback((e) => {
+  const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
@@ -176,7 +176,7 @@ export const useMessages = (
     handleSendMessage,
     handleClearChat,
     handleSaveChat,
-    handleKeyPress,
+    handleKeyDown,
     loadConversationMessages,
     createNewConversation,
     switchToConversation,
