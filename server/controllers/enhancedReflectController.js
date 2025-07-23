@@ -69,7 +69,7 @@ const generateEnhancedResponse = async (userMessage, userData, conversationConte
     console.log('🤖 Generating enhanced AI response with strategy:', responseStrategy.type);
 
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:complementary-data:Bw5xGY3w',
+      model: process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:multi-turn-memory-enhanced:BwNX11i1',
       messages: [
         {
           role: 'system',
