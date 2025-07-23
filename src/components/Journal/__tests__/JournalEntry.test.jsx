@@ -48,19 +48,7 @@ jest.mock('../TopicSelector', () => ({
   )
 }));
 
-// Mock the lazy-loaded RichTextEditor
-jest.mock('../../RichTextEditor', () => ({
-  default: ({ value, onChange, placeholder, autoFocus, className }) => (
-    <textarea
-      data-testid="rich-text-editor"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      autoFocus={autoFocus}
-      className={className}
-    />
-  )
-}));
+// RichTextEditor removed - using plain textarea only
 
 // Test wrapper component to handle Suspense
 const TestWrapper = ({ children }) => (
@@ -100,7 +88,7 @@ describe('JournalEntry', () => {
     );
     
     expect(screen.getByText(/new reflection/i)).toBeInTheDocument();
-    expect(screen.getByTestId('rich-text-editor')).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
   });
 
@@ -131,7 +119,7 @@ describe('JournalEntry', () => {
       </TestWrapper>
     );
     
-    const editor = screen.getByTestId('rich-text-editor');
+    const editor = screen.getByRole('textbox');
     await user.type(editor, 'This is a new reflection');
     
     expect(editor).toHaveValue('This is a new reflection');
@@ -144,7 +132,7 @@ describe('JournalEntry', () => {
       </TestWrapper>
     );
     
-    const editor = screen.getByTestId('rich-text-editor');
+    const editor = screen.getByRole('textbox');
     await user.type(editor, 'Test reflection content');
     
     const saveButton = screen.getByRole('button', { name: /save/i });
@@ -250,7 +238,7 @@ describe('JournalEntry', () => {
     await user.click(templateButton);
     
     // Should apply the template content
-    const editor = screen.getByTestId('rich-text-editor');
+    const editor = screen.getByRole('textbox');
     expect(editor.value).toContain('gratitude');
   });
 
@@ -338,7 +326,7 @@ describe('JournalEntry', () => {
       </TestWrapper>
     );
     
-    const editor = screen.getByTestId('rich-text-editor');
+    const editor = screen.getByRole('textbox');
     await user.type(editor, 'Test content');
     
     // Test Ctrl+S shortcut
@@ -354,7 +342,7 @@ describe('JournalEntry', () => {
       </TestWrapper>
     );
     
-    const editor = screen.getByTestId('rich-text-editor');
+    const editor = screen.getByRole('textbox');
     await user.type(editor, 'This is a test reflection');
     
     expect(screen.getByText(/5 words/i)).toBeInTheDocument();
@@ -369,7 +357,7 @@ describe('JournalEntry', () => {
       </TestWrapper>
     );
     
-    const editor = screen.getByTestId('rich-text-editor');
+    const editor = screen.getByRole('textbox');
     await user.type(editor, 'Auto-save test content');
     
     // Fast-forward time to trigger auto-save

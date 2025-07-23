@@ -14,18 +14,7 @@ import JournalTemplates from './JournalTemplates';
 import TopicSelector from './TopicSelector';
 import { LoadingButton } from '../ui/LoadingButton.jsx';
 
-// Lazy load RichTextEditor
-const RichTextEditor = lazy(() => import('../RichTextEditor'));
-
-// Loading component for rich text editor
-const EditorLoadingSpinner = () => (
-  <div className="flex items-center justify-center p-8">
-    <div className="flex flex-col items-center space-y-2">
-      <Loader2 className="w-6 h-6 animate-spin text-cyan-400" />
-      <span className="text-sm text-slate-400">Loading editor...</span>
-    </div>
-  </div>
-);
+// Rich text editor removed - using plain text only
 
 const JournalEntry = ({ 
   selectedDate, 
@@ -48,7 +37,7 @@ const JournalEntry = ({
   const [isEditing, setIsEditing] = useState(!entry);
   const [showTemplates, setShowTemplates] = useState(false);
   const [wordCount, setWordCount] = useState(0);
-  const [useRichText, setUseRichText] = useState(true); // Default to rich text
+  const [useRichText, setUseRichText] = useState(false); // Use plain text only
 
   // Mood options
   const moodOptions = [
@@ -290,41 +279,29 @@ const JournalEntry = ({
               </div>
             </div>
             
-            {useRichText ? (
-              <Suspense fallback={<EditorLoadingSpinner />}>
-                <RichTextEditor
-                  content={content}
-                  onChange={handleContentChange}
-                  placeholder="Write your private thoughts, reflections, or experiences for today..."
-                  autoFocus={isEditing}
-                  className="min-h-[200px]"
-                />
-              </Suspense>
-            ) : (
-              <div className="relative">
-                <textarea
-                  value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  placeholder="Write your private thoughts, reflections, or experiences for today..."
-                  className="w-full h-32 sm:h-48 p-3 sm:p-4 pr-12 border border-slate-700/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 bg-slate-800/50 text-slate-50 placeholder-slate-400 font-normal text-sm resize-none"
-                />
-                {/* Voice Input Button */}
-                {browserSupportsSpeechRecognition && (
-                  <button
-                    onClick={onSpeechToggle}
-                    disabled={isListening}
-                    className="absolute right-3 bottom-3 p-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 hover:text-slate-100 transition-all duration-200 disabled:opacity-50"
-                    title={isListening ? "Stop recording" : "Start voice input"}
-                  >
-                    {isListening ? (
-                      <MicOff className="w-4 h-4" />
-                    ) : (
-                      <Mic className="w-4 h-4" />
-                    )}
-                  </button>
-                )}
-              </div>
-            )}
+            <div className="relative">
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="Write your private thoughts, reflections, or experiences for today..."
+                className="w-full h-32 sm:h-48 p-3 sm:p-4 pr-12 border border-slate-700/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 bg-slate-800/50 text-slate-50 placeholder-slate-400 font-normal text-sm resize-none"
+              />
+              {/* Voice Input Button */}
+              {browserSupportsSpeechRecognition && (
+                <button
+                  onClick={onSpeechToggle}
+                  disabled={isListening}
+                  className="absolute right-3 bottom-3 p-2 rounded-lg bg-slate-700/50 hover:bg-slate-600/50 text-slate-300 hover:text-slate-100 transition-all duration-200 disabled:opacity-50"
+                  title={isListening ? "Stop recording" : "Start voice input"}
+                >
+                  {isListening ? (
+                    <MicOff className="w-4 h-4" />
+                  ) : (
+                    <Mic className="w-4 h-4" />
+                  )}
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Media Attachments */}
