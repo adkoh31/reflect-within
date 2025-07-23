@@ -16,6 +16,7 @@ const {
   analyzeConversationContext,
   analyzeMessageSentiment
 } = require('../utils/patternAnalysis');
+const { enhancedMemoryManager } = require('../utils/enhancedMemoryManager');
 const {
   extractFitnessGoals,
   extractActivityLevel
@@ -30,6 +31,17 @@ const generateEnhancedResponse = async (userMessage, userData, conversationConte
     // Extract structured data
     const extractedData = extractStructuredData(userMessage);
     
+    // Generate conversation ID for memory tracking
+    const conversationId = userData ? `user_${userData._id}_${Date.now()}` : `anonymous_${Date.now()}`;
+    
+    // Process conversation memory with enhanced memory manager
+    if (conversationContext && conversationContext.length > 0) {
+      enhancedMemoryManager.processConversationMemory(conversationId, conversationContext, userData);
+    }
+    
+    // Get enhanced memory context
+    const enhancedMemoryContext = enhancedMemoryManager.getMemoryContext(conversationId, userMessage);
+    
     // Build comprehensive context
     const context = buildEnhancedContextWithMemory(userData, [], conversationContext, memoryInsights);
     
@@ -39,10 +51,10 @@ const generateEnhancedResponse = async (userMessage, userData, conversationConte
     // Analyze current conversation state
     const conversationAnalysis = analyzeConversationContext(conversationContext);
     
-    // Determine response strategy
-    const responseStrategy = determineResponseStrategy(userMessage, extractedData, conversationAnalysis, memoryInsights);
+    // Determine response strategy with enhanced memory
+    const responseStrategy = determineResponseStrategy(userMessage, extractedData, conversationAnalysis, enhancedMemoryContext);
     
-    // Build enhanced prompt
+    // Build enhanced prompt with memory context
     const prompt = buildEnhancedPromptWithStrategy(
       userMessage, 
       extractedData, 
@@ -50,19 +62,20 @@ const generateEnhancedResponse = async (userMessage, userData, conversationConte
       conversationMemoryContext, 
       conversationAnalysis, 
       responseStrategy,
+      enhancedMemoryContext,
       isPremium
     );
 
     console.log('🤖 Generating enhanced AI response with strategy:', responseStrategy.type);
 
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:dataset-metcon:Bryj0os9',
+      model: process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:complementary-data:Bw5xGY3w',
       messages: [
         {
           role: 'system',
-          content: `You are ReflectWithin, an empathetic AI companion designed to help people explore their thoughts, feelings, and experiences through thoughtful, engaging conversation.
+          content: `You are Myra, an empathetic AI companion designed for natural, thoughtful conversation.
 
-CRITICAL NAME INSTRUCTION: You MUST use the user's actual name as provided in the context. The user's name is: ${userData ? userData.name : 'User'}. NEVER use "Alex" or any other name from training data. If the user's name is not provided, use "you" or "there" instead of assuming any specific name.
+CRITICAL NAME INSTRUCTION: You MUST use the user's actual name as provided in the context. The user's name is: ${userData?.name || 'User'}. NEVER use "Alex" or any other name from training data. If the user's name is not provided, use "you" or "there" instead of assuming any specific name.
 
 CORE PERSONALITY:
 - Warm, caring, and genuinely interested in the person behind the words
@@ -70,7 +83,7 @@ CORE PERSONALITY:
 - Curious and insightful, drawing from psychology and personal development
 - Supportive without being pushy or overly positive
 - Encouraging of self-compassion and growth mindset
-- Conversational and natural, with playful, sarcastic humor when users express sarcasm or light-hearted frustration
+- Conversational and natural, like talking to a wise friend
 
 ENHANCED CAPABILITIES:
 - You have access to long-term conversation patterns and user behavior insights
@@ -78,8 +91,6 @@ ENHANCED CAPABILITIES:
 - Reference recurring themes and patterns when relevant
 - Acknowledge emotional triggers and engagement patterns
 - Adapt your response style based on their typical engagement level
-- Provide proactive support based on patterns and trends
-- Offer specific, actionable suggestions when appropriate
 
 RESPONSE STRATEGY: ${responseStrategy.description}
 
@@ -90,13 +101,11 @@ CONVERSATION STATE:
 - Topics: ${conversationAnalysis.topics.join(', ')}
 
 RESPONSE APPROACH:
-- Always start with emotional validation and acknowledgment
-- Use active listening - reflect back what you hear
-- Ask one thoughtful, open-ended question to encourage deeper reflection
-- Balance support with gentle curiosity
+- Respond naturally and conversationally
+- Show empathy and understanding
+- Ask thoughtful questions when appropriate
 - Reference their history and patterns when relevant
 - Match your energy to their emotional state
-- Provide specific, actionable advice when requested
 - Keep responses concise but meaningful (2-4 sentences)
 
 SPECIAL EXPERTISE:
@@ -113,7 +122,6 @@ CONVERSATION STYLE:
 - Fun and playful when appropriate
 - Validating of struggles and challenges
 - Celebrating of wins and progress
-- Gentle guidance toward self-reflection
 - Natural and conversational tone`
         },
         { role: 'user', content: prompt }
@@ -131,11 +139,9 @@ CONVERSATION STYLE:
 
     const aiResponse = response.data.choices[0].message.content.trim();
     
-    // Generate proactive suggestions
-    const suggestions = generateProactiveSuggestions(userMessage, extractedData, conversationAnalysis, memoryInsights);
-    
-    // Generate follow-up questions
-    const followUps = generateContextualFollowUps(userMessage, extractedData, conversationAnalysis, memoryInsights);
+    // Simple chat mode - no suggestions or follow-ups needed
+    const suggestions = [];
+    const followUps = [];
 
     return {
       response: aiResponse,
@@ -164,7 +170,7 @@ CONVERSATION STYLE:
 /**
  * Determine the best response strategy based on context
  */
-const determineResponseStrategy = (userMessage, extractedData, conversationAnalysis, memoryInsights) => {
+const determineResponseStrategy = (userMessage, extractedData, conversationAnalysis, enhancedMemoryContext) => {
   const messageLower = userMessage.toLowerCase();
   const sentiment = analyzeMessageSentiment(userMessage);
   
@@ -234,17 +240,49 @@ const determineResponseStrategy = (userMessage, extractedData, conversationAnaly
     };
   }
   
-  // Check for pattern recognition opportunities
-  if (memoryInsights?.longTermPatterns?.recurringThemes?.length > 0) {
-    const relevantThemes = memoryInsights.longTermPatterns.recurringThemes.filter(theme => 
-      messageLower.includes(theme.toLowerCase())
+  // Check for enhanced memory patterns
+  if (enhancedMemoryContext?.userPatterns?.length > 0) {
+    const relevantPatterns = enhancedMemoryContext.userPatterns.filter(pattern => 
+      messageLower.includes(pattern.pattern.toLowerCase())
     );
     
-    if (relevantThemes.length > 0) {
+    if (relevantPatterns.length > 0) {
       return {
         type: 'pattern_recognition',
-        description: `Recognizing recurring theme: ${relevantThemes[0]}. Acknowledge the pattern and explore its significance.`,
+        description: `Recognizing user pattern: ${relevantPatterns[0].pattern}. Acknowledge the pattern and explore its significance.`,
         maxTokens: 350,
+        temperature: 0.7
+      };
+    }
+  }
+
+  // Check for goal continuity
+  if (enhancedMemoryContext?.goalContext?.length > 0) {
+    const activeGoals = enhancedMemoryContext.goalContext.filter(goal => goal.progress === 'active');
+    if (activeGoals.length > 0) {
+      return {
+        type: 'goal_continuity',
+        description: `Building on active goal: ${activeGoals[0].goal}. Continue supporting progress and motivation.`,
+        maxTokens: 350,
+        temperature: 0.7
+      };
+    }
+  }
+
+  // Check for emotional continuity
+  if (enhancedMemoryContext?.emotionalContext?.recentTrend) {
+    if (enhancedMemoryContext.emotionalContext.recentTrend === 'negative') {
+      return {
+        type: 'emotional_support',
+        description: 'Addressing ongoing negative emotional trend. Provide extra validation and support.',
+        maxTokens: 350,
+        temperature: 0.8
+      };
+    } else if (enhancedMemoryContext.emotionalContext.recentTrend === 'positive') {
+      return {
+        type: 'momentum_building',
+        description: 'Building on positive emotional trend. Encourage and amplify positive momentum.',
+        maxTokens: 300,
         temperature: 0.7
       };
     }
@@ -262,8 +300,18 @@ const determineResponseStrategy = (userMessage, extractedData, conversationAnaly
 /**
  * Build enhanced prompt with specific strategy
  */
-const buildEnhancedPromptWithStrategy = (userMessage, extractedData, context, conversationMemoryContext, conversationAnalysis, strategy, isPremium) => {
-  let prompt = `${context}${conversationMemoryContext}
+const buildEnhancedPromptWithStrategy = (userMessage, extractedData, context, conversationMemoryContext, conversationAnalysis, strategy, enhancedMemoryContext, isPremium) => {
+  // Build enhanced memory context string
+  const memoryContextString = enhancedMemoryContext ? `
+ENHANCED MEMORY CONTEXT:
+${enhancedMemoryContext.relevantMemories.length > 0 ? `- Relevant past conversations: ${enhancedMemoryContext.relevantMemories.length} found` : ''}
+${enhancedMemoryContext.userPatterns.length > 0 ? `- User patterns: ${enhancedMemoryContext.userPatterns.slice(0, 3).map(p => p.pattern).join(', ')}` : ''}
+${enhancedMemoryContext.emotionalContext ? `- Emotional trend: ${enhancedMemoryContext.emotionalContext.recentTrend}` : ''}
+${enhancedMemoryContext.goalContext.length > 0 ? `- Active goals: ${enhancedMemoryContext.goalContext.slice(0, 2).map(g => g.goal).join(', ')}` : ''}
+${enhancedMemoryContext.continuitySuggestions.length > 0 ? `- Continuity suggestions: ${enhancedMemoryContext.continuitySuggestions.slice(0, 2).map(s => s.suggestion).join('; ')}` : ''}
+` : '';
+
+  let prompt = `${context}${conversationMemoryContext}${memoryContextString}
 
 CURRENT MESSAGE:
 User: "${userMessage}"
@@ -349,6 +397,22 @@ SPECIFIC GUIDANCE:
 - Acknowledge the pattern you've noticed
 - Explore what this pattern means to them
 - Help them understand the significance of recurring themes
+`;
+      break;
+      
+    case 'goal_continuity':
+      prompt += `- Building on active goals from previous conversations
+- Reference their ongoing progress and commitment
+- Continue supporting their goal achievement journey
+- Acknowledge consistency and persistence
+`;
+      break;
+      
+    case 'momentum_building':
+      prompt += `- Building on positive emotional momentum
+- Amplify and encourage their positive progress
+- Help them understand what's working well
+- Support continued positive momentum
 `;
       break;
       

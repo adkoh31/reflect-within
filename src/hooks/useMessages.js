@@ -7,7 +7,7 @@ export const useMessages = (
   messages, setMessages, inputText, setInputText, isChatLoading, setIsChatLoading,
   isListening, setIsListening, resetTranscript, formatTimestamp,
   last5JournalEntries, isPremium, user, handleError, onMessageSent,
-  conversationPersistence
+  conversationPersistence, generateEnhancedResponse
 ) => {
   const handleSendMessage = useCallback(async () => {
     if (!inputText.trim() || isChatLoading) return;
@@ -44,28 +44,69 @@ export const useMessages = (
       // Get memory insights for enhanced AI responses
       const memoryInsights = conversationPersistence?.getMemoryInsightsForAI?.() || null;
       
-      const response = await retryWithBackoff(async () => {
-        return await axios.post(API_ENDPOINTS.REFLECT, { 
-          message: inputText, 
-          pastEntries: last5JournalEntries,
-          conversationContext: conversationContext,
-          isPremium: isPremium,
-          memoryInsights: memoryInsights
-        }, {
-          headers: token ? {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          } : {
-            'Content-Type': 'application/json'
-          }
+      // Use enhanced AI if available, otherwise fall back to basic AI
+      let aiResponse;
+      if (generateEnhancedResponse) {
+        try {
+          const enhancedResponse = await generateEnhancedResponse(inputText, conversationContext);
+          aiResponse = {
+            question: enhancedResponse.response,
+            suggestions: enhancedResponse.suggestions || [],
+            followUps: enhancedResponse.followUps || [],
+            strategy: enhancedResponse.strategy || 'general',
+            analysis: enhancedResponse.analysis || {}
+          };
+        } catch (enhancedError) {
+          console.log('Enhanced AI failed, falling back to basic AI:', enhancedError);
+          // Fall back to basic AI
+          const response = await retryWithBackoff(async () => {
+            return await axios.post(API_ENDPOINTS.REFLECT, { 
+              message: inputText, 
+              pastEntries: last5JournalEntries,
+              conversationContext: conversationContext,
+              isPremium: isPremium,
+              memoryInsights: memoryInsights
+            }, {
+              headers: token ? {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              } : {
+                'Content-Type': 'application/json'
+              }
+            });
+          });
+          aiResponse = response.data;
+        }
+      } else {
+        // Use basic AI
+        const response = await retryWithBackoff(async () => {
+          return await axios.post(API_ENDPOINTS.REFLECT, { 
+            message: inputText, 
+            pastEntries: last5JournalEntries,
+            conversationContext: conversationContext,
+            isPremium: isPremium,
+            memoryInsights: memoryInsights
+          }, {
+            headers: token ? {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            } : {
+              'Content-Type': 'application/json'
+            }
+          });
         });
-      });
+        aiResponse = response.data;
+      }
       
       const aiMessage = {
         id: Date.now() + 1,
-        text: response.data.question,
+        text: aiResponse.question,
         sender: 'ai',
-        timestamp: formatTimestamp()
+        timestamp: formatTimestamp(),
+        suggestions: aiResponse.suggestions || [],
+        followUps: aiResponse.followUps || [],
+        strategy: aiResponse.strategy || 'general',
+        analysis: aiResponse.analysis || {}
       };
 
       setMessages(prev => [...prev, aiMessage]);

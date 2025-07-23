@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { enhancedReflect } = require('../controllers/enhancedReflectController');
-const auth = require('../middleware/auth');
+const { authenticateToken, optionalAuth } = require('../middleware/auth');
 
 /**
  * Enhanced AI Reflection Routes
@@ -9,9 +9,9 @@ const auth = require('../middleware/auth');
  */
 
 // Enhanced reflection endpoint with improved AI capabilities
-router.post('/enhanced-reflect', auth, enhancedReflect);
+router.post('/enhanced-reflect', authenticateToken, enhancedReflect);
 
 // Public enhanced reflection endpoint (for non-authenticated users)
-router.post('/enhanced-reflect-public', enhancedReflect);
+router.post('/enhanced-reflect-public', optionalAuth, enhancedReflect);
 
 module.exports = router; 

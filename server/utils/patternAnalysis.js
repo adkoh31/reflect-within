@@ -816,10 +816,10 @@ CONVERSATION FLOW:
  */
 const buildConversationUserContext = (user, pastEntries = [], conversationContext = []) => {
   let context = `USER CONTEXT:
-- Name: ${user.name || 'User'}
-- Email: ${user.email}
-- Goals: ${user.goals ? user.goals.join(', ') : 'Not specified'}
-- Activity Level: ${user.activityLevel || 'Not specified'}
+- Name: ${user?.name || 'User'}
+- Email: ${user?.email || 'Not provided'}
+- Goals: ${user?.goals ? user.goals.join(', ') : 'Not specified'}
+- Activity Level: ${user?.activityLevel || 'Not specified'}
 
 `;
 
@@ -958,7 +958,7 @@ const analyzeMessageSentiment = (message) => {
  * Build enhanced context with long-term memory patterns
  */
 const buildEnhancedContextWithMemory = (user, pastEntries = [], conversationContext = [], memoryInsights = null) => {
-  let context = buildConversationUserContext(user, pastEntries, conversationContext);
+  let context = buildConversationUserContext(user || null, pastEntries, conversationContext);
 
   // Add memory insights if available
   if (memoryInsights) {

@@ -79,13 +79,44 @@ export const useConversations = (user, isPremium) => {
 
   // Update conversation metadata with advanced analysis
   const updateConversationMetadata = useCallback((metadata, message, allMessages) => {
-    const updatedMetadata = { ...metadata };
+    // Ensure metadata has proper structure
+    const updatedMetadata = {
+      topics: metadata?.topics || [],
+      mood: metadata?.mood || null,
+      goals: metadata?.goals || [],
+      emotionalState: metadata?.emotionalState || {
+        primary: null,
+        intensity: 0,
+        trend: 'neutral'
+      },
+      engagement: metadata?.engagement || {
+        userMessageLength: 0,
+        responseTime: 0,
+        interactionFrequency: 0
+      },
+      insights: metadata?.insights || {
+        moodTrend: null,
+        consistencyScore: null,
+        goalProgress: null,
+        topicEvolution: [],
+        emotionalPatterns: [],
+        peakInteractionTimes: []
+      },
+      longTermMemory: metadata?.longTermMemory || {
+        recurringThemes: [],
+        emotionalTriggers: [],
+        goalMentions: [],
+        stressPatterns: [],
+        achievementCelebrations: []
+      }
+    };
+
     const messageText = message.text || message.content || '';
 
     // Extract topics with clustering
     const topics = extractTopicsFromText(messageText);
     if (topics.length > 0) {
-      updatedMetadata.topics = [...new Set([...metadata.topics, ...topics])];
+      updatedMetadata.topics = [...new Set([...updatedMetadata.topics, ...topics])];
     }
 
     // Analyze emotional state
@@ -104,6 +135,11 @@ export const useConversations = (user, isPremium) => {
 
   // Update long-term memory patterns
   const updateLongTermMemory = useCallback((metadata, messageText, allMessages) => {
+    if (!metadata?.longTermMemory) {
+      console.warn('Metadata or longTermMemory is undefined');
+      return;
+    }
+
     const textLower = messageText.toLowerCase();
 
     // Track recurring themes
@@ -215,13 +251,18 @@ export const useConversations = (user, isPremium) => {
 
     const updatedConversations = conversations.map(conv => {
       if (conv.id === conversationId) {
-        const updatedMessages = [...conv.messages, {
-          ...message,
-          conversationId,
-          timestamp: message.timestamp || new Date().toISOString()
-        }];
+        // Ensure message has proper structure
+        const messageWithDefaults = {
+          id: message.id || Date.now(),
+          text: message.text || message.content || '',
+          sender: message.sender || 'user',
+          timestamp: message.timestamp || new Date().toISOString(),
+          conversationId
+        };
 
-        const updatedMetadata = updateConversationMetadata(conv.metadata, message, updatedMessages);
+        const updatedMessages = [...conv.messages, messageWithDefaults];
+
+        const updatedMetadata = updateConversationMetadata(conv.metadata, messageWithDefaults, updatedMessages);
 
         return {
           ...conv,

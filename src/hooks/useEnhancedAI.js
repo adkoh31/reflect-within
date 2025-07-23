@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../config/api';
-import { generateEnhancedResponse } from '../utils/enhancedAI';
+import { generateEnhancedResponse } from '../utils/enhancedAI.js';
 
 /**
  * Enhanced AI Hook

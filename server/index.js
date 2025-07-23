@@ -46,6 +46,7 @@ app.use(ipRateLimiter); // Apply rate limiting to all routes
 
 // Import routes
 const reflectRoutes = require('./routes/reflect');
+const enhancedReflectRoutes = require('./routes/enhancedReflect');
 const authRoutes = require('./routes/auth');
 const insightsRoutes = require('./routes/insights');
 const journalRoutes = require('./routes/journal');
@@ -54,6 +55,7 @@ const workoutRoutes = require('./routes/workout');
 
 // Use routes
 app.use('/api', reflectRoutes);
+app.use('/api', enhancedReflectRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/insights', insightsRoutes);
 app.use('/api/journal', journalRoutes);

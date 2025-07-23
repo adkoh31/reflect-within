@@ -24,6 +24,7 @@ import { EnhancedTypingIndicator } from '../ui/typing-indicator';
 import { PulsingButton } from '../ui/loading-states';
 import { LoadingButton } from '../ui/LoadingButton.jsx';
 import { useMobileGestures } from '../../hooks/useMobileGestures.js';
+import EnhancedAISuggestions from '../AI/EnhancedAISuggestions.jsx';
 
 
 // Utility function to format timestamp
@@ -31,6 +32,11 @@ const formatTimestamp = (timestamp) => {
   if (!timestamp) return '';
   
   try {
+    // If timestamp is already a formatted time string, return it
+    if (typeof timestamp === 'string' && timestamp.match(/^\d{1,2}:\d{2}\s?(AM|PM)$/i)) {
+      return timestamp;
+    }
+    
     const date = new Date(timestamp);
     
     // Check if the date is valid
@@ -427,6 +433,9 @@ const MessageItem = memo(({ message, isLast }) => {
         }`}
       >
         <p className="text-sm leading-relaxed">{message.text}</p>
+        
+        {/* Simple Chat Mode - No suggestions or follow-ups */}
+        
         <p className={`text-xs mt-1 ${
           message.sender === 'user' ? 'text-cyan-100' : 'text-slate-400'
         }`}>
@@ -644,7 +653,21 @@ const ChatWindow = memo(({
         />
       )}
 
-
+      {/* Enhanced AI Suggestions */}
+      {conversationPersistence && (
+        <EnhancedAISuggestions
+          userData={conversationPersistence.userData}
+          conversationContext={conversationPersistence.currentConversation?.messages || []}
+          memoryInsights={memoryInsights}
+          onSuggestionSelect={(suggestion) => {
+            onInputChange({ target: { value: suggestion.text } });
+          }}
+          isVisible={messages.length > 0 && !isLoading}
+          onClose={() => {}}
+          currentMood={memoryInsights?.emotionalTrends?.currentMood || 'neutral'}
+          timeOfDay={new Date().getHours()}
+        />
+      )}
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">

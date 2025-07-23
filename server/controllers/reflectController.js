@@ -16,6 +16,7 @@ const {
   analyzeConversationContext,
   analyzeMessageSentiment
 } = require('../utils/patternAnalysis');
+const { enhancedMemoryManager } = require('../utils/enhancedMemoryManager');
 const {
   extractFitnessGoals,
   extractActivityLevel
@@ -51,7 +52,7 @@ const reflect = async (req, res) => {
     }
 
     // Log which model is being used
-    const modelToUse = process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:dataset-metcon:Bryj0os9';
+    const modelToUse = process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:complementary-data:Bw5xGY3w';
     console.log(`🤖 Using model: ${modelToUse}`);
     if (process.env.FINE_TUNED_MODEL_ID) {
       console.log('✅ Fine-tuned model detected!');
@@ -84,15 +85,35 @@ const reflect = async (req, res) => {
       context = buildBasicContext(pastEntries, conversationContext);
     }
 
+    // Generate conversation ID for memory tracking
+    const conversationId = req.user ? `user_${req.user._id}_${Date.now()}` : `anonymous_${Date.now()}`;
+    
+    // Process conversation memory with enhanced memory manager
+    if (conversationContext && conversationContext.length > 0) {
+      enhancedMemoryManager.processConversationMemory(conversationId, conversationContext, user);
+    }
+    
+    // Get enhanced memory context
+    const enhancedMemoryContext = enhancedMemoryManager.getMemoryContext(conversationId, message);
+    
     // Build conversation memory context
     const conversationMemoryContext = buildConversationMemoryContext(conversationContext, memoryInsights);
 
-    // Build the user prompt
-    const prompt = `${context}${conversationMemoryContext}
+    // Build enhanced prompt with memory context
+    const memoryContextString = enhancedMemoryContext ? `
+ENHANCED MEMORY CONTEXT:
+${enhancedMemoryContext.relevantMemories.length > 0 ? `- Relevant past conversations: ${enhancedMemoryContext.relevantMemories.length} found` : ''}
+${enhancedMemoryContext.userPatterns.length > 0 ? `- User patterns: ${enhancedMemoryContext.userPatterns.slice(0, 3).map(p => p.pattern).join(', ')}` : ''}
+${enhancedMemoryContext.emotionalContext ? `- Emotional trend: ${enhancedMemoryContext.emotionalContext.recentTrend}` : ''}
+${enhancedMemoryContext.goalContext.length > 0 ? `- Active goals: ${enhancedMemoryContext.goalContext.slice(0, 2).map(g => g.goal).join(', ')}` : ''}
+${enhancedMemoryContext.continuitySuggestions.length > 0 ? `- Continuity suggestions: ${enhancedMemoryContext.continuitySuggestions.slice(0, 2).map(s => s.suggestion).join('; ')}` : ''}
+` : '';
+
+    const prompt = `${context}${conversationMemoryContext}${memoryContextString}
 
 User: "${message}"
 
-Respond naturally and empathetically.`;
+Respond naturally and empathetically with memory continuity. Reference previous conversations when relevant and build on past discussions.`;
 
     console.log('📝 Sending enhanced prompt to AI with conversation memory...');
 
@@ -101,7 +122,7 @@ Respond naturally and empathetically.`;
       messages: [
         {
           role: 'system',
-          content: `You are ReflectWithin, an empathetic AI companion for fitness and wellness.
+          content: `You are Myra, an empathetic AI companion for fitness and wellness.
 
 CORE APPROACH:
 - Listen and validate emotions first

@@ -5,6 +5,7 @@ import { useUnifiedData } from './hooks/useUnifiedData.js';
 import { useInsights } from './hooks/useInsights.js';
 import { useWorkerManager } from './hooks/useWorkerManager.js';
 import { useConversationPersistence } from './hooks/useConversationPersistence.js';
+import { useEnhancedAI } from './hooks/useEnhancedAI.js';
 import LandingPage from './components/Landing/LandingPage.jsx';
 import AuthPage from './components/Auth/AuthPage.jsx';
 import OnboardingFlow from './components/Onboarding/OnboardingFlow.jsx';
@@ -79,6 +80,10 @@ function App() {
   // Conversation persistence
   const conversationPersistence = useConversationPersistence(stableUser, isPremium);
 
+  // Enhanced AI with memory
+  const enhancedAI = useEnhancedAI(userData, conversationPersistence, isPremium);
+  const { generateResponse: generateEnhancedResponse, isLoading: isEnhancedAILoading } = enhancedAI;
+
   // Utils
   const { formatTimestamp, last5JournalEntries } = useUtils(messages);
 
@@ -120,7 +125,7 @@ function App() {
     messages, setMessages, inputText, setInputText, isChatLoading, setIsChatLoading,
     isListening, setIsListening, resetTranscript, formatTimestamp,
     last5JournalEntries, isPremium, stableUser, handleError, showMessageSent,
-    conversationPersistence
+    conversationPersistence, generateEnhancedResponse
   );
   const { 
     handleSendMessage, 
