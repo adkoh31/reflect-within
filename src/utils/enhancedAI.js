@@ -4,6 +4,7 @@
  */
 
 import { analyzeSentiment, extractTopics } from './advancedAnalytics';
+import { generateGoalAwareResponse } from './goalAwareAI';
 
 // Enhanced response patterns with more natural conversation flow
 const ENHANCED_RESPONSE_PATTERNS = {
@@ -89,7 +90,25 @@ const ENHANCED_RESPONSE_PATTERNS = {
  */
 export const generateEnhancedResponse = (userMessage, userData, conversationContext, memoryInsights) => {
   try {
-    // Analyze current state
+    // First, check for goal-aware responses
+    const goalAwareResult = generateGoalAwareResponse(userMessage, userData, conversationContext);
+    
+    // If we have goal context, use goal-aware response
+    if (goalAwareResult.goalContext && goalAwareResult.goalContext.activeGoals.length > 0) {
+      return {
+        response: goalAwareResult.response,
+        suggestions: goalAwareResult.suggestions,
+        followUps: goalAwareResult.followUps,
+        strategy: 'goal_aware',
+        analysis: {
+          goalContext: goalAwareResult.goalContext,
+          sentiment: analyzeSentiment(userMessage),
+          topics: extractTopics(userMessage)
+        }
+      };
+    }
+
+    // Fall back to enhanced response patterns
     const messageAnalysis = analyzeMessage(userMessage, userData, conversationContext, memoryInsights);
     
     // Generate personalized response
@@ -98,22 +117,24 @@ export const generateEnhancedResponse = (userMessage, userData, conversationCont
     // Generate proactive suggestions
     const suggestions = generateProactiveSuggestions(messageAnalysis);
     
-    // Generate follow-up questions
+    // Generate contextual follow-ups
     const followUps = generateContextualFollowUps(messageAnalysis);
     
     return {
       response,
       suggestions,
       followUps,
+      strategy: 'enhanced',
       analysis: messageAnalysis
     };
   } catch (error) {
     console.error('Error generating enhanced response:', error);
     return {
       response: "I'm here to support you. What would you like to explore?",
-      suggestions: [],
-      followUps: ["How are you feeling right now?"],
-      analysis: { type: 'fallback' }
+      suggestions: ["How are you feeling right now?"],
+      followUps: ["What's on your mind today?"],
+      strategy: 'fallback',
+      analysis: { error: error.message }
     };
   }
 };

@@ -22,11 +22,14 @@ const {
   extractActivityLevel
 } = require('../utils/fitnessDataExtraction');
 
+// Unified system prompt for all AI interactions
+const UNIFIED_SYSTEM_PROMPT = `You are Myra, an empathetic AI companion for fitness and wellness with expertise in exercise programming, mental health support, recovery practices, and evidence-based injury management. You have access to user goals, progress tracking, and journal entries. Always provide warm, supportive guidance while prioritizing safety and appropriate professional referrals when needed. Use scientific principles to explain recommendations and help users understand their body's responses. When giving exercise or recovery advice, be very specific with pose names, breathing techniques, and step-by-step instructions. Remember previous conversations and user patterns to provide personalized guidance. Structure your responses with: 1) Empathetic acknowledgment, 2) Specific, actionable guidance with exact timeframes and techniques, 3) Scientific explanation when relevant, 4) Personalization based on user history, 5) Safety considerations and professional referral when needed.`;
+
 /**
  * Enhanced AI Response Generator
  * Provides more sophisticated, personalized AI responses with proactive support
  */
-const generateEnhancedResponse = async (userMessage, userData, conversationContext, memoryInsights, isPremium = false) => {
+const generateEnhancedResponse = async (userMessage, userData, conversationContext, memoryInsights, isPremium = false, goalData = null) => {
   try {
     // Extract structured data
     const extractedData = extractStructuredData(userMessage);
@@ -43,7 +46,7 @@ const generateEnhancedResponse = async (userMessage, userData, conversationConte
     const enhancedMemoryContext = enhancedMemoryManager.getMemoryContext(conversationId, userMessage);
     
     // Build comprehensive context
-    const context = buildEnhancedContextWithMemory(userData, [], conversationContext, memoryInsights);
+    const context = buildEnhancedContextWithMemory(userData, [], conversationContext, memoryInsights, goalData);
     
     // Build conversation memory context
     const conversationMemoryContext = buildConversationMemoryContext(conversationContext, memoryInsights);
@@ -68,66 +71,38 @@ const generateEnhancedResponse = async (userMessage, userData, conversationConte
 
     console.log('🤖 Generating enhanced AI response with strategy:', responseStrategy.type);
 
+    // Build goal-specific instructions
+    let goalInstructions = '';
+    if (goalData && goalData.metricGoals) {
+      const activeGoals = Object.entries(goalData.metricGoals)
+        .filter(([_, goal]) => goal.hasGoal)
+        .map(([metricId, goal]) => ({ metricId, goal }));
+      
+      if (activeGoals.length > 0) {
+        goalInstructions = `\n\nUSER GOALS (ALWAYS REFERENCE WHEN RELEVANT):\n`;
+        activeGoals.forEach(({ metricId, goal }) => {
+          const currentValue = goalData.metricValues?.[metricId] || 'Not set';
+          goalInstructions += `- ${metricId}: Current ${currentValue}, Target ${goal.target} ${goal.timeline === 'ongoing' ? '(ongoing)' : `(${goal.timeline})`}\n`;
+        });
+        goalInstructions += `\nGOAL INTEGRATION RULES:\n`;
+        goalInstructions += `- When user mentions ${activeGoals.map(g => g.metricId).join(', ')}, reference their specific targets\n`;
+        goalInstructions += `- Celebrate progress toward these goals\n`;
+        goalInstructions += `- Provide suggestions that help reach these targets\n`;
+        goalInstructions += `- Use phrases like "closer to your ${activeGoals[0]?.goal.target} ${activeGoals[0]?.metricId} goal"\n\n`;
+      }
+    }
+
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:multi-turn-memory-enhanced:BwNX11i1',
+                              model: process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:unified-enhanced:By8h6kBm',
       messages: [
         {
           role: 'system',
-          content: `You are Myra, an empathetic AI companion designed for natural, thoughtful conversation.
-
-CRITICAL NAME INSTRUCTION: You MUST use the user's actual name as provided in the context. The user's name is: ${userData?.name || 'User'}. NEVER use "Alex" or any other name from training data. If the user's name is not provided, use "you" or "there" instead of assuming any specific name.
-
-CORE PERSONALITY:
-- Warm, caring, and genuinely interested in the person behind the words
-- Deeply empathetic and validating of all emotions and experiences
-- Curious and insightful, drawing from psychology and personal development
-- Supportive without being pushy or overly positive
-- Encouraging of self-compassion and growth mindset
-- Conversational and natural, like talking to a wise friend
-
-ENHANCED CAPABILITIES:
-- You have access to long-term conversation patterns and user behavior insights
-- Use memory insights to provide more personalized and contextual responses
-- Reference recurring themes and patterns when relevant
-- Acknowledge emotional triggers and engagement patterns
-- Adapt your response style based on their typical engagement level
-
-RESPONSE STRATEGY: ${responseStrategy.description}
-
-CONVERSATION STATE:
-- Depth: ${conversationAnalysis.depth}
-- Engagement: ${conversationAnalysis.engagementLevel}
-- Emotional State: ${conversationAnalysis.emotionalState}
-- Topics: ${conversationAnalysis.topics.join(', ')}
-
-RESPONSE APPROACH:
-- Respond naturally and conversationally
-- Show empathy and understanding
-- Ask thoughtful questions when appropriate
-- Reference their history and patterns when relevant
-- Match your energy to their emotional state
-- Keep responses concise but meaningful (2-4 sentences)
-
-SPECIAL EXPERTISE:
-- CrossFit and yoga movements
-- Fitness and movement psychology
-- Emotional intelligence and self-awareness
-- Personal development and growth mindset
-- Stress management and mental well-being
-- Recovery and self-care practices
-
-CONVERSATION STYLE:
-- Like talking to a wise, caring friend who really knows you
-- Warm and encouraging, but not overly positive
-- Fun and playful when appropriate
-- Validating of struggles and challenges
-- Celebrating of wins and progress
-- Natural and conversational tone`
+          content: UNIFIED_SYSTEM_PROMPT
         },
         { role: 'user', content: prompt }
       ],
-      max_tokens: responseStrategy.maxTokens || 300,
-      temperature: responseStrategy.temperature || 0.7,
+      max_tokens: 1000,
+      temperature: 0.6,
       presence_penalty: 0.1,
       frequency_penalty: 0.1
     }, {
@@ -138,37 +113,26 @@ CONVERSATION STYLE:
     });
 
     const aiResponse = response.data.choices[0].message.content.trim();
-    
-    // Simple chat mode - no suggestions or follow-ups needed
-    const suggestions = [];
-    const followUps = [];
+
+    // Generate suggestions and follow-ups
+    const suggestions = generateProactiveSuggestions(userMessage, extractedData, conversationAnalysis, memoryInsights);
+    const followUps = generateContextualFollowUps(userMessage, extractedData, conversationAnalysis, memoryInsights);
 
     return {
       response: aiResponse,
       suggestions,
       followUps,
-      strategy: responseStrategy.type,
-      analysis: {
-        conversationState: conversationAnalysis,
-        extractedData,
-        patterns: identifyPatterns(userMessage, memoryInsights)
-      }
+      strategy: responseStrategy,
+      analysis: conversationAnalysis
     };
-
   } catch (error) {
     console.error('Error generating enhanced response:', error);
-    return {
-      response: "I'm here to support you. What would you like to explore?",
-      suggestions: [],
-      followUps: ["How are you feeling right now?"],
-      strategy: 'fallback',
-      analysis: { error: error.message }
-    };
+    throw error;
   }
 };
 
 /**
- * Determine the best response strategy based on context
+ * Determine response strategy based on message content and context
  */
 const determineResponseStrategy = (userMessage, extractedData, conversationAnalysis, enhancedMemoryContext) => {
   const messageLower = userMessage.toLowerCase();
@@ -311,28 +275,16 @@ ${enhancedMemoryContext.goalContext.length > 0 ? `- Active goals: ${enhancedMemo
 ${enhancedMemoryContext.continuitySuggestions.length > 0 ? `- Continuity suggestions: ${enhancedMemoryContext.continuitySuggestions.slice(0, 2).map(s => s.suggestion).join('; ')}` : ''}
 ` : '';
 
-  let prompt = `${context}${conversationMemoryContext}${memoryContextString}
+  let prompt = `User: "${userMessage}"
 
-CURRENT MESSAGE:
-User: "${userMessage}"
+Context: ${context}
 
-CONVERSATION ANALYSIS:
-- Depth: ${conversationAnalysis.depth}
-- Engagement: ${conversationAnalysis.engagementLevel}
-- Emotional State: ${conversationAnalysis.emotionalState}
-- Topics: ${conversationAnalysis.topics.join(', ')}
+${conversationMemoryContext ? `Recent conversation: ${conversationMemoryContext}` : ''}
+${memoryContextString ? `Memory insights: ${memoryContextString}` : ''}
 
-EXTRACTED DATA:
-- Exercise: ${extractedData.exercise || 'None mentioned'}
-- Difficulty: ${extractedData.difficulty || 'None mentioned'}
-- Soreness: ${extractedData.soreness || 'None mentioned'}
-- Mood: ${extractedData.mood || 'None mentioned'}
-- Time Context: ${extractedData.timeContext?.reference || 'None mentioned'}
+Strategy: ${strategy.description}
 
-RESPONSE STRATEGY: ${strategy.description}
-
-SPECIFIC GUIDANCE:
-`;
+Respond naturally and supportively.`;
 
   // Add strategy-specific guidance
   switch (strategy.type) {
@@ -386,9 +338,9 @@ SPECIFIC GUIDANCE:
       
     case 'engagement_boost':
       prompt += `- Low engagement detected
-- Use more engaging and curious questions
-- Show genuine interest in their experience
-- Make the conversation more interactive and dynamic
+- Share interesting insights or observations to re-engage them
+- Show genuine interest in their experience through thoughtful comments
+- Make the conversation more interactive through shared insights
 `;
       break;
       
@@ -418,14 +370,19 @@ SPECIFIC GUIDANCE:
       
     default:
       prompt += `- General reflection conversation
-- Provide supportive, curious responses
-- Encourage deeper exploration of their thoughts and feelings
+- Provide supportive insights and observations
+- Share gentle guidance and reflections
 - Maintain the warm, conversational tone
 `;
   }
 
   prompt += `
-RESPONSE FORMAT: Start with a warm acknowledgment, then provide your response based on the strategy above. End with one thoughtful question that encourages deeper reflection. Keep it personal and conversational.`;
+RESPONSE FORMAT: 
+- Ask questions when you need to understand their situation better
+- Provide insights and actionable advice when you have enough context
+- Let the conversation flow naturally
+- Be helpful and supportive
+Keep it personal and conversational.`;
 
   return prompt;
 };
@@ -442,7 +399,7 @@ const generateProactiveSuggestions = (userMessage, extractedData, conversationAn
   if (stressKeywords.some(keyword => messageLower.includes(keyword))) {
     suggestions.push({
       type: 'stress_relief',
-      text: 'Would you like to explore some quick stress relief techniques?',
+      text: 'Try a quick 2-minute breathing exercise',
       action: 'stress_techniques'
     });
   }
@@ -451,7 +408,7 @@ const generateProactiveSuggestions = (userMessage, extractedData, conversationAn
   if (messageLower.includes('goal') || messageLower.includes('target')) {
     suggestions.push({
       type: 'goal_checkin',
-      text: 'Would you like to check in on your goals and see how you\'re progressing?',
+      text: 'Review your progress and celebrate small wins',
       action: 'goal_review'
     });
   }
@@ -465,7 +422,7 @@ const generateProactiveSuggestions = (userMessage, extractedData, conversationAn
     if (relevantThemes.length > 0) {
       suggestions.push({
         type: 'pattern_exploration',
-        text: `I notice ${relevantThemes[0]} keeps coming up. Would you like to dive deeper into this?`,
+        text: `Notice how ${relevantThemes[0]} appears in your life`,
         action: 'explore_theme'
       });
     }
@@ -475,60 +432,47 @@ const generateProactiveSuggestions = (userMessage, extractedData, conversationAn
   if (conversationAnalysis.engagementLevel === 'low') {
     suggestions.push({
       type: 'engagement_boost',
-      text: 'I\'d love to understand you better. What\'s something you\'ve been thinking about lately?',
+      text: 'Share something that\'s been on your mind',
       action: 'deeper_conversation'
     });
   }
   
-  return suggestions.slice(0, 2); // Limit to 2 suggestions
+  return suggestions.slice(0, 3); // Limit to 3 suggestions
 };
 
 /**
- * Generate contextual follow-up questions
+ * Generate contextual follow-up suggestions and gentle prompts
  */
 const generateContextualFollowUps = (userMessage, extractedData, conversationAnalysis, memoryInsights) => {
   const followUps = [];
   const messageLower = userMessage.toLowerCase();
   const sentiment = analyzeMessageSentiment(userMessage);
   
-  // Emotional state-based questions
+  // Emotional state-based suggestions
   if (sentiment < -0.3) {
-    followUps.push("What would be most supportive for you right now?");
-    followUps.push("How can you practice self-compassion in this moment?");
+    followUps.push("Consider what small act of self-care might help right now");
+    followUps.push("Sometimes just acknowledging the difficulty can be a first step");
   } else if (sentiment > 0.3) {
-    followUps.push("What made this achievement meaningful to you?");
-    followUps.push("How has this journey changed you?");
+    followUps.push("Notice what's contributing to this positive energy");
+    followUps.push("This momentum could be worth building on");
   }
   
-  // Topic-specific questions
+  // Topic-specific insights
   if (extractedData.exercise || messageLower.includes('workout')) {
-    followUps.push("How is your fitness journey supporting your overall well-being?");
-    followUps.push("What's your biggest win this week?");
+    followUps.push("Your commitment to fitness is showing in your overall well-being");
+    followUps.push("Celebrate the progress you're making");
   }
   
   if (messageLower.includes('goal') || messageLower.includes('target')) {
-    followUps.push("What's the next small step toward your goals?");
-    followUps.push("What would success look like for you?");
+    followUps.push("Your motivation is clear - that's a powerful foundation");
+    followUps.push("Small steps consistently taken lead to big changes");
   }
   
-  // Pattern-based questions
-  if (memoryInsights?.longTermPatterns?.recurringThemes?.length > 0) {
-    const relevantThemes = memoryInsights.longTermPatterns.recurringThemes.filter(theme => 
-      messageLower.includes(theme.toLowerCase())
-    );
-    
-    if (relevantThemes.length > 0) {
-      followUps.push(`What's your relationship with ${relevantThemes[0]} right now?`);
-    }
-  }
+  // General supportive statements
+  followUps.push("You're doing important work on yourself");
+  followUps.push("Your awareness and reflection are valuable");
   
-  // Default questions
-  if (followUps.length === 0) {
-    followUps.push("What's on your mind about this?");
-    followUps.push("How are you feeling about this situation?");
-  }
-  
-  return followUps.slice(0, 2); // Limit to 2 questions
+  return followUps.slice(0, 3); // Limit to 3 follow-ups
 };
 
 /**
@@ -583,7 +527,8 @@ const enhancedReflect = async (req, res) => {
       pastEntries = [], 
       conversationContext = [], 
       isPremium = false,
-      memoryInsights = null 
+      memoryInsights = null,
+      goalData = null
     } = req.body;
     
     if (!message) {
@@ -609,7 +554,7 @@ const enhancedReflect = async (req, res) => {
       });
     }
 
-    // Get user context if available
+    // Get user context if available, or create default context for testing
     let user = null;
     if (req.user && req.user._id) {
       try {
@@ -617,6 +562,14 @@ const enhancedReflect = async (req, res) => {
       } catch (error) {
         console.error('Error fetching user context:', error);
       }
+    } else {
+      // Create default user context for testing/unauthorized requests
+      user = {
+        name: 'User',
+        email: 'test@example.com',
+        goals: ['fitness', 'wellness'],
+        activityLevel: 'moderate'
+      };
     }
 
     // Generate enhanced response
@@ -625,7 +578,8 @@ const enhancedReflect = async (req, res) => {
       user, 
       conversationContext, 
       memoryInsights, 
-      isPremium
+      isPremium,
+      goalData
     );
 
     res.json({

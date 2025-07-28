@@ -34,6 +34,12 @@ export const useEnhancedAI = (userData, conversationPersistence, isPremium = fal
       // Get memory insights
       const memoryInsights = conversationPersistence?.getMemoryInsightsForAI?.() || null;
 
+      // Prepare goal data
+      const goalData = {
+        metricValues: userData?.metricValues || {},
+        metricGoals: userData?.metricGoals || {}
+      };
+
       // Get auth token
       const token = localStorage.getItem('reflectWithin_token');
 
@@ -45,7 +51,8 @@ export const useEnhancedAI = (userData, conversationPersistence, isPremium = fal
         pastEntries: userData?.journalEntries?.slice(-5) || [],
         conversationContext: context || [],
         isPremium: isPremium,
-        memoryInsights: memoryInsights
+        memoryInsights: memoryInsights,
+        goalData: goalData // Include goal data
       }, {
         headers: token ? {
           'Authorization': `Bearer ${token}`,

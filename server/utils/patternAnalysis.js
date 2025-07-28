@@ -30,7 +30,7 @@ const getCachedContext = async (userId, extractedData, isPremium, user = null, l
         const User = require('../models/User');
         user = await User.findById(userId);
       }
-      context = buildBasicContext(extractedData, user, lastWorkout, sorenessHistory);
+      context = buildBasicContext(extractedData, user);
     }
     
     contextCache.set(cacheKey, {
@@ -620,50 +620,73 @@ const buildEnhancedUserContext = async (userId, extractedData) => {
 /**
  * Build basic context for free users
  */
-const buildBasicContext = (extractedData, user, lastWorkout = null, sorenessHistory = null) => {
-  if (!user) {
-    return 'Name: Unknown User';
-  }
-  
-  let context = `Name: ${user.name}`;
-  
-  if (user.fitnessLevel) {
-    context += `, Fitness Level: ${user.fitnessLevel}`;
-  }
-  
-  if (user.goals && user.goals.length > 0) {
-    context += `, Goals: ${user.goals.join(', ')}`;
-  }
-  
-  // Add time-aware workout context
-  if (extractedData.exercise && lastWorkout) {
-    const daysSinceLastWorkout = Math.floor((new Date() - lastWorkout.date) / (1000 * 60 * 60 * 24));
-    const weight = lastWorkout.exercises && lastWorkout.exercises[0] ? 
-      (lastWorkout.exercises[0].weight || 'no weight') : 'no weight';
-    context += `, Last ${extractedData.exercise}: ${weight} ${daysSinceLastWorkout} days ago`;
-  }
-  
-  // Add time-aware soreness context
-  if (extractedData.soreness && sorenessHistory && sorenessHistory.length > 0) {
-    const mostRecentSoreness = sorenessHistory[0];
-    const daysSinceSoreness = Math.floor((new Date() - mostRecentSoreness.date) / (1000 * 60 * 60 * 24));
-    
-    if (sorenessHistory.length > 1) {
-      context += `, Recurring soreness in ${extractedData.soreness} (last occurrence: ${daysSinceSoreness} days ago)`;
-    } else {
-      context += `, Recent soreness in ${extractedData.soreness} (${daysSinceSoreness} days ago)`;
+const buildBasicContext = (extractedData, user, lastWorkout = null, sorenessHistory = null, goalData = null) => {
+  let context = `You are Myra, an AI wellness companion focused on fitness reflection and personal growth. You help users reflect on their workouts, recovery, and overall wellness journey.\n\n`;
+
+  // Add basic user context
+  if (user) {
+    context += `User Profile:\n`;
+    if (user.name) context += `- Name: ${user.name}\n`;
+    if (user.focusAreas && user.focusAreas.length > 0) {
+      context += `- Focus Areas: ${user.focusAreas.join(', ')}\n`;
+    }
+    if (user.selectedMetrics && Object.keys(user.selectedMetrics).length > 0) {
+      context += `- Tracking Metrics: ${Object.entries(user.selectedMetrics)
+        .map(([category, metrics]) => `${category}: ${metrics.join(', ')}`)
+        .join('; ')}\n`;
     }
   }
-  
-  // Add time context
-  if (extractedData.timeContext && extractedData.timeContext.type !== 'unknown') {
-    context += `, Time Context: ${extractedData.timeContext.reference}`;
+
+  // Add goal context if available
+  if (goalData && goalData.metricGoals) {
+    context += `\nUser Goals:\n`;
+    Object.entries(goalData.metricGoals).forEach(([metricId, goal]) => {
+      if (goal.hasGoal) {
+        const currentValue = goalData.metricValues?.[metricId] || 'Not set';
+        context += `- ${metricId}: Current ${currentValue}, Target ${goal.target} ${goal.timeline === 'ongoing' ? '(ongoing)' : `(${goal.timeline})`}\n`;
+      }
+    });
+    context += `\n`;
   }
-  
-  if (extractedData.mood) {
-    context += `, Current Mood: ${extractedData.mood}`;
+
+  // Add extracted data context
+  if (extractedData) {
+    context += `Current Context:\n`;
+    if (extractedData.exercise) context += `- Exercise: ${extractedData.exercise}\n`;
+    if (extractedData.difficulty) context += `- Difficulty: ${extractedData.difficulty}\n`;
+    if (extractedData.soreness) context += `- Soreness: ${extractedData.soreness}\n`;
+    if (extractedData.mood) context += `- Mood: ${extractedData.mood}\n`;
+    if (extractedData.energy) context += `- Energy: ${extractedData.energy}\n`;
+    if (extractedData.timeContext) context += `- Time: ${extractedData.timeContext}\n`;
+    context += `\n`;
   }
-  
+
+  // Add goal-aware instructions
+  if (goalData && goalData.metricGoals) {
+    const activeGoals = Object.entries(goalData.metricGoals)
+      .filter(([_, goal]) => goal.hasGoal)
+      .map(([metricId, goal]) => metricId);
+    
+    if (activeGoals.length > 0) {
+      context += `Goal-Aware Instructions:\n`;
+      context += `- The user has active goals for: ${activeGoals.join(', ')}\n`;
+      context += `- When relevant, acknowledge their progress toward these goals\n`;
+      context += `- Provide encouragement and support for goal achievement\n`;
+      context += `- Ask about goal progress when appropriate\n`;
+      context += `- Celebrate milestones and achievements\n`;
+      context += `- Offer suggestions that align with their goals\n\n`;
+    }
+  }
+
+  context += `Response Guidelines:\n`;
+  context += `- Be warm, supportive, and encouraging\n`;
+  context += `- Ask thoughtful follow-up questions\n`;
+  context += `- Provide specific, actionable insights\n`;
+  context += `- Acknowledge progress and effort\n`;
+  context += `- Be goal-aware and supportive of their objectives\n`;
+  context += `- Keep responses conversational and engaging\n`;
+  context += `- Focus on reflection and personal growth\n\n`;
+
   return context;
 };
 
@@ -957,65 +980,104 @@ const analyzeMessageSentiment = (message) => {
 /**
  * Build enhanced context with long-term memory patterns
  */
-const buildEnhancedContextWithMemory = (user, pastEntries = [], conversationContext = [], memoryInsights = null) => {
-  let context = buildConversationUserContext(user || null, pastEntries, conversationContext);
+const buildEnhancedContextWithMemory = (user, pastEntries = [], conversationContext = [], memoryInsights = null, goalData = null) => {
+  let context = `You are Myra, an AI wellness companion focused on fitness reflection and personal growth. You help users reflect on their workouts, recovery, and overall wellness journey.\n\n`;
 
-  // Add memory insights if available
-  if (memoryInsights) {
-    context += `LONG-TERM MEMORY INSIGHTS:
-`;
-
-    // Add conversation patterns
-    if (memoryInsights.conversationPatterns) {
-      const patterns = memoryInsights.conversationPatterns;
-      context += `- Total conversations: ${patterns.totalConversations}
-- Average messages per conversation: ${patterns.averageMessagesPerConversation}
-- Most active time: ${patterns.mostActiveTime || 'Not available'}
-- Conversation duration distribution: ${patterns.conversationDuration.short} short, ${patterns.conversationDuration.medium} medium, ${patterns.conversationDuration.long} long
-
-`;
+  // Add basic user context
+  if (user) {
+    context += `User Profile:\n`;
+    if (user.name) context += `- Name: ${user.name}\n`;
+    if (user.email) context += `- Email: ${user.email}\n`;
+    if (user.focusAreas && user.focusAreas.length > 0) {
+      context += `- Focus Areas: ${user.focusAreas.join(', ')}\n`;
     }
-
-    // Add emotional trends
-    if (memoryInsights.emotionalTrends) {
-      const trends = memoryInsights.emotionalTrends;
-      context += `- Overall emotional trend: ${trends.overallSentiment}
-- Emotional stability: ${Math.round(trends.emotionalStability * 100)}%
-- Emotional triggers: ${trends.emotionalTriggers.join(', ') || 'None identified'}
-
-`;
-    }
-
-    // Add topic evolution
-    if (memoryInsights.topicEvolution) {
-      const evolution = memoryInsights.topicEvolution;
-      context += `- Primary topics: ${evolution.primaryTopics.join(', ')}
-- Emerging topics: ${evolution.emergingTopics.join(', ') || 'None'}
-- Declining topics: ${evolution.decliningTopics.join(', ') || 'None'}
-
-`;
-    }
-
-    // Add engagement metrics
-    if (memoryInsights.engagementMetrics) {
-      const metrics = memoryInsights.engagementMetrics;
-      context += `- Engagement score: ${metrics.engagementScore}/100
-- Average message length: ${metrics.averageMessageLength} characters
-- Peak engagement times: ${metrics.peakEngagementTimes.join(', ')}
-
-`;
-    }
-
-    // Add long-term patterns
-    if (memoryInsights.longTermPatterns) {
-      const patterns = memoryInsights.longTermPatterns;
-      context += `- Recurring themes: ${patterns.recurringThemes.join(', ') || 'None'}
-- Recent achievements: ${patterns.achievementPatterns.length > 0 ? patterns.achievementPatterns.slice(-3).map(a => a.achievement).join(', ') : 'None'}
-- Stress patterns: ${patterns.stressPatterns.length > 0 ? `${patterns.stressPatterns.length} stress indicators identified` : 'No stress patterns'}
-
-`;
+    if (user.selectedMetrics && Object.keys(user.selectedMetrics).length > 0) {
+      context += `- Tracking Metrics: ${Object.entries(user.selectedMetrics)
+        .map(([category, metrics]) => `${category}: ${metrics.join(', ')}`)
+        .join('; ')}\n`;
     }
   }
+
+  // Add goal context if available
+  if (goalData && goalData.metricGoals) {
+    context += `\nUser Goals:\n`;
+    Object.entries(goalData.metricGoals).forEach(([metricId, goal]) => {
+      if (goal.hasGoal) {
+        const currentValue = goalData.metricValues?.[metricId] || 'Not set';
+        context += `- ${metricId}: Current ${currentValue}, Target ${goal.target} ${goal.timeline === 'ongoing' ? '(ongoing)' : `(${goal.timeline})`}\n`;
+      }
+    });
+    context += `\n`;
+  }
+
+  // Add recent entries context
+  if (pastEntries && pastEntries.length > 0) {
+    context += `Recent Reflections (last ${Math.min(pastEntries.length, 5)} entries):\n`;
+    pastEntries.slice(-5).forEach((entry, index) => {
+      const date = new Date(entry.createdAt || entry.date).toLocaleDateString();
+      context += `${index + 1}. [${date}] ${entry.content.substring(0, 100)}${entry.content.length > 100 ? '...' : ''}\n`;
+    });
+    context += `\n`;
+  }
+
+  // Add conversation memory context
+  if (conversationContext && conversationContext.length > 0) {
+    context += `Recent Conversation Context:\n`;
+    conversationContext.slice(-5).forEach((msg, index) => {
+      const role = msg.role || (msg.sender === 'user' ? 'user' : 'assistant');
+      const content = msg.content || msg.text || '';
+      context += `${index + 1}. ${role}: ${content.substring(0, 80)}${content.length > 80 ? '...' : ''}\n`;
+    });
+    context += `\n`;
+  }
+
+  // Add memory insights
+  if (memoryInsights) {
+    context += `Memory Insights:\n`;
+    if (memoryInsights.recentThemes) {
+      context += `- Recent Themes: ${memoryInsights.recentThemes.join(', ')}\n`;
+    }
+    if (memoryInsights.emotionalTrends) {
+      context += `- Emotional Trends: ${memoryInsights.emotionalTrends}\n`;
+    }
+    if (memoryInsights.patterns) {
+      context += `- Patterns: ${memoryInsights.patterns.join(', ')}\n`;
+    }
+    context += `\n`;
+  }
+
+  // Add goal-aware instructions
+  if (goalData && goalData.metricGoals) {
+    const activeGoals = Object.entries(goalData.metricGoals)
+      .filter(([_, goal]) => goal.hasGoal)
+      .map(([metricId, goal]) => ({ metricId, goal }));
+    
+    if (activeGoals.length > 0) {
+      context += `GOAL-AWARE INSTRUCTIONS:\n`;
+      context += `- The user has active goals that you MUST reference when relevant:\n`;
+      
+      activeGoals.forEach(({ metricId, goal }) => {
+        const currentValue = goalData.metricValues?.[metricId] || 'Not set';
+        context += `  * ${metricId}: Current ${currentValue}, Target ${goal.target} ${goal.timeline === 'ongoing' ? '(ongoing)' : `(${goal.timeline})`}\n`;
+      });
+      
+      context += `- ALWAYS acknowledge progress toward these specific goals when the user mentions related topics\n`;
+      context += `- Reference the specific target values (like "160 lbs" for weight goal) when relevant\n`;
+      context += `- Celebrate when they're making progress toward their targets\n`;
+      context += `- Provide suggestions that help them reach their specific goal targets\n`;
+      context += `- Ask about their progress toward these specific goals when appropriate\n`;
+      context += `- Use goal-specific language like "closer to your target", "progress toward your goal", etc.\n\n`;
+    }
+  }
+
+  context += `Response Guidelines:\n`;
+  context += `- Be warm, supportive, and encouraging\n`;
+  context += `- Ask thoughtful follow-up questions\n`;
+  context += `- Provide specific, actionable insights\n`;
+  context += `- Acknowledge progress and effort\n`;
+  context += `- Be goal-aware and supportive of their objectives\n`;
+  context += `- Keep responses conversational and engaging\n`;
+  context += `- Focus on reflection and personal growth\n\n`;
 
   return context;
 };

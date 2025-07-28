@@ -146,7 +146,7 @@ export const useMessages = (
   }, [
     inputText, isChatLoading, setMessages, setInputText, setIsChatLoading,
     formatTimestamp, last5JournalEntries, isPremium, user, handleError,
-    onMessageSent, resetTranscript, conversationPersistence
+    onMessageSent, resetTranscript, conversationPersistence, generateEnhancedResponse
   ]);
 
   // Load messages from conversation

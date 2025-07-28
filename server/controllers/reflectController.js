@@ -22,6 +22,12 @@ const {
   extractActivityLevel
 } = require('../utils/fitnessDataExtraction');
 
+// Unified system prompt for all AI interactions
+const UNIFIED_SYSTEM_PROMPT = `You are Myra, an empathetic AI companion for fitness and wellness with expertise in exercise programming, mental health support, recovery practices, and evidence-based injury management. You have access to user goals, progress tracking, and journal entries. Always provide warm, supportive guidance while prioritizing safety and appropriate professional referrals when needed. Use scientific principles to explain recommendations and help users understand their body's responses. When giving exercise or recovery advice, be very specific with pose names, breathing techniques, and step-by-step instructions. Remember previous conversations and user patterns to provide personalized guidance. Structure your responses with: 1) Empathetic acknowledgment, 2) Specific, actionable guidance with exact timeframes and techniques, 3) Scientific explanation when relevant, 4) Personalization based on user history, 5) Safety considerations and professional referral when needed.`;
+
+// Crisis detection keywords
+const CRISIS_KEYWORDS = ['suicide', 'kill myself', 'end it all', 'want to die', 'self-harm', 'cut myself', 'hopeless', 'no point', 'better off dead'];
+
 // Enhanced reflection with conversation memory
 const reflect = async (req, res) => {
   try {
@@ -30,11 +36,24 @@ const reflect = async (req, res) => {
       pastEntries = [], 
       conversationContext = [], 
       isPremium = false,
-      memoryInsights = null 
+      memoryInsights = null,
+      goalData = null // Add goal data parameter
     } = req.body;
     
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // Basic safety checks for crisis detection
+    const messageLower = message.toLowerCase();
+    const hasCrisisKeywords = CRISIS_KEYWORDS.some(keyword => messageLower.includes(keyword));
+    
+    if (hasCrisisKeywords) {
+      console.log('🚨 Crisis keywords detected in message');
+      return res.json({ 
+        question: "I'm concerned about what you're sharing. These feelings are serious and deserve immediate attention. Please reach out to a mental health professional, call the National Suicide Prevention Lifeline at 988, or text HOME to 741741 for Crisis Text Line. You don't have to go through this alone, and there are people who want to help you.",
+        requiresEscalation: true
+      });
     }
 
     // Check if API key is available
@@ -51,14 +70,14 @@ const reflect = async (req, res) => {
       return res.json({ question: randomQuestion });
     }
 
-    // Log which model is being used
-    const modelToUse = process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:complementary-data:Bw5xGY3w';
-    console.log(`🤖 Using model: ${modelToUse}`);
-    if (process.env.FINE_TUNED_MODEL_ID) {
-      console.log('✅ Fine-tuned model detected!');
-    } else {
-      console.log('⚠️ Using base model - add FINE_TUNED_MODEL_ID to .env for custom model');
-    }
+                    // Log which model is being used
+        const modelToUse = process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:unified-enhanced:By8h6kBm';
+        console.log(`🤖 Using model: ${modelToUse}`);
+        if (process.env.FINE_TUNED_MODEL_ID) {
+            console.log('✅ Fine-tuned model detected!');
+        } else {
+            console.log('✅ Using unified enhanced fine-tuned model!');
+        }
 
     // Extract structured data using patterns
     const extractedData = extractStructuredData(message);
@@ -72,17 +91,17 @@ const reflect = async (req, res) => {
         // Fetch user data
         user = await User.findById(req.user._id);
         
-        // Build enhanced context with memory insights
+        // Build enhanced context with memory insights and goal data
         if (user) {
-          context = buildEnhancedContextWithMemory(user, pastEntries, conversationContext, memoryInsights);
+          context = buildEnhancedContextWithMemory(user, pastEntries, conversationContext, memoryInsights, goalData);
         }
       } catch (error) {
         console.error('Error fetching user context:', error);
         // Continue without user context if there's an error
       }
     } else {
-      // No auth - build basic context
-      context = buildBasicContext(pastEntries, conversationContext);
+      // No auth - build basic context with goal data if available
+      context = buildBasicContext(pastEntries, conversationContext, goalData);
     }
 
     // Generate conversation ID for memory tracking
@@ -118,21 +137,11 @@ Respond naturally and empathetically with memory continuity. Reference previous 
     console.log('📝 Sending enhanced prompt to AI with conversation memory...');
 
     const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-      model: modelToUse,
+              model: modelToUse,
       messages: [
         {
           role: 'system',
-          content: `You are Myra, an empathetic AI companion for fitness and wellness.
-
-CORE APPROACH:
-- Listen and validate emotions first
-- Ask one thoughtful follow-up question to encourage deeper reflection
-- Provide specific, actionable advice when requested
-- Use the user's name: ${user ? user.name : 'you'}
-
-STYLE: Warm, supportive, conversational. Keep responses under 3 sentences unless providing detailed advice.
-
-EXPERTISE: CrossFit, yoga, fitness psychology, and personal development.`
+          content: UNIFIED_SYSTEM_PROMPT
         },
         { role: 'user', content: prompt }
       ],
@@ -264,10 +273,10 @@ const deleteReflection = async (req, res) => {
   }
 };
 
-// Generate structured journal entry from conversational input
+// Generate structured journal entry from user input
 const generateJournalEntry = async (req, res) => {
   try {
-    const { message, pastEntries = [], conversationHistory = [], isReadyForEntry = false } = req.body;
+    const { message, pastEntries = [], promptType, prompt, isReadyForEntry = true } = req.body;
     
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
@@ -279,20 +288,20 @@ const generateJournalEntry = async (req, res) => {
       return res.json({ 
         structuredEntry: {
           date: new Date().toISOString().split('T')[0],
+          content: 'Please enable OpenAI API key for AI journal assistance.',
           mood: 'Unknown',
-          workout: { exercises: [] },
-          reflection: 'Please enable OpenAI API key for AI journal assistance.'
+          topics: []
         }
       });
     }
 
     // Log which model is being used
-    const modelToUse = process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:dataset-metcon:Bryj0os9';
+    const modelToUse = process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:unified-enhanced:By8h6kBm';
     console.log(`🤖 Using model: ${modelToUse}`);
     if (process.env.FINE_TUNED_MODEL_ID) {
       console.log('✅ Fine-tuned model detected!');
     } else {
-      console.log('⚠️ Using base model - add FINE_TUNED_MODEL_ID to .env for custom model');
+      console.log('✅ Using unified enhanced fine-tuned model!');
     }
 
     // Get user context if available (from auth middleware)
@@ -320,127 +329,152 @@ const generateJournalEntry = async (req, res) => {
       }
     }
 
-    // Determine if we should have a conversation or generate an entry
-    if (!isReadyForEntry) {
-      // CONVERSATION PHASE - Ask follow-up questions
-      const conversationPrompt = `${context}User: "${message}"
+    // Build prompt-specific guidance
+    let promptGuidance = '';
+    switch (promptType) {
+      case 'workout':
+        promptGuidance = `
+WORKOUT ENTRY GUIDANCE:
+- Focus on the workout details: exercises, sets, reps, weights
+- Include how it felt physically and mentally
+- Mention any achievements, PRs, or challenges
+- Add recovery notes if relevant
+- Keep it personal and engaging`;
+        break;
+      case 'mood':
+        promptGuidance = `
+MOOD CHECK GUIDANCE:
+- Explore the emotional state and what's affecting it
+- Include context about what happened today
+- Mention any coping strategies or self-care
+- Be empathetic and validating
+- Keep it reflective and honest`;
+        break;
+      case 'daily':
+        promptGuidance = `
+DAILY REFLECTION GUIDANCE:
+- Capture the key events and experiences of the day
+- Include gratitude and positive moments
+- Reflect on learnings and insights
+- Consider how the day felt overall
+- Make it personal and meaningful`;
+        break;
+      case 'goals':
+        promptGuidance = `
+GOAL CHECK-IN GUIDANCE:
+- Review progress toward specific goals
+- Include actions taken today toward goals
+- Mention any obstacles or challenges
+- Celebrate small wins and progress
+- Plan next steps if relevant`;
+        break;
+      default:
+        promptGuidance = `
+GENERAL JOURNAL GUIDANCE:
+- Create a natural, personal journal entry
+- Include relevant details and emotions
+- Make it engaging and authentic
+- Keep the user's voice and style`;
+    }
 
-${conversationHistory.length > 0 ? `Conversation so far:
-${conversationHistory.map(msg => `${msg.sender}: ${msg.text}`).join('\n')}
+    // Generate the journal entry
+    const entryPrompt = `${context}${promptGuidance}
+
+USER RESPONSE: "${message}"
+
+${pastEntries.length > 0 ? `RECENT ENTRIES CONTEXT:
+${pastEntries.slice(-3).map(entry => `- ${entry.date}: "${entry.content?.substring(0, 100)}..."`).join('\n')}
 ` : ''}
 
-Have a natural conversation to understand their day and feelings. Ask 1-2 thoughtful follow-up questions.`;
+Create a natural, well-written journal entry based on the user's response. Write it in first person as if the user is writing their own entry, but with AI assistance to make it more comprehensive and reflective.
 
-      const conversationResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: modelToUse,
-        messages: [
-          {
-            role: 'system',
-            content: `You are ReflectWithin, an empathetic AI companion for fitness and wellness. Have natural conversations and use the user's name: ${user ? user.name : 'you'}.`
-          },
-          { role: 'user', content: conversationPrompt }
-        ],
-        max_tokens: 300,
-        temperature: 0.7,
-        presence_penalty: 0.1,
-        frequency_penalty: 0.1
-      }, {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
+The entry should be:
+- Natural and conversational
+- Personal and authentic to the user's voice
+- Well-structured and easy to read
+- Include relevant details from their response
+- 2-4 paragraphs in length
 
-      const conversationText = conversationResponse.data.choices[0].message.content.trim();
-      
-      return res.json({ 
-        conversation: conversationText,
-        shouldGenerateEntry: false
-      });
-    } else {
-      // ENTRY GENERATION PHASE - Generate natural language entry
-      let entryPrompt = `${context}Conversation:
-${conversationHistory.map(msg => `${msg.sender}: ${msg.text}`).join('\n')}
+Write the entry as a single, flowing piece of text.`;
 
-Create a natural, readable journal entry based on this conversation. Write it as if the user is writing their own reflection, but with AI assistance to capture all the important details.
-
-Structure it with these sections (but write naturally, not as headers):
-- How they're feeling and their overall mood
-- Key highlights and activities from their day
-- Workout details (if mentioned) - describe naturally like "Hit a new PR on back squats at 115kg"
-- What they learned or insights gained
-- Goals or focus for tomorrow
-- A brief gratitude note
-
-Write in first person, as if the user is writing their own entry. Make it engaging and personal, not robotic. Include specific details mentioned in the conversation.`;
-
-      // Add context from past entries if available
-      if (pastEntries.length > 0) {
-        entryPrompt += `\n\nContext from recent entries:`;
-        pastEntries.forEach(entry => {
-          entryPrompt += `\n- ${entry.date}: "${entry.input}"`;
-        });
-        entryPrompt += `\n\nUse this context to maintain consistency in writing style and tone.`;
+    const response = await axios.post('https://api.openai.com/v1/chat/completions', {
+      model: modelToUse,
+      messages: [
+        {
+          role: 'system',
+          content: `You are ReflectWithin, an AI assistant that helps users create thoughtful journal entries. Write in the user's voice, making their entries more comprehensive and reflective while maintaining authenticity.`
+        },
+        { role: 'user', content: entryPrompt }
+      ],
+      max_tokens: 800,
+      temperature: 0.7,
+      presence_penalty: 0.1,
+      frequency_penalty: 0.1
+    }, {
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
       }
-
-      const response = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: modelToUse,
-        messages: [
-          {
-            role: 'system',
-            content: `You are ReflectWithin, an AI assistant that helps users create natural, personal journal entries. Write in the user's voice - as if they're writing their own reflection with your help. Make entries engaging, personal, and readable. Use natural language, not structured data. Include specific details and emotions mentioned in the conversation. Write in first person perspective.`
-          },
-          { role: 'user', content: entryPrompt }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
-        presence_penalty: 0.1,
-        frequency_penalty: 0.1
-      }, {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      const content = response.data.choices[0].message.content.trim();
-      
-      // Create a structured entry object for the frontend, but with natural language content
-      const structuredEntry = {
-        date: new Date().toISOString().split('T')[0],
-        mood: 'reflected', // Will be extracted from content if needed
-        content: content,
-        reflection: content,
-        activities: [],
-        goals: [],
-        workout: null
-      };
-
-      res.json({ structuredEntry });
-    }
-  } catch (error) {
-    console.error('Journal entry generation error:', error);
-    
-    // Handle specific API errors
-    if (error.response?.status === 401) {
-      return res.status(500).json({ 
-        error: 'API key is invalid or expired',
-        message: 'Please check your OpenAI API key configuration'
-      });
-    }
-    
-    if (error.response?.status === 429) {
-      return res.status(500).json({ 
-        error: 'Rate limit exceeded',
-        message: 'Please wait a moment before trying again'
-      });
-    }
-    
-    res.status(500).json({ 
-      error: 'Failed to generate journal entry',
-      message: 'Please try again later'
     });
+
+    const generatedEntry = response.data.choices[0].message.content.trim();
+
+    // Create structured entry
+    const structuredEntry = {
+      date: new Date().toISOString().split('T')[0],
+      content: generatedEntry,
+      mood: extractMoodFromEntry(generatedEntry),
+      topics: extractTopicsFromEntry(generatedEntry, promptType),
+      promptType: promptType
+    };
+
+    res.json({ structuredEntry });
+
+  } catch (error) {
+    console.error('❌ Journal entry generation error:', error);
+    
+    // Provide fallback response
+    const fallbackEntry = {
+      date: new Date().toISOString().split('T')[0],
+      content: "I'm having trouble generating your journal entry right now. Please try again or write your entry manually.",
+      mood: 'neutral',
+      topics: ['general'],
+      promptType: promptType || 'general'
+    };
+    
+    res.json({ structuredEntry: fallbackEntry });
   }
+};
+
+// Helper function to extract mood from entry
+const extractMoodFromEntry = (entry) => {
+  const entryLower = entry.toLowerCase();
+  if (entryLower.includes('happy') || entryLower.includes('excited') || entryLower.includes('great')) return 'happy';
+  if (entryLower.includes('sad') || entryLower.includes('down') || entryLower.includes('disappointed')) return 'sad';
+  if (entryLower.includes('stressed') || entryLower.includes('anxious') || entryLower.includes('worried')) return 'stressed';
+  if (entryLower.includes('calm') || entryLower.includes('peaceful') || entryLower.includes('relaxed')) return 'calm';
+  if (entryLower.includes('tired') || entryLower.includes('exhausted') || entryLower.includes('drained')) return 'tired';
+  return 'neutral';
+};
+
+// Helper function to extract topics from entry
+const extractTopicsFromEntry = (entry, promptType) => {
+  const topics = [];
+  const entryLower = entry.toLowerCase();
+  
+  // Add prompt-specific topics
+  if (promptType === 'workout') topics.push('fitness', 'workout');
+  if (promptType === 'mood') topics.push('mood', 'emotions');
+  if (promptType === 'daily') topics.push('daily', 'reflection');
+  if (promptType === 'goals') topics.push('goals', 'progress');
+  
+  // Extract additional topics from content
+  if (entryLower.includes('workout') || entryLower.includes('exercise') || entryLower.includes('gym')) topics.push('fitness');
+  if (entryLower.includes('goal') || entryLower.includes('target') || entryLower.includes('progress')) topics.push('goals');
+  if (entryLower.includes('grateful') || entryLower.includes('thankful') || entryLower.includes('blessed')) topics.push('gratitude');
+  if (entryLower.includes('stress') || entryLower.includes('anxiety') || entryLower.includes('pressure')) topics.push('stress');
+  
+  return [...new Set(topics)]; // Remove duplicates
 };
 
 module.exports = {

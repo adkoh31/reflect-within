@@ -504,8 +504,6 @@ const ChatWindow = memo(({
     }
   }, [messages.length, showWelcomeMessage]);
 
-
-
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -687,6 +685,12 @@ const ChatWindow = memo(({
                 I remember our previous conversations and can provide personalized insights.
               </div>
             )}
+            <div className="text-xs text-slate-500 mt-2">
+              {true // Always true as mode is removed
+                ? "💬 Chat Mode: General conversation and support"
+                : "📝 Journal Mode: Create structured journal entries"
+              }
+            </div>
           </div>
         )}
 

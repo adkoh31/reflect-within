@@ -19,7 +19,8 @@ import {
   Users, 
   Palette, 
   Plus,
-  MoreHorizontal
+  MoreHorizontal,
+  X
 } from 'lucide-react';
 
 // Metric Input Modal Component
@@ -27,6 +28,12 @@ const MetricInputModal = ({ metric, onSubmit, onSkip, currentValue }) => {
   const [inputValue, setInputValue] = useState(currentValue || '');
   const [customMetricName, setCustomMetricName] = useState('');
   const [customMetricType, setCustomMetricType] = useState('qualitative');
+  const [goalData, setGoalData] = useState({
+    hasGoal: false,
+    target: '',
+    timeline: 'ongoing',
+    description: ''
+  });
 
   const handleSubmit = () => {
     if (metric.inputType === 'custom') {
@@ -34,15 +41,71 @@ const MetricInputModal = ({ metric, onSubmit, onSkip, currentValue }) => {
       onSubmit({
         name: customMetricName,
         type: customMetricType,
-        value: inputValue
+        value: inputValue,
+        goal: goalData.hasGoal ? goalData : null
       });
     } else {
-      onSubmit(inputValue);
+      onSubmit({
+        value: inputValue,
+        goal: goalData.hasGoal ? goalData : null
+      });
     }
   };
 
   const handleSkip = () => {
     onSkip();
+  };
+
+  const getGoalSuggestions = () => {
+    const currentValue = parseFloat(inputValue) || 0;
+    
+    switch (metric.id) {
+      case 'weight':
+        return {
+          suggestions: [
+            { label: 'Lose weight', target: currentValue - 10, timeline: '3_months' },
+            { label: 'Maintain weight', target: currentValue, timeline: 'ongoing' },
+            { label: 'Gain weight', target: currentValue + 10, timeline: '3_months' }
+          ],
+          unit: 'lbs'
+        };
+      case 'workouts':
+        return {
+          suggestions: [
+            { label: 'Increase workouts', target: Math.min(currentValue + 2, 7), timeline: '1_month' },
+            { label: 'Maintain frequency', target: currentValue, timeline: 'ongoing' },
+            { label: 'Build consistency', target: 3, timeline: '2_months' }
+          ],
+          unit: 'sessions/week'
+        };
+      case 'sleep':
+        return {
+          suggestions: [
+            { label: 'Improve sleep', target: 8, timeline: '1_month' },
+            { label: 'Maintain sleep', target: currentValue, timeline: 'ongoing' },
+            { label: 'Optimize sleep', target: Math.max(currentValue, 7), timeline: '1_month' }
+          ],
+          unit: 'hours/night'
+        };
+      case 'mood':
+        return {
+          suggestions: [
+            { label: 'Improve mood', target: Math.min(currentValue + 2, 10), timeline: '1_month' },
+            { label: 'Maintain mood', target: currentValue, timeline: 'ongoing' },
+            { label: 'Boost positivity', target: 8, timeline: '1_month' }
+          ],
+          unit: 'rating'
+        };
+      default:
+        return {
+          suggestions: [
+            { label: 'Improve', target: currentValue + 1, timeline: '1_month' },
+            { label: 'Maintain', target: currentValue, timeline: 'ongoing' },
+            { label: 'Optimize', target: currentValue + 2, timeline: '2_months' }
+          ],
+          unit: metric.unit || 'units'
+        };
+    }
   };
 
   const renderInputField = () => {
@@ -101,67 +164,52 @@ const MetricInputModal = ({ metric, onSubmit, onSkip, currentValue }) => {
                 type="text"
                 value={customMetricName}
                 onChange={(e) => setCustomMetricName(e.target.value)}
-                className="w-full px-4 py-3 bg-slate-800/60 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 mb-4"
-                placeholder="e.g., Water intake, Steps, Reading time"
+                className="w-full px-4 py-3 bg-slate-800/60 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                placeholder="e.g., Water intake, Steps, etc."
                 autoFocus
               />
-              
+            </div>
+            <div className="text-center">
               <label className="block text-white/80 text-sm font-medium mb-2">
                 How would you like to track it?
               </label>
-              <div className="flex gap-2 justify-center">
-                <button
-                  onClick={() => setCustomMetricType('quantifiable')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    customMetricType === 'quantifiable'
-                      ? 'bg-cyan-500 text-white'
-                      : 'bg-slate-700 text-white/70 hover:bg-slate-600'
-                  }`}
-                >
-                  Numbers
-                </button>
-                <button
-                  onClick={() => setCustomMetricType('qualitative')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    customMetricType === 'qualitative'
-                      ? 'bg-cyan-500 text-white'
-                      : 'bg-slate-700 text-white/70 hover:bg-slate-600'
-                  }`}
-                >
-                  Description
-                </button>
-              </div>
-              
-              {customMetricType === 'quantifiable' && (
-                <div className="mt-4">
-                  <label className="block text-white/80 text-sm font-medium mb-2">
-                    Initial value
-                  </label>
-                  <input
-                    type="number"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-800/60 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
-                    placeholder="Enter initial value"
-                  />
-                </div>
-              )}
-              
-              {customMetricType === 'qualitative' && (
-                <div className="mt-4">
-                  <label className="block text-white/80 text-sm font-medium mb-2">
-                    Initial description
-                  </label>
-                  <textarea
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    className="w-full px-4 py-3 bg-slate-800/60 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
-                    placeholder="Describe your current state..."
-                    rows={3}
-                  />
-                </div>
-              )}
+              <select
+                value={customMetricType}
+                onChange={(e) => setCustomMetricType(e.target.value)}
+                className="w-full px-4 py-3 bg-slate-800/60 border border-slate-600 rounded-xl text-white focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+              >
+                <option value="quantifiable">With numbers (e.g., 8 glasses, 10,000 steps)</option>
+                <option value="qualitative">With descriptions (e.g., "I feel hydrated", "I'm active")</option>
+              </select>
             </div>
+            {customMetricType === 'quantifiable' && (
+              <div className="text-center">
+                <label className="block text-white/80 text-sm font-medium mb-2">
+                  Current value
+                </label>
+                <input
+                  type="number"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800/60 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                  placeholder="Enter current value"
+                />
+              </div>
+            )}
+            {customMetricType === 'qualitative' && (
+              <div className="text-center">
+                <label className="block text-white/80 text-sm font-medium mb-2">
+                  Current state
+                </label>
+                <textarea
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800/60 border border-slate-600 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none"
+                  placeholder="Describe your current state..."
+                  rows={3}
+                />
+              </div>
+            )}
           </div>
         );
 
@@ -170,55 +218,139 @@ const MetricInputModal = ({ metric, onSubmit, onSkip, currentValue }) => {
     }
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-    >
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-slate-900/95 backdrop-blur-md rounded-2xl border border-slate-700/50 p-6 sm:p-8 max-w-md w-full"
-      >
-        <div className="text-center space-y-6">
-          {/* Header */}
-          <div className="space-y-2">
-            <div className="flex justify-center mb-2">
-              {metric.icon}
+  const renderGoalSetting = () => {
+    const suggestions = getGoalSuggestions();
+    
+    return (
+      <div className="space-y-6">
+        <div className="text-center">
+          <h3 className="text-lg font-semibold text-white mb-2">Set a goal for {metric.label}?</h3>
+          <p className="text-white/70 text-sm mb-4">
+            Optional: Set a target to track your progress over time
+          </p>
+        </div>
+
+        {/* Goal Suggestions */}
+        <div className="space-y-3">
+          {suggestions.suggestions.map((suggestion, index) => (
+            <button
+              key={index}
+              onClick={() => {
+                setGoalData({
+                  hasGoal: true,
+                  target: suggestion.target,
+                  timeline: suggestion.timeline,
+                  description: suggestion.label
+                });
+              }}
+              className={`w-full p-3 text-left rounded-lg border transition-all duration-200 ${
+                goalData.hasGoal && goalData.target === suggestion.target
+                  ? 'border-cyan-500 bg-cyan-500/10'
+                  : 'border-white/20 bg-white/5 hover:border-white/40'
+              }`}
+            >
+              <div className="text-white font-medium">{suggestion.label}</div>
+              <div className="text-white/60 text-sm">
+                Target: {suggestion.target} {suggestions.unit}
+              </div>
+              <div className="text-white/40 text-xs">
+                Timeline: {suggestion.timeline === 'ongoing' ? 'Ongoing' : 
+                          suggestion.timeline === '1_month' ? '1 Month' :
+                          suggestion.timeline === '2_months' ? '2 Months' :
+                          suggestion.timeline === '3_months' ? '3 Months' : suggestion.timeline}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* Custom Goal */}
+        <div className="space-y-3">
+          <div className="text-center">
+            <label className="block text-white/80 text-sm font-medium mb-2">
+              Or set a custom goal
+            </label>
+            <div className="flex space-x-2">
+              <input
+                type="number"
+                value={goalData.target}
+                onChange={(e) => setGoalData({...goalData, target: e.target.value, hasGoal: true})}
+                className="flex-1 px-3 py-2 bg-slate-800/60 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-cyan-500"
+                placeholder="Target value"
+              />
+              <select
+                value={goalData.timeline}
+                onChange={(e) => setGoalData({...goalData, timeline: e.target.value, hasGoal: true})}
+                className="px-3 py-2 bg-slate-800/60 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-cyan-500"
+              >
+                <option value="ongoing">Ongoing</option>
+                <option value="1_month">1 Month</option>
+                <option value="2_months">2 Months</option>
+                <option value="3_months">3 Months</option>
+                <option value="6_months">6 Months</option>
+              </select>
             </div>
-            <h3 className="text-white text-lg sm:text-xl font-semibold">
-              {metric.label}
-            </h3>
-            <p className="text-white/70 text-sm">
-              {metric.description}
-            </p>
-          </div>
-
-          {/* Input Field */}
-          {renderInputField()}
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={handleSkip}
-              className="flex-1 px-4 py-3 rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors text-sm font-medium"
-            >
-              Skip for now
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={metric.inputType === 'custom' ? !customMetricName.trim() : !inputValue.trim()}
-              className="flex-1 px-4 py-3 rounded-xl bg-cyan-500 text-white hover:bg-cyan-600 disabled:bg-slate-700 disabled:text-white/40 transition-colors text-sm font-medium"
-            >
-              Continue
-            </button>
           </div>
         </div>
-      </motion.div>
-    </motion.div>
+
+        {/* Skip Goal Setting */}
+        <div className="text-center">
+          <button
+            onClick={() => {
+              setGoalData({ hasGoal: false, target: '', timeline: 'ongoing', description: '' });
+              handleSubmit();
+            }}
+            className="text-white/60 hover:text-white text-sm underline"
+          >
+            Skip goal setting for now
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div className="bg-slate-900 rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-white">
+            {metric.label}
+          </h3>
+          <button
+            onClick={handleSkip}
+            className="text-white/60 hover:text-white"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Current Value Input */}
+        {renderInputField()}
+        
+        {/* Goal Setting (for quantifiable and qualitative metrics) */}
+        {(metric.inputType === 'quantifiable' || metric.inputType === 'qualitative') && (
+          <>
+            <div className="my-6 border-t border-white/10"></div>
+            {renderGoalSetting()}
+          </>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex space-x-3 mt-6">
+          <button
+            onClick={handleSkip}
+            className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"
+          >
+            Skip
+          </button>
+          <button
+            onClick={handleSubmit}
+            className="flex-1 px-4 py-2 bg-cyan-500 text-white rounded-lg hover:bg-cyan-400 transition-colors"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -230,7 +362,8 @@ const OnboardingFlow = ({ onComplete, onSkip, user }) => {
   const [formData, setFormData] = useState({
     focusAreas: [],
     selectedMetrics: {},
-    metricValues: {} // Store initial values for selected metrics
+    metricValues: {}, // Store initial values for selected metrics
+    metricGoals: {} // Store goals for selected metrics
   });
 
   const steps = [
@@ -251,8 +384,8 @@ const OnboardingFlow = ({ onComplete, onSkip, user }) => {
     {
       id: 2,
       title: "What would you like to track?",
-      subtitle: "Select your key metrics",
-      description: "Choose the specific metrics that matter most to your fitness journey and recovery.",
+      subtitle: "Select your key metrics and set goals",
+      description: "Choose the specific metrics that matter most to your fitness journey and recovery. Set targets to track your progress.",
       component: 'metrics'
     }
   ];
@@ -292,7 +425,8 @@ const OnboardingFlow = ({ onComplete, onSkip, user }) => {
       name: user?.name,
       focusAreas: formData.focusAreas,
       selectedMetrics: formData.selectedMetrics,
-      metricValues: formData.metricValues
+      metricValues: formData.metricValues,
+      metricGoals: formData.metricGoals
     };
     onComplete(onboardingData);
   };
@@ -885,11 +1019,31 @@ const OnboardingFlow = ({ onComplete, onSkip, user }) => {
     const handleInputModalSubmit = (value) => {
       if (currentMetric) {
         const newValues = { ...formData.metricValues };
-        newValues[currentMetric.id] = value;
+        const newGoals = { ...formData.metricGoals };
+        
+        if (currentMetric.inputType === 'custom') {
+          // Handle custom metric
+          newValues[currentMetric.id] = {
+            name: value.name,
+            type: value.type,
+            value: value.value
+          };
+          if (value.goal) {
+            newGoals[currentMetric.id] = value.goal;
+          }
+        } else {
+          // Handle regular metric
+          newValues[currentMetric.id] = value.value;
+          if (value.goal) {
+            newGoals[currentMetric.id] = value.goal;
+          }
+        }
+        
         handleInputChange('metricValues', newValues);
+        handleInputChange('metricGoals', newGoals);
+        setShowInputModal(false);
+        setCurrentMetric(null);
       }
-      setShowInputModal(false);
-      setCurrentMetric(null);
     };
 
     const handleInputModalSkip = () => {

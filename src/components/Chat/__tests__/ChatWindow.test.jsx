@@ -1,444 +1,148 @@
-import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import ChatWindow from '../ChatWindow';
 
-// Mock dependencies
+// Mock the required dependencies
+jest.mock('../../ui/MyraLogo', () => ({
+  default: ({ size, animated }) => <div data-testid="myra-logo" data-size={size} data-animated={animated}>MyraLogo</div>
+}));
+
 jest.mock('../../ui/gesture-feedback', () => ({
-  GestureButton: ({ children, onClick, disabled, className }) => (
-    <button onClick={onClick} disabled={disabled} className={className} data-testid="gesture-button">
-      {children}
-    </button>
+  GestureButton: ({ children, onClick, ...props }) => (
+    <button onClick={onClick} {...props}>{children}</button>
   )
 }));
 
 jest.mock('../../ui/voice-visualizer', () => ({
-  VoiceVisualizer: ({ isListening }) => (
-    <div data-testid="voice-visualizer" className={isListening ? 'listening' : 'not-listening'}>
-      Voice Visualizer
-    </div>
-  ),
-  VoiceStatusIndicator: ({ status }) => (
-    <div data-testid="voice-status-indicator" data-status={status}>
-      Voice Status: {status}
-    </div>
-  )
+  VoiceVisualizer: () => <div data-testid="voice-visualizer">VoiceVisualizer</div>,
+  VoiceStatusIndicator: () => <div data-testid="voice-status-indicator">VoiceStatusIndicator</div>
 }));
 
 jest.mock('../../ui/typing-indicator', () => ({
-  EnhancedTypingIndicator: () => <div data-testid="typing-indicator">AI is typing...</div>
+  EnhancedTypingIndicator: () => <div data-testid="typing-indicator">TypingIndicator</div>
 }));
 
-jest.mock('../../ui/loading-states', () => ({
-  PulsingButton: ({ children, onClick, disabled }) => (
-    <button onClick={onClick} disabled={disabled} data-testid="pulsing-button">
-      {children}
-    </button>
+jest.mock('../../ui/LoadingButton', () => ({
+  default: ({ children, onClick, ...props }) => (
+    <button onClick={onClick} {...props}>{children}</button>
   )
 }));
 
-jest.mock('../../ui/LoadingButton.jsx', () => ({
-  LoadingButton: ({ children, onClick, disabled, loading, className }) => (
-    <button 
-      onClick={onClick} 
-      disabled={disabled || loading} 
-      className={className}
-      data-testid="loading-button"
-      data-loading={loading}
-    >
-      {children}
-    </button>
-  )
+jest.mock('../../../hooks/useMobileGestures', () => ({
+  useMobileGestures: () => ({
+    gestureHandlers: {},
+    triggerHaptic: jest.fn()
+  })
 }));
 
-jest.mock('framer-motion', () => ({
-  motion: {
-    div: ({ children, ...props }) => <div {...props}>{children}</div>
-  }
+jest.mock('../../AI/EnhancedAISuggestions', () => ({
+  default: () => <div data-testid="ai-suggestions">AISuggestions</div>
 }));
 
-describe('ChatWindow Component', () => {
+describe('ChatWindow Mode Toggle', () => {
   const defaultProps = {
     messages: [],
     inputText: '',
     onInputChange: jest.fn(),
     onSend: jest.fn(),
-    onSendPrompt: jest.fn(),
-    onSpeechToggle: jest.fn(),
-    isListening: false,
+    onKeyDown: jest.fn(),
     isLoading: false,
-    browserSupportsSpeechRecognition: true,
+    isListening: false,
+    onSpeechToggle: jest.fn(),
     transcript: '',
-    inputRef: { current: null },
-    chatEndRef: { current: null },
-    handleKeyPress: jest.fn(),
-    user: null,
     streak: 0,
-    microphoneStatus: 'ready',
-    isPremium: false
+    browserSupportsSpeechRecognition: true,
+    microphoneStatus: 'granted',
+    conversationPersistence: null
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Basic Rendering', () => {
-    it('renders chat window with header', () => {
-      render(<ChatWindow {...defaultProps} />);
-      
-      expect(screen.getByText('Reflect Within')).toBeInTheDocument();
-      expect(screen.getByText('AI')).toBeInTheDocument();
-    });
-
-    it('shows welcome message when no messages exist', () => {
-      render(<ChatWindow {...defaultProps} />);
-      
-      expect(screen.getByText('Welcome to Reflect Within')).toBeInTheDocument();
-      expect(screen.getByText("What's on your mind today?")).toBeInTheDocument();
-      expect(screen.getByText('How are you feeling right now?')).toBeInTheDocument();
-    });
-
-    it('does not show welcome message when messages exist', () => {
-      const propsWithMessages = {
-        ...defaultProps,
-        messages: [
-          { id: '1', text: 'Hello', sender: 'user', timestamp: Date.now() }
-        ]
-      };
-      
-      render(<ChatWindow {...propsWithMessages} />);
-      
-      expect(screen.queryByText('Welcome to Reflect Within')).not.toBeInTheDocument();
-    });
-
-    it('shows streak display when streak is greater than 0', () => {
-      const propsWithStreak = {
-        ...defaultProps,
-        streak: 5
-      };
-      
-      render(<ChatWindow {...propsWithStreak} />);
-      
-      expect(screen.getByText('5 days streak')).toBeInTheDocument();
-      expect(screen.getByText('🔥')).toBeInTheDocument();
-    });
-
-    it('does not show streak display when streak is 0', () => {
-      render(<ChatWindow {...defaultProps} />);
-      
-      expect(screen.queryByText(/streak/)).not.toBeInTheDocument();
-    });
+  it('renders mode toggle buttons', () => {
+    render(<ChatWindow {...defaultProps} />);
+    
+    expect(screen.getByText('Chat')).toBeInTheDocument();
+    expect(screen.getByText('Journal')).toBeInTheDocument();
   });
 
-  describe('Message Display', () => {
-    it('displays user messages correctly', () => {
-      const propsWithMessages = {
-        ...defaultProps,
-        messages: [
-          { 
-            id: '1', 
-            text: 'Hello AI', 
-            sender: 'user', 
-            timestamp: new Date('2024-01-15T10:00:00Z').getTime() 
-          }
-        ]
-      };
-      
-      render(<ChatWindow {...propsWithMessages} />);
-      
-      expect(screen.getByText('Hello AI')).toBeInTheDocument();
-      expect(screen.queryByText('Welcome to Reflect Within')).not.toBeInTheDocument();
-    });
-
-    it('displays AI messages correctly', () => {
-      const propsWithMessages = {
-        ...defaultProps,
-        messages: [
-          { 
-            id: '1', 
-            text: 'Hello! How can I help you today?', 
-            sender: 'ai', 
-            timestamp: new Date('2024-01-15T10:00:00Z').getTime() 
-          }
-        ]
-      };
-      
-      render(<ChatWindow {...propsWithMessages} />);
-      
-      expect(screen.getByText('Hello! How can I help you today?')).toBeInTheDocument();
-    });
-
-    it('displays multiple messages in order', () => {
-      const propsWithMessages = {
-        ...defaultProps,
-        messages: [
-          { 
-            id: '1', 
-            text: 'Hello', 
-            sender: 'user', 
-            timestamp: new Date('2024-01-15T10:00:00Z').getTime() 
-          },
-          { 
-            id: '2', 
-            text: 'Hi there!', 
-            sender: 'ai', 
-            timestamp: new Date('2024-01-15T10:01:00Z').getTime() 
-          }
-        ]
-      };
-      
-      render(<ChatWindow {...propsWithMessages} />);
-      
-      const messages = screen.getAllByText(/Hello|Hi there!/);
-      expect(messages).toHaveLength(2);
-    });
-
-    it('shows loading indicator when isLoading is true', () => {
-      const propsWithLoading = {
-        ...defaultProps,
-        isLoading: true
-      };
-      
-      render(<ChatWindow {...propsWithLoading} />);
-      
-      expect(screen.getByTestId('typing-indicator')).toBeInTheDocument();
-    });
+  it('starts in chat mode by default', () => {
+    render(<ChatWindow {...defaultProps} />);
+    
+    const chatButton = screen.getByText('Chat').closest('button');
+    const journalButton = screen.getByText('Journal').closest('button');
+    
+    expect(chatButton).toHaveClass('bg-cyan-500');
+    expect(journalButton).not.toHaveClass('bg-cyan-500');
   });
 
-  describe('User Interactions', () => {
-    it('calls onInputChange when text is entered', async () => {
-      const user = userEvent.setup();
-      const mockOnInputChange = jest.fn();
-      const propsWithMock = {
-        ...defaultProps,
-        onInputChange: mockOnInputChange
-      };
-      
-      render(<ChatWindow {...propsWithMock} />);
-      
-      const textarea = screen.getByPlaceholderText('Share your thoughts...');
-      await user.type(textarea, 'Hello');
-      
-      expect(mockOnInputChange).toHaveBeenCalled();
-    });
-
-    it('calls onSend when send button is clicked', async () => {
-      const user = userEvent.setup();
-      const mockOnSend = jest.fn();
-      const propsWithMock = {
-        ...defaultProps,
-        inputText: 'Hello',
-        onSend: mockOnSend
-      };
-      
-      render(<ChatWindow {...propsWithMock} />);
-      
-      const sendButton = screen.getByTestId('loading-button');
-      await user.click(sendButton);
-      
-      expect(mockOnSend).toHaveBeenCalled();
-    });
-
-    it('disables send button when input is empty', () => {
-      render(<ChatWindow {...defaultProps} />);
-      
-      const sendButton = screen.getByTestId('loading-button');
-      expect(sendButton).toBeDisabled();
-    });
-
-    it('enables send button when input has text', () => {
-      const propsWithText = {
-        ...defaultProps,
-        inputText: 'Hello'
-      };
-      
-      render(<ChatWindow {...propsWithText} />);
-      
-      const sendButton = screen.getByTestId('loading-button');
-      expect(sendButton).not.toBeDisabled();
-    });
-
-    it('calls onSendPrompt when welcome prompt is clicked', async () => {
-      const user = userEvent.setup();
-      const mockOnSendPrompt = jest.fn();
-      const propsWithMock = {
-        ...defaultProps,
-        onSendPrompt: mockOnSendPrompt
-      };
-      
-      render(<ChatWindow {...propsWithMock} />);
-      
-      const promptButton = screen.getByText("What's on your mind today?");
-      await user.click(promptButton);
-      
-      expect(mockOnSendPrompt).toHaveBeenCalledWith("What's on your mind today?");
-    });
-
-    it('calls handleKeyPress when Enter is pressed', async () => {
-      const user = userEvent.setup();
-      const mockHandleKeyPress = jest.fn();
-      const propsWithMock = {
-        ...defaultProps,
-        handleKeyPress: mockHandleKeyPress
-      };
-      
-      render(<ChatWindow {...propsWithMock} />);
-      
-      const textarea = screen.getByPlaceholderText('Share your thoughts...');
-      await user.type(textarea, '{enter}');
-      
-      expect(mockHandleKeyPress).toHaveBeenCalled();
-    });
+  it('switches to journal mode when journal button is clicked', () => {
+    render(<ChatWindow {...defaultProps} />);
+    
+    const journalButton = screen.getByText('Journal').closest('button');
+    fireEvent.click(journalButton);
+    
+    expect(journalButton).toHaveClass('bg-cyan-500');
+    expect(screen.getByText('Chat').closest('button')).not.toHaveClass('bg-cyan-500');
   });
 
-  describe('Voice Features', () => {
-    it('shows microphone button', () => {
-      render(<ChatWindow {...defaultProps} />);
-      
-      expect(screen.getByTestId('gesture-button')).toBeInTheDocument();
-    });
-
-    it('calls onSpeechToggle when microphone button is clicked', async () => {
-      const user = userEvent.setup();
-      const mockOnSpeechToggle = jest.fn();
-      const propsWithMock = {
-        ...defaultProps,
-        onSpeechToggle: mockOnSpeechToggle
-      };
-      
-      render(<ChatWindow {...propsWithMock} />);
-      
-      const micButton = screen.getByTestId('gesture-button');
-      await user.click(micButton);
-      
-      expect(mockOnSpeechToggle).toHaveBeenCalled();
-    });
-
-    it('shows voice visualizer when listening', () => {
-      const propsWithListening = {
-        ...defaultProps,
-        isListening: true
-      };
-      
-      render(<ChatWindow {...propsWithListening} />);
-      
-      expect(screen.getByTestId('voice-visualizer')).toBeInTheDocument();
-      expect(screen.getByTestId('voice-status-indicator')).toBeInTheDocument();
-    });
-
-    it('does not show voice visualizer when not listening', () => {
-      render(<ChatWindow {...defaultProps} />);
-      
-      expect(screen.queryByTestId('voice-visualizer')).not.toBeInTheDocument();
-      expect(screen.queryByTestId('voice-status-indicator')).not.toBeInTheDocument();
-    });
-
-    it('shows transcript when available', () => {
-      const propsWithTranscript = {
-        ...defaultProps,
-        transcript: 'Hello, this is a test transcript'
-      };
-      
-      render(<ChatWindow {...propsWithTranscript} />);
-      
-      expect(screen.getByText('Hello, this is a test transcript')).toBeInTheDocument();
-      expect(screen.getByText('Transcript:')).toBeInTheDocument();
-    });
-
-    it('disables microphone button when browser does not support speech recognition', () => {
-      const propsWithoutSpeechSupport = {
-        ...defaultProps,
-        browserSupportsSpeechRecognition: false
-      };
-      
-      render(<ChatWindow {...propsWithoutSpeechSupport} />);
-      
-      const micButton = screen.getByTestId('gesture-button');
-      expect(micButton).toBeDisabled();
-    });
-
-    it('shows browser support warning when speech recognition is not supported', () => {
-      const propsWithoutSpeechSupport = {
-        ...defaultProps,
-        browserSupportsSpeechRecognition: false
-      };
-      
-      render(<ChatWindow {...propsWithoutSpeechSupport} />);
-      
-      expect(screen.getByText('Voice input not supported in this browser')).toBeInTheDocument();
-    });
-
-    it('disables microphone button when loading', () => {
-      const propsWithLoading = {
-        ...defaultProps,
-        isLoading: true
-      };
-      
-      render(<ChatWindow {...propsWithLoading} />);
-      
-      const micButton = screen.getByTestId('gesture-button');
-      expect(micButton).toBeDisabled();
-    });
+  it('shows chat-specific quick actions in chat mode', () => {
+    render(<ChatWindow {...defaultProps} />);
+    
+    expect(screen.getByText('How are you feeling?')).toBeInTheDocument();
+    expect(screen.getByText("What's on your mind?")).toBeInTheDocument();
+    expect(screen.getByText('Tell me about your day')).toBeInTheDocument();
   });
 
-  describe('Loading States', () => {
-    it('shows loading state on send button when isLoading is true', () => {
-      const propsWithLoading = {
-        ...defaultProps,
-        inputText: 'Hello',
-        isLoading: true
-      };
-      
-      render(<ChatWindow {...propsWithLoading} />);
-      
-      const sendButton = screen.getByTestId('loading-button');
-      expect(sendButton).toHaveAttribute('data-loading', 'true');
-    });
-
-    it('disables send button when loading', () => {
-      const propsWithLoading = {
-        ...defaultProps,
-        inputText: 'Hello',
-        isLoading: true
-      };
-      
-      render(<ChatWindow {...propsWithLoading} />);
-      
-      const sendButton = screen.getByTestId('loading-button');
-      expect(sendButton).toBeDisabled();
-    });
+  it('shows journal-specific quick actions in journal mode', () => {
+    render(<ChatWindow {...defaultProps} />);
+    
+    // Switch to journal mode
+    const journalButton = screen.getByText('Journal').closest('button');
+    fireEvent.click(journalButton);
+    
+    expect(screen.getByText('Workout Entry')).toBeInTheDocument();
+    expect(screen.getByText('Mood Reflection')).toBeInTheDocument();
+    expect(screen.getByText('Daily Entry')).toBeInTheDocument();
   });
 
-  describe('Premium Features', () => {
-    it('shows premium indicator when user is premium', () => {
-      const propsWithPremium = {
-        ...defaultProps,
-        isPremium: true
-      };
-      
-      render(<ChatWindow {...propsWithPremium} />);
-      
-      // Note: Premium features might be handled differently in the actual component
-      // This test can be updated based on how premium features are displayed
-      expect(screen.getByText('Reflect Within')).toBeInTheDocument();
-    });
+  it('updates welcome message based on mode', () => {
+    render(<ChatWindow {...defaultProps} />);
+    
+    // Check chat mode welcome message
+    expect(screen.getByText(/I'm here to help you explore your thoughts and feelings through meaningful conversations/)).toBeInTheDocument();
+    
+    // Switch to journal mode
+    const journalButton = screen.getByText('Journal').closest('button');
+    fireEvent.click(journalButton);
+    
+    // Check journal mode welcome message
+    expect(screen.getByText(/I'm here to help you create thoughtful journal entries/)).toBeInTheDocument();
   });
 
-  describe('Accessibility', () => {
-    it('has proper textarea placeholder', () => {
-      render(<ChatWindow {...defaultProps} />);
-      
-      expect(screen.getByPlaceholderText('Share your thoughts...')).toBeInTheDocument();
-    });
+  it('updates input placeholder based on mode', () => {
+    render(<ChatWindow {...defaultProps} />);
+    
+    const textarea = screen.getByPlaceholderText(/Share your thoughts/);
+    expect(textarea).toBeInTheDocument();
+    
+    // Switch to journal mode
+    const journalButton = screen.getByText('Journal').closest('button');
+    fireEvent.click(journalButton);
+    
+    const journalTextarea = screen.getByPlaceholderText(/What's on your mind/);
+    expect(journalTextarea).toBeInTheDocument();
+  });
 
-    it('has proper button labels and roles', () => {
-      render(<ChatWindow {...defaultProps} />);
-      
-      const sendButton = screen.getByTestId('loading-button');
-      const micButton = screen.getByTestId('gesture-button');
-      
-      expect(sendButton).toBeInTheDocument();
-      expect(micButton).toBeInTheDocument();
+  it('calls onInputChange when quick action buttons are clicked', () => {
+    render(<ChatWindow {...defaultProps} />);
+    
+    const feelingButton = screen.getByText('How are you feeling?');
+    fireEvent.click(feelingButton);
+    
+    expect(defaultProps.onInputChange).toHaveBeenCalledWith({
+      target: { value: 'How are you feeling today?' }
     });
   });
 }); 

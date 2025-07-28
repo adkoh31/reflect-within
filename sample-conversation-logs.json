@@ -1,0 +1,76 @@
+[
+  {
+    "id": "sample-1",
+    "user": "test@example.com",
+    "timestamp": "2025-07-24T07:57:14.469Z",
+    "messages": [
+      {
+        "role": "user",
+        "content": "I'm feeling really stressed about work lately",
+        "timestamp": "2025-07-24T07:52:14.474Z"
+      },
+      {
+        "role": "assistant",
+        "content": "That sounds really challenging. Stress can be overwhelming, and it's completely normal to feel this way. Consider what small act of self-care might help right now.",
+        "timestamp": "2025-07-24T07:53:14.474Z"
+      },
+      {
+        "role": "user",
+        "content": "I think I need to take more breaks during the day",
+        "timestamp": "2025-07-24T07:54:14.474Z"
+      },
+      {
+        "role": "assistant",
+        "content": "That's a great insight! Taking regular breaks can really help manage stress levels. What kind of breaks work best for you?",
+        "timestamp": "2025-07-24T07:55:14.474Z"
+      }
+    ],
+    "analysis": {
+      "emotionalState": "negative",
+      "engagementLevel": "medium",
+      "topics": [
+        "stress",
+        "work",
+        "self-care"
+      ],
+      "flowState": "emotional_support"
+    }
+  },
+  {
+    "id": "sample-2",
+    "user": "test@example.com",
+    "timestamp": "2025-07-24T07:57:14.474Z",
+    "messages": [
+      {
+        "role": "user",
+        "content": "I had an amazing workout today! I finally hit my goal weight",
+        "timestamp": "2025-07-24T07:47:14.474Z"
+      },
+      {
+        "role": "assistant",
+        "content": "That's incredible! Your hard work and dedication are really paying off. This is a huge milestone worth celebrating!",
+        "timestamp": "2025-07-24T07:48:14.474Z"
+      },
+      {
+        "role": "user",
+        "content": "I'm so proud of myself. It took months of consistency",
+        "timestamp": "2025-07-24T07:49:14.474Z"
+      },
+      {
+        "role": "assistant",
+        "content": "You absolutely should be proud! Consistency is the key to success, and you've shown incredible commitment. This momentum could be worth building on.",
+        "timestamp": "2025-07-24T07:50:14.474Z"
+      }
+    ],
+    "analysis": {
+      "emotionalState": "positive",
+      "engagementLevel": "high",
+      "topics": [
+        "fitness",
+        "achievement",
+        "goals"
+      ],
+      "flowState": "celebration"
+    }
+  }
+]

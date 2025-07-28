@@ -21,7 +21,7 @@ ${reflectionTexts}`;
     let apiResponse;
     if (process.env.OPENAI_API_KEY) {
       apiResponse = await axios.post('https://api.openai.com/v1/chat/completions', {
-        model: process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:dataset-metcon:Bryj0os9',
+        model: process.env.FINE_TUNED_MODEL_ID || 'ft:gpt-4o-mini-2024-07-18:personal:unified-enhanced:By8h6kBm',
         messages: [
           { role: 'system', content: 'You are an expert at analyzing emotional and psychological themes in personal reflections. Return only valid JSON.' },
           { role: 'user', content: analysisPrompt }

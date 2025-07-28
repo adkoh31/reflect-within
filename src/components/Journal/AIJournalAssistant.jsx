@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Mic, MicOff, Bot, Edit3 } from 'lucide-react';
+import { Mic, MicOff, Bot, Edit3, Target, Heart, BookOpen, Zap } from 'lucide-react';
 import axios from 'axios';
 import { API_ENDPOINTS } from '../../config/api';
 import { ComponentErrorBoundary } from '../ui/ComponentErrorBoundary.jsx';
@@ -17,19 +17,13 @@ const AIJournalAssistant = ({
   last5JournalEntries = [],
   microphoneStatus
 }) => {
-  const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [structuredEntry, setStructuredEntry] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editableEntry, setEditableEntry] = useState(null);
+  const [selectedPrompt, setSelectedPrompt] = useState(null);
   const inputRef = useRef(null);
-  const messagesEndRef = useRef(null);
-
-  // Auto-scroll to bottom of messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
 
   // Update input when transcript changes
   useEffect(() => {
@@ -38,144 +32,69 @@ const AIJournalAssistant = ({
     }
   }, [transcript]);
 
-  // Show welcome message
-  useEffect(() => {
-    if (messages.length === 0) {
-      setMessages([{
-        id: Date.now(),
-        text: "Hi! I'm here to help you create a journal entry. Tell me about your day - what you did, how you felt, any workouts, activities, or thoughts you'd like to record.",
-        sender: 'ai',
-        timestamp: new Date().toLocaleTimeString()
-      }]);
+  // Quick action prompts
+  const quickActions = [
+    {
+      id: 'workout',
+      title: 'Workout Entry',
+      description: 'Log your workout details',
+      prompt: 'Tell me about your workout today - what exercises, how it felt, any achievements?',
+      icon: Zap,
+      color: 'from-orange-500 to-red-500'
+    },
+    {
+      id: 'mood',
+      title: 'Mood Check',
+      description: 'How are you feeling today?',
+      prompt: 'How are you feeling today? What\'s affecting your mood?',
+      icon: Heart,
+      color: 'from-pink-500 to-purple-500'
+    },
+    {
+      id: 'daily',
+      title: 'Daily Reflection',
+      description: 'Reflect on your day',
+      prompt: 'What happened today? What are you grateful for? Any insights or learnings?',
+      icon: BookOpen,
+      color: 'from-blue-500 to-cyan-500'
+    },
+    {
+      id: 'goals',
+      title: 'Goal Check-in',
+      description: 'Check in on your goals',
+      prompt: 'How are your goals progressing? What steps did you take today?',
+      icon: Target,
+      color: 'from-green-500 to-emerald-500'
     }
-  }, [messages.length]);
+  ];
 
-  const handleSendMessage = async () => {
-    if (!inputText.trim()) return;
-
-    const userMessage = {
-      id: Date.now(),
-      text: inputText,
-      sender: 'user',
-      timestamp: new Date().toLocaleTimeString()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
+  const handleQuickAction = (action) => {
+    setSelectedPrompt(action);
     setInputText('');
+    setStructuredEntry(null);
+    setEditableEntry(null);
+    setIsEditing(false);
+    inputRef.current?.focus();
+  };
+
+  const handleGenerateEntry = async () => {
+    if (!inputText.trim() || !selectedPrompt) return;
+
     setIsLoading(true);
 
     try {
       // Get auth token from localStorage
       const token = localStorage.getItem('reflectWithin_token');
-      console.log('Journal AI Assistant - Token:', token ? 'Present' : 'Missing');
       
       if (!token) {
         throw new Error('No authentication token found. Please log in again.');
       }
-      
-      // Prepare conversation history for the API
-      const conversationHistory = messages.map(msg => ({
-        sender: msg.sender,
-        text: msg.text
-      }));
-      
-      // Determine if we should generate an entry or continue conversation
-      const isReadyForEntry = messages.length >= 4; // After 2 exchanges (4 messages)
       
       const response = await axios.post(API_ENDPOINTS.JOURNAL.GENERATE_ENTRY, {
         message: inputText,
         pastEntries: last5JournalEntries,
-        conversationHistory: conversationHistory,
-        isReadyForEntry: isReadyForEntry
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.data.conversation) {
-        // Conversation phase - show AI response
-        const aiMessage = {
-          id: Date.now() + 1,
-          text: response.data.conversation,
-          sender: 'ai',
-          timestamp: new Date().toLocaleTimeString()
-        };
-
-        setMessages(prev => [...prev, aiMessage]);
-        
-        // If we have enough conversation, show option to generate entry
-        if (isReadyForEntry && !response.data.shouldGenerateEntry) {
-          const generateOptionMessage = {
-            id: Date.now() + 2,
-            text: "I think I have a good understanding of your day now. Would you like me to create a journal entry based on our conversation?",
-            sender: 'ai',
-            timestamp: new Date().toLocaleTimeString(),
-            showGenerateButton: true
-          };
-          setMessages(prev => [...prev, generateOptionMessage]);
-        }
-      } else if (response.data.structuredEntry) {
-        // Entry generation phase - show structured entry
-        const aiMessage = {
-          id: Date.now() + 1,
-          text: "I've created a structured journal entry based on our conversation. Would you like me to ask any follow-up questions to add more details, or are you ready to save this entry?",
-          sender: 'ai',
-          timestamp: new Date().toLocaleTimeString()
-        };
-
-        setMessages(prev => [...prev, aiMessage]);
-        setStructuredEntry(response.data.structuredEntry);
-        setIsEditing(false); // Show preview first, not edit mode
-      }
-
-    } catch (error) {
-      console.error('AI Journal Assistant error:', error);
-      
-      let errorMessage = "I'm having trouble processing that right now. Could you try again or tell me more about your day?";
-      
-      if (error.message === 'No authentication token found. Please log in again.') {
-        errorMessage = "Authentication error. Please log out and log back in.";
-      } else if (error.response?.status === 401) {
-        errorMessage = "Authentication failed. Please log out and log back in.";
-      } else if (error.response?.status === 500) {
-        errorMessage = "Server error. Please try again in a moment.";
-      }
-      
-      const aiErrorMessage = {
-        id: Date.now() + 1,
-        text: errorMessage,
-        sender: 'ai',
-        timestamp: new Date().toLocaleTimeString()
-      };
-      
-      setMessages(prev => [...prev, aiErrorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleGenerateEntry = async () => {
-    setIsLoading(true);
-    
-    try {
-      const token = localStorage.getItem('reflectWithin_token');
-      
-      if (!token) {
-        throw new Error('No authentication token found. Please log in again.');
-      }
-      
-      // Prepare conversation history
-      const conversationHistory = messages.map(msg => ({
-        sender: msg.sender,
-        text: msg.text
-      }));
-      
-      const response = await axios.post(API_ENDPOINTS.JOURNAL.GENERATE_ENTRY, {
-        message: "Generate entry from conversation",
-        pastEntries: last5JournalEntries,
-        conversationHistory: conversationHistory,
+        promptType: selectedPrompt.id,
+        prompt: selectedPrompt.prompt,
         isReadyForEntry: true
       }, {
         headers: {
@@ -185,29 +104,14 @@ const AIJournalAssistant = ({
       });
 
       if (response.data.structuredEntry) {
-        const aiMessage = {
-          id: Date.now() + 1,
-          text: "I've created a structured journal entry based on our conversation. Would you like me to ask any follow-up questions to add more details, or are you ready to save this entry?",
-          sender: 'ai',
-          timestamp: new Date().toLocaleTimeString()
-        };
-
-        setMessages(prev => [...prev, aiMessage]);
         setStructuredEntry(response.data.structuredEntry);
+        setEditableEntry(response.data.structuredEntry);
         setIsEditing(false);
       }
 
     } catch (error) {
       console.error('Generate entry error:', error);
-      
-      const aiErrorMessage = {
-        id: Date.now() + 1,
-        text: "I'm having trouble generating the entry right now. Please try again.",
-        sender: 'ai',
-        timestamp: new Date().toLocaleTimeString()
-      };
-      
-      setMessages(prev => [...prev, aiErrorMessage]);
+      // Show error message to user
     } finally {
       setIsLoading(false);
     }
@@ -216,7 +120,7 @@ const AIJournalAssistant = ({
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      handleGenerateEntry();
     }
   };
 
@@ -485,208 +389,174 @@ const AIJournalAssistant = ({
 
   return (
     <ComponentErrorBoundary>
-      <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 sm:p-4 border-b border-slate-700/50 bg-slate-900/80">
-        <div className="flex items-center space-x-2 sm:space-x-3">
-          <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
-          <h2 className="text-base sm:text-lg font-semibold text-slate-50">AI Journal Assistant</h2>
-        </div>
-        <button
-          onClick={onCancel}
-          className="text-xs sm:text-sm text-slate-400 hover:text-slate-200 transition-colors py-2 px-3 rounded-lg hover:bg-slate-800/50"
-        >
-          Cancel
-        </button>
-      </div>
-
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 pb-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+      <div className="space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Bot className="w-5 h-5 text-cyan-400" />
+            <h3 className="text-lg font-semibold text-slate-50">AI Journal Assistant</h3>
+          </div>
+          <button
+            onClick={onCancel}
+            className="text-slate-400 hover:text-slate-300 transition-colors"
           >
-            <div
-              className={`max-w-[85%] px-3 sm:px-4 py-2 sm:py-3 rounded-2xl shadow-sm ${
-                message.sender === 'user'
-                  ? 'bg-cyan-500 text-slate-900'
-                  : 'bg-slate-800/80 text-slate-50 border border-slate-700/50'
-              }`}
-            >
-              <p className="text-sm sm:text-base leading-relaxed font-normal">{message.text}</p>
-              <p className={`text-xs mt-2 font-normal ${
-                message.sender === 'user' 
-                  ? 'text-slate-900/70' 
-                  : 'text-slate-400'
-              }`}>
-                {message.timestamp}
-              </p>
-              
-              {/* Show Generate Entry button if message has showGenerateButton flag */}
-              {message.showGenerateButton && (
-                <div className="mt-3">
+            <Edit3 className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Quick Actions */}
+        {!selectedPrompt && (
+          <div className="space-y-3">
+            <p className="text-slate-400 text-sm">
+              Choose a quick action to create your journal entry:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {quickActions.map((action) => {
+                const IconComponent = action.icon;
+                return (
                   <button
-                    onClick={handleGenerateEntry}
-                    disabled={isLoading}
-                    className="px-4 py-2 bg-cyan-500 text-slate-900 rounded-lg hover:bg-cyan-400 transition-colors font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    key={action.id}
+                    onClick={() => handleQuickAction(action)}
+                    className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl hover:bg-slate-700/50 transition-all duration-200 text-left group"
                   >
-                    {isLoading ? 'Generating...' : 'Generate Journal Entry'}
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg bg-gradient-to-r ${action.color} group-hover:scale-110 transition-transform`}>
+                        <IconComponent className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-slate-50">{action.title}</h4>
+                        <p className="text-sm text-slate-400">{action.description}</p>
+                      </div>
+                    </div>
                   </button>
-                </div>
-              )}
+                );
+              })}
             </div>
           </div>
-        ))}
-        
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-slate-800/80 border border-slate-700/50 px-3 sm:px-4 py-2 sm:py-3 rounded-xl max-w-[85%]">
-              <div className="flex items-center space-x-2">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                  <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                </div>
-                <span className="text-xs sm:text-sm text-slate-300 font-normal">Creating entry...</span>
+        )}
+
+        {/* Selected Prompt */}
+        {selectedPrompt && !structuredEntry && (
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
+              <div className="flex items-center space-x-2 mb-2">
+                <selectedPrompt.icon className="w-5 h-5 text-cyan-400" />
+                <h4 className="font-medium text-slate-50">{selectedPrompt.title}</h4>
               </div>
+              <p className="text-slate-300 text-sm">{selectedPrompt.prompt}</p>
+            </div>
+
+            {/* Input Area */}
+            <div className="space-y-3">
+              <textarea
+                ref={inputRef}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder="Share your thoughts..."
+                className="w-full h-32 p-4 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              />
+              
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => {
+                    setSelectedPrompt(null);
+                    setInputText('');
+                  }}
+                  className="text-slate-400 hover:text-slate-300 transition-colors text-sm"
+                >
+                  ← Choose different action
+                </button>
+                
+                <LoadingButton
+                  onClick={handleGenerateEntry}
+                  loading={isLoading}
+                  disabled={!inputText.trim()}
+                  size="small"
+                >
+                  Generate Entry
+                </LoadingButton>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Loading State */}
+        {isLoading && (
+          <div className="flex justify-center py-8">
+            <div className="flex flex-col items-center space-y-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
+              <span className="text-sm text-slate-400">Creating your journal entry...</span>
             </div>
           </div>
         )}
 
         {/* Structured Entry Preview */}
-        {structuredEntry && !isEditing && renderStructuredEntry(structuredEntry)}
-        
-        {isEditing && editableEntry && renderEditableEntry(editableEntry)}
-        
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input Area */}
-      <div className="border-t border-slate-700/50 bg-slate-900/95 backdrop-blur-sm p-3 sm:p-4 pb-6">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex-1">
-            <input
-              ref={inputRef}
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Tell me about your day..."
-              className="w-full px-3 sm:px-4 py-2 sm:py-3 border border-slate-700/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 bg-slate-800/50 text-slate-50 placeholder-slate-400 font-normal text-sm sm:text-base min-h-[44px]"
-            />
-          </div>
-          
-          <button
-            onClick={onSpeechToggle}
-            disabled={!browserSupportsSpeechRecognition || microphoneStatus === 'requesting'}
-            className="p-2 sm:p-3 bg-slate-800/80 hover:bg-slate-700/80 rounded-xl transition-all duration-200 border border-slate-700/50 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] min-w-[44px] flex items-center justify-center"
-            title={
-              !browserSupportsSpeechRecognition ? 'Speech recognition not supported' : 
-              microphoneStatus === 'requesting' ? 'Requesting microphone access...' :
-              microphoneStatus === 'denied' ? 'Microphone access denied. Please allow access in browser settings.' :
-              isListening ? 'Stop listening' : 'Click to speak - I\'ll listen for up to 30 seconds'
-            }
-          >
-            {microphoneStatus === 'requesting' ? (
-              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-            ) : isListening ? (
-              <MicOff className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300" />
-            ) : (
-              <Mic className="w-4 h-4 sm:w-5 sm:h-5 text-slate-300" />
-            )}
-          </button>
-          
-          <LoadingButton
-            onClick={handleSendMessage}
-            disabled={!inputText.trim()}
-            loading={isLoading}
-            loadingText="Sending..."
-            size="large"
-            className="min-w-[80px]"
-          >
-            Send
-          </LoadingButton>
-        </div>
-        
-        {/* Listening Indicator */}
-        {isListening && (
-          <div className="mt-3 p-3 sm:p-4 bg-slate-800/80 rounded-lg border border-slate-700/50">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm text-slate-300 font-normal">
-                <span className="font-medium">Listening...</span>
-              </p>
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                <div className="w-2 h-2 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+        {structuredEntry && !isEditing && (
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
+              <h4 className="font-medium text-slate-50 mb-3">Generated Entry</h4>
+              <div className="prose prose-invert max-w-none">
+                <p className="text-slate-300 whitespace-pre-wrap">{structuredEntry.content}</p>
               </div>
             </div>
-            <p className="text-sm text-slate-300 font-normal mb-2">
-              {transcript || 'Start speaking...'}
-            </p>
-            <div className="text-xs text-slate-400 font-normal">
-              💡 Tell me about your day, workouts, or feelings. I'll stop listening after 3 seconds of silence.
+            
+            <div className="flex space-x-3">
+              <LoadingButton
+                onClick={() => setIsEditing(true)}
+                size="small"
+                variant="secondary"
+              >
+                Edit Entry
+              </LoadingButton>
+              <LoadingButton
+                onClick={handleSaveEntry}
+                size="small"
+              >
+                Save Entry
+              </LoadingButton>
+              <button
+                onClick={() => {
+                  setStructuredEntry(null);
+                  setSelectedPrompt(null);
+                  setInputText('');
+                }}
+                className="px-4 py-2 text-sm text-slate-400 hover:text-slate-300 transition-colors"
+              >
+                Start Over
+              </button>
             </div>
           </div>
         )}
 
-        {/* Microphone Access Error */}
-        {microphoneStatus === 'denied' && (
-          <div className="mt-3 p-3 bg-red-900/20 border border-red-700/30 rounded-lg">
-            <p className="text-sm text-red-300 font-normal">
-              <span className="font-medium">Microphone access denied.</span> Please allow microphone access in your browser settings to use voice input.
-            </p>
-          </div>
-        )}
-
-        {/* Save Button */}
-        {structuredEntry && (
-          <div className="mt-4 flex flex-col sm:flex-row gap-3">
-            <LoadingButton
-              onClick={handleSaveEntry}
-              loading={isLoading}
-              loadingText="Saving..."
-              size="large"
-              className="flex-1"
-            >
-              {isEditing ? 'Save Edited Entry' : 'Save Journal Entry'}
-            </LoadingButton>
-            {!isEditing && (
+        {/* Editable Entry */}
+        {isEditing && editableEntry && (
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-800/50 border border-slate-700/50 rounded-xl">
+              <h4 className="font-medium text-slate-50 mb-3">Edit Entry</h4>
+              <textarea
+                value={editableEntry.content}
+                onChange={(e) => setEditableEntry({...editableEntry, content: e.target.value})}
+                className="w-full h-48 p-4 bg-slate-800 border border-slate-700 rounded-xl text-slate-100 placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+              />
+            </div>
+            
+            <div className="flex space-x-3">
               <LoadingButton
-                onClick={() => {
-                  setStructuredEntry(null);
-                  setMessages([{
-                    id: Date.now(),
-                    text: "Let me ask you some follow-up questions to improve your journal entry. What else would you like to add?",
-                    sender: 'ai',
-                    timestamp: new Date().toLocaleTimeString()
-                  }]);
-                }}
-                variant="secondary"
-                size="large"
+                onClick={handleSaveEdits}
+                size="small"
               >
-                Add More
+                Save Changes
               </LoadingButton>
-            )}
-            <LoadingButton
-              onClick={() => {
-                setStructuredEntry(null);
-                setMessages([{
-                  id: Date.now(),
-                  text: "I've discarded the generated entry. Would you like to start over or try a different approach?",
-                  sender: 'ai',
-                  timestamp: new Date().toLocaleTimeString()
-                }]);
-              }}
-              variant="danger"
-              size="large"
-            >
-              Discard Entry
-            </LoadingButton>
+              <button
+                onClick={() => setIsEditing(false)}
+                className="px-4 py-2 text-sm text-slate-400 hover:text-slate-300 transition-colors"
+              >
+                Cancel Edit
+              </button>
+            </div>
           </div>
         )}
-      </div>
       </div>
     </ComponentErrorBoundary>
   );

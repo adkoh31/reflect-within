@@ -2,9 +2,9 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { LampBackground } from '../ui/lamp.jsx';
 import { Button } from '../ui/button.jsx';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Play } from 'lucide-react';
 
-const LandingPage = ({ onGetStarted }) => {
+const LandingPage = ({ onGetStarted, onTryDemo }) => {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Hero Section with Lamp Effect */}
@@ -43,14 +43,22 @@ const LandingPage = ({ onGetStarted }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.0 }}
-              className="flex flex-col sm:flex-row gap-6 justify-center items-center"
+              className="flex flex-col sm:flex-row gap-4 justify-center items-center"
             >
               <Button
+                onClick={onTryDemo}
+                className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-600 hover:to-blue-600 px-8 py-4 text-lg font-semibold rounded-xl shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center gap-2"
+              >
+                <Play className="h-5 w-5" />
+                Try Demo
+              </Button>
+              
+              <Button
                 onClick={onGetStarted}
-                className="bg-white text-black hover:bg-slate-200 px-8 py-4 text-lg font-semibold rounded-xl shadow-xl transform hover:scale-105 transition-all duration-200"
+                className="bg-white text-black hover:bg-slate-200 px-8 py-4 text-lg font-semibold rounded-xl shadow-xl transform hover:scale-105 transition-all duration-200 flex items-center gap-2"
               >
                 Get Started Free
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <ArrowRight className="h-5 w-5" />
               </Button>
             </motion.div>
 
@@ -58,9 +66,10 @@ const LandingPage = ({ onGetStarted }) => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.8, delay: 1.2 }}
-              className="text-white/90 text-sm font-light"
+              className="text-white/90 text-sm font-light space-y-2"
             >
-              No credit card required • Cancel anytime
+              <p>No credit card required • Cancel anytime</p>
+              <p className="text-cyan-300 font-medium">✨ Try the full experience with sample data</p>
             </motion.div>
           </motion.div>
         </div>

@@ -26,6 +26,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { MyraLogo } from './components/ui/MyraLogo.jsx';
 import AdminDashboard from './components/Admin/AdminDashboard.jsx';
+import DemoModeIndicator from './components/ui/DemoModeIndicator.jsx';
 
 // Custom hooks
 import { useErrorHandling } from './hooks/useErrorHandling.js';
@@ -39,6 +40,7 @@ import { useOfflineSync } from './hooks/useOfflineSync.js';
 import { OfflineTestUtils } from './utils/offlineTestUtils.js';
 import { QuickTest } from './utils/quickTest.js';
 import { SimpleOfflineTest } from './utils/simpleOfflineTest.js';
+import { useDemoMode, demoModeManager } from './utils/demoMode.js';
 
 
 function App() {
@@ -53,6 +55,17 @@ function App() {
   });
   const [user, setUser] = useState(null);
   const [showTestPanel, setShowTestPanel] = useState(false);
+  
+  // Demo mode state
+  const { 
+    isDemoMode, 
+    demoData, 
+    demoUsage, 
+    startDemoMode, 
+    exitDemoMode, 
+    checkLimit, 
+    incrementUsage 
+  } = useDemoMode();
   
   // Create a stable user object using useMemo
   const stableUser = useMemo(() => {
@@ -348,6 +361,65 @@ function App() {
     }
   }, []);
 
+  // Demo mode handlers
+  const handleTryDemo = useCallback(() => {
+    try {
+      // Initialize demo mode
+      const demoData = startDemoMode();
+      
+      // Set demo user
+      setUser(demoData.user);
+      
+      // Load demo conversations
+      if (demoData.conversations && demoData.conversations.length > 0) {
+        setMessages(demoData.conversations[0].messages || []);
+      }
+      
+      // Load demo insights
+      setInsights(demoData.insights || { themes: [], moods: [] });
+      
+      // Set to main view
+      setCurrentView('main');
+      setActiveTab('home');
+      
+      toast.success('🎭 Demo mode activated! Explore the app with sample data.');
+      console.log('🎭 Demo mode started successfully');
+      
+    } catch (error) {
+      console.error('Demo mode initialization error:', error);
+      toast.error('Failed to start demo mode. Please try again.');
+    }
+  }, [startDemoMode]);
+
+  const handleExitDemo = useCallback(() => {
+    try {
+      // Exit demo mode
+      exitDemoMode();
+      
+      // Clear user and app state
+      setUser(null);
+      setMessages([]);
+      setInputText('');
+      setInsights({ themes: [], moods: [] });
+      
+      // Return to landing page
+      setCurrentView('landing');
+      setActiveTab('home');
+      
+      toast.success('Demo mode ended. Ready to start your real journey!');
+      console.log('🎭 Demo mode exited successfully');
+      
+    } catch (error) {
+      console.error('Demo mode exit error:', error);
+      toast.error('Failed to exit demo mode. Please refresh the page.');
+    }
+  }, [exitDemoMode]);
+
+  const handleDemoLimitReached = useCallback((feature) => {
+    const featureName = feature === 'conversations' ? 'AI conversations' : 'journal entries';
+    toast.info(`🎭 Demo limit reached for ${featureName}. Create an account to continue!`);
+  }, []);
+
   // Show loading screen
   if (isLoading) {
     return (
@@ -384,7 +456,7 @@ function App() {
   if (currentView === 'landing') {
     return (
       <div className="relative">
-        <LandingPage onGetStarted={handleGetStarted} />
+        <LandingPage onGetStarted={handleGetStarted} onTryDemo={handleTryDemo} />
         {showTestPanel && (
           <SimpleTestPanel
             isVisible={showTestPanel}
@@ -452,6 +524,13 @@ function App() {
           onRetry={retryFailedOperations}
         />
 
+        {/* Demo Mode Indicator */}
+        <DemoModeIndicator
+          isDemoMode={isDemoMode}
+          demoUsage={demoUsage}
+          onExitDemo={handleExitDemo}
+        />
+
         {/* Offline Test Panel */}
         <SimpleTestPanel
           isVisible={showTestPanel}
@@ -507,20 +586,14 @@ function App() {
                   inputText={inputText}
                   onInputChange={(e) => setInputText(e.target.value)}
                   onSend={handleSendMessage}
-
-                  onSpeechToggle={handleSpeechToggle}
-                  isListening={isListening}
-                  isLoading={isChatLoading}
-                  browserSupportsSpeechRecognition={browserSupportsSpeechRecognition}
-                  transcript={transcript}
-                  inputRef={inputRef}
-                  chatEndRef={chatEndRef}
                   onKeyDown={handleKeyDown}
-                  user={stableUser}
+                  isLoading={isChatLoading}
+                  isListening={isListening}
+                  onSpeechToggle={handleSpeechToggle}
+                  transcript={transcript}
                   streak={streak}
+                  browserSupportsSpeechRecognition={browserSupportsSpeechRecognition}
                   microphoneStatus={microphoneStatus}
-                  isPremium={isPremium}
-                  isOffline={!isOnline}
                   conversationPersistence={conversationPersistence}
                   createNewConversation={createNewConversation}
                   switchToConversation={switchToConversation}
